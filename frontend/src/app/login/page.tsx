@@ -15,12 +15,6 @@ import { Alert } from '@/components/ui';
 import { OTPInput } from '@/components/auth/OTPInput';
 import Script from 'next/script';
 
-declare global {
-  interface Window {
-    google: any;
-  }
-}
-
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -194,7 +188,7 @@ export default function LoginPage() {
         if (btn) {
           window.google.accounts.id.renderButton(
             btn,
-            { theme: 'outline', size: 'large', width: '100%', text: 'continue_with' }
+            { theme: 'outline', size: 'large', width: 400, text: 'continue_with' }
           );
         }
       } catch (e) {
@@ -220,7 +214,7 @@ export default function LoginPage() {
             if (btn) {
               window.google.accounts.id.renderButton(
                 btn,
-                { theme: 'outline', size: 'large', width: '100%', text: 'continue_with' }
+                { theme: 'outline', size: 'large', width: 400, text: 'continue_with' }
               );
             }
           }
