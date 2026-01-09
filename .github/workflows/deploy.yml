@@ -1,0 +1,58 @@
+name: Deploy OriyetWeb to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Repo checkout
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ SSH দিয়ে VPS এ deploy
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "🚀 Starting deployment..."
+
+            # Project root
+            cd /root/OriyetWeb
+
+            echo "📥 Pull latest code"
+            git fetch origin
+            git reset --hard origin/main
+
+            # =========================
+            # Backend Deploy
+            # =========================
+            echo "⚙️ Backend deployment"
+            cd backend
+
+            npm install
+            npm run build || true
+
+            pm2 restart oriyet-backend \
+              || pm2 start dist/server.js --name oriyet-backend
+
+            # =========================
+            # Frontend Deploy
+            # =========================
+            echo "🎨 Frontend deployment"
+            cd ../frontend
+
+            npm install
+            npm run build
+
+            pm2 restart oriyet-frontend \
+              || pm2 start npm --name oriyet-frontend -- start
+
+            echo "✅ Deployment completed successfully"
