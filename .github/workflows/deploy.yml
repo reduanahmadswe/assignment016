@@ -1,4 +1,4 @@
-name: Deploy OriyetWeb to VPS
+name: Deploy OriyetWeb (Prod)
 
 on:
   push:
@@ -10,15 +10,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Start ssh-agent and add key
+      - name: Start ssh-agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: Test SSH connection
+      - name: Deploy Backend + Frontend
         run: |
           ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} << 'EOF'
-            echo "CONNECTED SUCCESSFULLY"
-            whoami
-            pwd
+            set -e
+
+            echo "🚀 Deploy started"
+            cd /root/OriyetWeb
+
+            echo "📥 Pull latest code"
+            git fetch origin
+            git reset --hard origin/main
+
+            # =====================
+            # Backend
+            # =====================
+            echo "⚙️ Backend build"
+            cd backend
+            pnpm install
+            pnpm prisma generate
+            pnpm build
+
+            pm2 start ecosystem.config.cjs --only oriyet-backend || pm2 restart oriyet-backend
+
+            # =====================
+            # Frontend
+            # =====================
+            echo "🎨 Frontend build"
+            cd ../frontend
+            pnpm install
+            pnpm build
+
+            pm2 start ecosystem.config.cjs --only oriyet-frontend || pm2 restart oriyet-frontend
+
+            pm2 save
+            echo "✅ Deploy completed successfully"
           EOF
