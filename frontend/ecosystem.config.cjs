@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "oriyet-frontend",
-      cwd: "/root/OriyetWeb/frontend",
+      cwd: "/root/oriyet/frontend",
       script: "pnpm",
       args: "start",
       env: {
