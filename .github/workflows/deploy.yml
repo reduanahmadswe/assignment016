@@ -20,7 +20,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} << 'EOF'
             set -e
 
-            PROJECT_DIR="/home/ubuntu/OriyetWeb"
+            PROJECT_DIR="/root/oriyet"
 
             echo "🚀 Deploy started"
             echo "📂 Project dir: $PROJECT_DIR"
