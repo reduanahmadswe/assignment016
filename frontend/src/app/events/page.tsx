@@ -67,6 +67,24 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <section className="relative py-12 md:py-16 bg-gradient-to-r from-[#004aad] to-[#003882] overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#ff7620]/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">
+            আসন্ন ইভেন্টসমূহ
+          </h1>
+          <p className="text-lg sm:text-xl text-orange-400 font-semibold mb-2">
+            জাগো বাংলাদেশ, জ্ঞান-গবেষণায়, আবিষ্কার-উদ্ভাবনে
+          </p>
+          <p className="text-blue-100 max-w-2xl mx-auto">
+            নতুন কিছু শিখুন, বিশেষজ্ঞদের সাথে সংযুক্ত হন এবং আপনার ক্যারিয়ারকে এগিয়ে নিন
+          </p>
+        </div>
+      </section>
 
       {/* Filters & Content */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

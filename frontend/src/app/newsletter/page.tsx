@@ -170,9 +170,12 @@ export default function NewsletterPage() {
               <Newspaper className="w-4 h-4 inline mr-1" />
               Stay Updated
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-[#004aad]">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#004aad]">
               নিউজলেটার
             </h1>
+            <p className="text-lg md:text-xl text-orange-500 font-semibold mb-4 italic">
+              "সত্য অনুসন্ধান যদি বিজ্ঞানীর লক্ষ্য হয়, তাহলে তাকে অবশ্যই যা পড়ে তার সবকিছুর শত্রু হতে হবে" — ইবনুল হাইসাম
+            </p>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               আমাদের সর্বশেষ আপডেট, ইভেন্ট এবং গুরুত্বপূর্ণ তথ্য সম্পর্কে জানুন
             </p>

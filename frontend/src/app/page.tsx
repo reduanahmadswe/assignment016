@@ -4,6 +4,7 @@ import { ArrowRight, Calendar, Users, Award, Sparkles, Star, CheckCircle, Clock,
 import { getFeaturedEvents, getUpcomingEvents, getRecentBlogs } from '@/services/data';
 import { EventCard } from '@/components/events';
 import Hero from '@/components/home/Hero';
+import SkillsIncomeChart from '@/components/home/SkillsIncomeChart';
 import type { Metadata } from 'next';
 import Marquee from 'react-fast-marquee';
 
@@ -183,7 +184,10 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 3.5. Available Opportunities Section */}
+      {/* 3.5. Skills & Income Growth Chart - Real Data */}
+      <SkillsIncomeChart />
+
+      {/* 4. Available Opportunities Section */}
       <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-12">

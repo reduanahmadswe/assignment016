@@ -52,6 +52,9 @@ export default function AboutPage() {
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight">
             Empowering Research <br className="hidden sm:block" /> & Innovation
           </h1>
+          <p className="text-xl sm:text-2xl md:text-3xl text-orange-400 font-bold mb-4">
+            জাগো বাংলাদেশ, জ্ঞান-গবেষণায়, আবিষ্কার-উদ্ভাবনে
+          </p>
           <p className="text-lg sm:text-xl text-blue-100 max-w-3xl mx-auto leading-relaxed">
             ORIYET (Research Innovation and Youth Empowerment for Sustainability) is a global platform connecting aspiring researchers with world-class experts.
           </p>

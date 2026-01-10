@@ -14,6 +14,7 @@ import { loginUser } from '@/store/slices/auth.slice';
 import { Alert } from '@/components/ui';
 import { OTPInput } from '@/components/auth/OTPInput';
 import Script from 'next/script';
+import QuoteModal from '@/components/QuoteModal';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -36,6 +37,10 @@ export default function LoginPage() {
   const [otpMethods, setOtpMethods] = useState({ email: true, authenticator: false });
   const [otpError, setOtpError] = useState('');
   const [useAuthenticator, setUseAuthenticator] = useState(false);
+  
+  // Quote modal state
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
 
   const redirect = searchParams.get('redirect') || '/dashboard';
 
@@ -88,11 +93,12 @@ export default function LoginPage() {
       const { user, accessToken, refreshToken } = response.data;
       await dispatch(loginUser({ accessToken, refreshToken, user }));
 
-      // Redirect based on user role
+      // Redirect based on user role - show quote for non-admin users
       if (user.role === 'admin') {
         router.push('/admin');
       } else {
-        router.push(redirect);
+        setPendingRedirect(redirect);
+        setShowQuoteModal(true);
       }
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Unable to sign in. Please check your credentials and try again.';
@@ -122,11 +128,12 @@ export default function LoginPage() {
       
       await dispatch(loginUser({ accessToken, refreshToken, user }));
 
-      // Redirect based on user role
+      // Redirect based on user role - show quote for non-admin users
       if (user.role === 'admin') {
         router.push('/admin');
       } else {
-        router.push(redirect);
+        setPendingRedirect(redirect);
+        setShowQuoteModal(true);
       }
     } catch (err: any) {
       console.error('OTP Verification Error:', err);
@@ -159,15 +166,25 @@ export default function LoginPage() {
 
       await dispatch(loginUser({ accessToken, refreshToken, user }));
 
+      // Show quote for non-admin users
       if (user.role === 'admin') {
         router.push('/admin');
       } else {
-        router.push(redirect);
+        setPendingRedirect(redirect);
+        setShowQuoteModal(true);
       }
     } catch (err: any) {
       console.error('Google Login Error:', err);
       setError(err.response?.data?.message || 'Google login failed. Please try again.');
       setIsLoading(false);
+    }
+  };
+
+  // Handle quote modal close and redirect
+  const handleQuoteModalClose = () => {
+    setShowQuoteModal(false);
+    if (pendingRedirect) {
+      router.push(pendingRedirect);
     }
   };
 
@@ -510,6 +527,9 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Quote Modal */}
+      <QuoteModal isOpen={showQuoteModal} onClose={handleQuoteModalClose} />
     </div>
   );
 }

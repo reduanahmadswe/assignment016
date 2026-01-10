@@ -58,6 +58,9 @@ export default function Footer() {
                 />
               </div>
             </Link>
+            <p className="text-orange-400 font-semibold text-sm italic">
+              Redefining the research culture in Bangladesh
+            </p>
             <p className="text-white/70 leading-relaxed text-sm pr-4">
               Your gateway to knowledge and growth. Join educational events, earn certificates,
               and connect with industry experts.

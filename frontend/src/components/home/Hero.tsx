@@ -67,6 +67,10 @@ export default function Hero() {
                                     Research & Innovation
                                 </span>
                             </h1>
+                            {/* Main Tagline */}
+                            <p className="text-lg sm:text-xl md:text-2xl text-orange-300 font-semibold tracking-wide">
+                                ORIYET — By Researchers. For Researchers. With Purpose.
+                            </p>
                         </div>
 
                         {/* Description - Responsive text size/width */}

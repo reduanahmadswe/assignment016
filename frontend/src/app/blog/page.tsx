@@ -62,9 +62,12 @@ export default function BlogPage() {
             <span className="inline-block py-1 px-3 rounded-full bg-[#004aad]/10 text-[#004aad] text-sm font-semibold mb-4">
               Research & Knowledge Hub
             </span>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-[#004aad]">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#004aad]">
               Blog & Insights
             </h1>
+            <p className="text-lg md:text-xl text-orange-500 font-semibold mb-4">
+              ORIYET — Redefining the research culture in Bangladesh
+            </p>
             <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
               Stay updated with the latest research trends, tutorials, and academic insights to accelerate your career.
             </p>
