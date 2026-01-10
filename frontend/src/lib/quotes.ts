@@ -50,6 +50,7 @@ export const quotes: Quote[] = [
     authorImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/A._P._J._Abdul_Kalam.jpg/220px-A._P._J._Abdul_Kalam.jpg",
     authorDesignation: "ভারতের প্রাক্তন রাষ্ট্রপতি ও বিজ্ঞানী"
   },
+  
   {
     id: 7,
     quote: "শিক্ষার শেকড় তেতো হলেও এর ফল মিষ্টি।",
