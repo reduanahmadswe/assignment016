@@ -117,40 +117,7 @@ export default async function HomePage() {
       {/* 1. Hero Section */}
       <Hero />
 
-      {/* 2. Stats Section - Builds Trust */}
-      <section className="py-12 sm:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              const colors = [
-                { bg: 'from-blue-500 to-blue-600', light: 'bg-blue-50', border: 'border-blue-100', hoverBorder: 'group-hover:border-blue-300' },
-                { bg: 'from-purple-500 to-purple-600', light: 'bg-purple-50', border: 'border-purple-100', hoverBorder: 'group-hover:border-purple-300' },
-                { bg: 'from-orange-500 to-orange-600', light: 'bg-orange-50', border: 'border-orange-100', hoverBorder: 'group-hover:border-orange-300' },
-                { bg: 'from-pink-500 to-pink-600', light: 'bg-pink-50', border: 'border-pink-100', hoverBorder: 'group-hover:border-pink-300' }
-              ];
-              const color = colors[index % colors.length];
-
-              return (
-                <div key={index} className={`group text-center bg-white rounded-2xl p-4 sm:p-6 border-2 ${color.border} ${color.hoverBorder} hover:-translate-y-2 hover:scale-105 transition-all duration-500 shadow-md hover:shadow-2xl relative overflow-hidden`}>
-                  {/* Subtle Background on Hover */}
-                  <div className={`absolute inset-0 ${color.light} opacity-0 group-hover:opacity-40 transition-opacity duration-500 rounded-2xl`}></div>
-
-                  <div className="relative z-10">
-                    <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${color.bg} mb-3 sm:mb-4 shadow-md group-hover:shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500`}>
-                      <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                    </div>
-                    <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-1 group-hover:text-gray-800 transition-colors duration-300">{stat.value}</div>
-                    <div className="text-xs sm:text-sm font-semibold text-gray-600 group-hover:text-gray-700 transition-colors duration-300">{stat.label}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Upcoming Events Section */}
+      {/* 2. Upcoming Events Section */}
       {upcomingEvents.length > 0 && (
         <section className="py-16 sm:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -493,203 +460,51 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 7. Our Story Section */}
-      <section className="py-16 sm:py-24 bg-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Badge */}
-          <div className="text-center mb-8">
-            <span className="inline-block px-5 py-2 rounded-full bg-[#004aad]/10 text-[#004aad] text-sm font-semibold">
-              Our Story
-            </span>
-          </div>
-
-          {/* Main Headline */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight">
-              A Story of Hope, Resolve,
-              <br className="hidden sm:block" />
-              <span className="sm:inline block">and a New Beginning</span>
-            </h2>
-          </div>
-
-          {/* Story Content - Optimized for mobile reading */}
-          <div className="space-y-6 sm:space-y-8 text-lg text-gray-700 leading-relaxed">
-            <p className="text-center text-lg sm:text-xl md:text-2xl text-gray-800 font-medium leading-relaxed">
-              Every great movement starts with a question. For us, it was simple yet powerful:{' '}
-              <span className="font-bold text-blue-600 italic block mt-2 sm:inline sm:mt-0">
-                "Why do thousands of brilliant young minds in Bangladesh fall through the cracks?"
-              </span>
-            </p>
-
-            <p className="text-center text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
-              Why do talented students lose direction? Why do researchers struggle without mentorship, guidance, or access?
-              Why do educators and scientists abroad feel a deep desire to contribute but lack a structured bridge to connect back home?
-            </p>
-
-            <p className="text-center text-base sm:text-lg md:text-xl text-gray-700 leading-relaxed">
-              These questions echoed across continents inside research labs in the <span className="font-semibold text-gray-800">United States</span>, classrooms in <span className="font-semibold text-gray-800">Europe</span>,
-              offices in <span className="font-semibold text-gray-800">Asia</span>, and homes throughout <span className="font-semibold text-gray-800">Bangladesh</span>. A group of passionate scientists, scholars, and professionals
-              kept meeting, discussing, and dreaming.
-            </p>
-
-            {/* Vision Card */}
-            <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl p-6 sm:p-8 md:p-10 shadow-lg border-2 border-blue-100 my-8 sm:my-12">
-              <p className="text-xl sm:text-2xl md:text-3xl font-extrabold text-gray-900 mb-6 sm:mb-8 text-center">
-                Slowly, a shared vision took shape:
-              </p>
-              <ul className="space-y-4 sm:space-y-5">
-                <li className="flex items-start gap-4 group">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                    </div>
-                  </div>
-                  <span className="text-gray-800 text-base sm:text-lg md:text-xl font-medium group-hover:text-blue-600 transition-colors duration-300">
-                    A connected platform where knowledge flows freely.
-                  </span>
-                </li>
-                <li className="flex items-start gap-4 group">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                    </div>
-                  </div>
-                  <span className="text-gray-800 text-base sm:text-lg md:text-xl font-medium group-hover:text-orange-600 transition-colors duration-300">
-                    A community that empowers youth.
-                  </span>
-                </li>
-                <li className="flex items-start gap-4 group">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                    </div>
-                  </div>
-                  <span className="text-gray-800 text-base sm:text-lg md:text-xl font-medium group-hover:text-blue-600 transition-colors duration-300">
-                    A movement that rebuilds the research culture of Bangladesh.
-                  </span>
-                </li>
-                <li className="flex items-start gap-4 group">
-                  <div className="flex-shrink-0 mt-1">
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-md">
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                    </div>
-                  </div>
-                  <span className="text-gray-800 text-base sm:text-lg md:text-xl font-medium group-hover:text-orange-600 transition-colors duration-300">
-                    A commitment to sustainability so progress lasts, and keeps growing.
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Concluding Statement */}
-            <div className="text-center pt-8">
-              <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold leading-snug mb-4">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-orange-600">
-                  This dream became ORIYET
-                </span>
-              </p>
-              <p className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-800 leading-relaxed">
-                The Organization for Research, Innovation,{' '}
-                <span className="text-orange-600 font-bold block sm:inline">
-                  Youth Empowerment
-                </span>
-                , and Sustainability.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. Vision & Mission Section */}
-      <section className="py-16 sm:py-20 bg-white">
+      {/* 7. Stats Section - Builds Trust */}
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12">
-            {/* Vision */}
-            <div className="bg-gradient-to-br from-[#004aad] to-blue-800 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden group hover:-translate-y-2 hover:shadow-[0_25px_60px_rgba(0,74,173,0.4)] transition-all duration-500">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none group-hover:bg-white/15 transition-colors duration-500"></div>
+          <div className="text-center mb-12">
+            <span className="inline-block px-4 py-2 rounded-full bg-[#004aad]/10 text-[#004aad] text-sm font-semibold mb-4">
+              Our Impact
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+              ORIYET by the Numbers
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Join thousands of learners who are transforming their careers through our platform
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              const colors = [
+                { bg: 'from-blue-500 to-blue-600', light: 'bg-blue-50', border: 'border-blue-100', hoverBorder: 'group-hover:border-blue-300' },
+                { bg: 'from-purple-500 to-purple-600', light: 'bg-purple-50', border: 'border-purple-100', hoverBorder: 'group-hover:border-purple-300' },
+                { bg: 'from-orange-500 to-orange-600', light: 'bg-orange-50', border: 'border-orange-100', hoverBorder: 'group-hover:border-orange-300' },
+                { bg: 'from-pink-500 to-pink-600', light: 'bg-pink-50', border: 'border-pink-100', hoverBorder: 'group-hover:border-pink-300' }
+              ];
+              const color = colors[index % colors.length];
 
-              <div className="relative z-10">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                    <Target className="w-6 h-6 sm:w-7 sm:h-7" />
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold">Our Vision</h3>
-                </div>
-                <p className="text-base sm:text-lg leading-relaxed text-blue-50 mb-8 group-hover:text-white transition-colors duration-300">
-                  To build a globally connected, research-driven generation of Bangladeshi youth who are empowered with knowledge,
-                  inspired to innovate, and equipped to shape a sustainable future for Bangladesh. We envision a nation where research
-                  is celebrated, collaboration is easy, and young people can thrive no matter where they come from.
-                </p>
+              return (
+                <div key={index} className={`group text-center bg-white rounded-2xl p-4 sm:p-6 border-2 ${color.border} ${color.hoverBorder} hover:-translate-y-2 hover:scale-105 transition-all duration-500 shadow-md hover:shadow-2xl relative overflow-hidden`}>
+                  {/* Subtle Background on Hover */}
+                  <div className={`absolute inset-0 ${color.light} opacity-0 group-hover:opacity-40 transition-opacity duration-500 rounded-2xl`}></div>
 
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-8">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7620] group-hover:scale-110 transition-transform duration-300" />
-                      <span className="text-xs sm:text-sm font-semibold text-white/90">Focus</span>
+                  <div className="relative z-10">
+                    <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br ${color.bg} mb-3 sm:mb-4 shadow-md group-hover:shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500`}>
+                      <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
-                    <p className="text-lg sm:text-xl font-bold">Youth Empowerment</p>
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7620] group-hover:scale-110 transition-transform duration-300" />
-                      <span className="text-xs sm:text-sm font-semibold text-white/90">Impact</span>
-                    </div>
-                    <p className="text-lg sm:text-xl font-bold">National Growth</p>
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center gap-2 mb-2">
-                      <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7620] group-hover:scale-110 transition-transform duration-300" />
-                      <span className="text-xs sm:text-sm font-semibold text-white/90">Method</span>
-                    </div>
-                    <p className="text-lg sm:text-xl font-bold">Research-Driven</p>
-                  </div>
-
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 hover:bg-white/20 hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Target className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff7620] group-hover:scale-110 transition-transform duration-300" />
-                      <span className="text-xs sm:text-sm font-semibold text-white/90">Goal</span>
-                    </div>
-                    <p className="text-lg sm:text-xl font-bold">Sustainability</p>
+                    <div className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-1 group-hover:text-gray-800 transition-colors duration-300">{stat.value}</div>
+                    <div className="text-xs sm:text-sm font-semibold text-gray-600 group-hover:text-gray-700 transition-colors duration-300">{stat.label}</div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Mission - Responsive padding */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border-2 border-blue-100 hover:border-blue-200 hover:shadow-2xl transition-all duration-500">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-[#ff7620] to-[#e06516] flex items-center justify-center shadow-lg shadow-orange-500/30">
-                  <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-[#004aad]">Our Mission</h3>
-              </div>
-              <ul className="space-y-4 sm:space-y-6">
-                {[
-                  { id: 1, title: 'Strengthen Research Culture', desc: 'Cultivate a strong scientific and academic ecosystem through seminars, workshops, courses, and mentorship.', color: 'blue' },
-                  { id: 2, title: 'Empower Youth with Knowledge', desc: 'Provide guidance on scholarships, higher education, research training, and professional growth.', color: 'orange' },
-                  { id: 3, title: 'Connect Global Experts', desc: 'Bridge between Bangladeshi students and the global scientific community.', color: 'blue' },
-                  { id: 4, title: 'Build Sustainable Initiatives', desc: 'Create educational structures through university partnerships and long-term training programs.', color: 'orange' },
-                  { id: 5, title: 'Ensure Accessibility', desc: 'Make high-quality education accessible to students from all backgrounds.', color: 'blue' },
-                ].map((item) => (
-                  <li key={item.id} className="group flex items-start gap-4 hover:translate-x-2 transition-transform duration-300">
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br ${item.color === 'blue' ? 'from-blue-500 to-blue-600' : 'from-orange-500 to-orange-600'} flex items-center justify-center flex-shrink-0 mt-1 shadow-md group-hover:shadow-lg group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300`}>
-                      <span className="font-bold text-white text-base sm:text-lg">{item.id}</span>
-                    </div>
-                    <div>
-                      <h4 className={`font-bold text-gray-900 mb-1 text-base sm:text-lg group-hover:text-${item.color === 'blue' ? 'blue' : 'orange'}-600 transition-colors duration-300`}>{item.title}</h4>
-                      <p className="text-gray-600 text-sm sm:text-base group-hover:text-gray-700 transition-colors duration-300">{item.desc}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* 9. Goals Section */}
+      {/* 8. Goals Section */}
       <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">

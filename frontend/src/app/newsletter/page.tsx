@@ -171,13 +171,27 @@ export default function NewsletterPage() {
               Stay Updated
             </span>
             <h1 className="text-4xl md:text-5xl font-bold mb-4 text-[#004aad]">
-              নিউজলেটার
+              Newsletter
             </h1>
-            <p className="text-lg md:text-xl text-orange-500 font-semibold mb-4 italic">
-              "সত্য অনুসন্ধান যদি বিজ্ঞানীর লক্ষ্য হয়, তাহলে তাকে অবশ্যই যা পড়ে তার সবকিছুর শত্রু হতে হবে" — ইবনুল হাইসাম
-            </p>
+            
+            {/* Ibn al-Haytham Quote with Image */}
+            <div className="flex flex-col items-center gap-4 my-6">
+              
+              <p className="text-lg md:text-xl text-orange-500 font-semibold italic text-center">
+                "If learning the truth is the scientist's goal, then he must make himself the enemy of all that he reads" <br/>
+                <span className="text-base">— Ibn al-Haytham (Alhazen)</span>
+              </p>
+              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-orange-500/20 shadow-lg">
+                <img 
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtGKl_g7zmuelIML-QAl3Beo1c21XyGyamyQ2o9rOsYebMK0mfGKXSvi9benHI5ejNmNagtgiPEK5hnOL7SMLaPOBxaDUhbux_I0ZfSeo&s=10" 
+                  alt="Ibn al-Haytham (Alhazen)"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              আমাদের সর্বশেষ আপডেট, ইভেন্ট এবং গুরুত্বপূর্ণ তথ্য সম্পর্কে জানুন
+              Stay informed with our latest updates, events, and important information
             </p>
           </div>
         </div>
@@ -197,11 +211,11 @@ export default function NewsletterPage() {
                     <Newspaper className="w-8 h-8 text-white" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                    নিউজলেটার কী?
+                    What is a Newsletter?
                   </h2>
                   <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
-                    নিউজলেটার হলো একটি নিয়মিত প্রকাশনা যেখানে আমরা আমাদের সংস্থার সকল কার্যক্রম, 
-                    আসন্ন ইভেন্ট, সাফল্যের গল্প এবং গুরুত্বপূর্ণ ঘোষণা শেয়ার করি।
+                    Our newsletter is a regular publication where we share all our organizational activities, 
+                    upcoming events, success stories, and important announcements.
                   </p>
                 </div>
 
@@ -215,24 +229,24 @@ export default function NewsletterPage() {
                       </div>
                       <div>
                         <h3 className="font-bold text-lg text-[#004aad] mb-3">
-                          কেন নিউজলেটার পড়বেন?
+                          Why Read Our Newsletter?
                         </h3>
                         <ul className="space-y-2.5">
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#004aad] rounded-full"></span>
-                            সর্বশেষ ইভেন্ট ও প্রোগ্রাম সম্পর্কে জানুন
+                            Stay updated on latest events & programs
                           </li>
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#004aad] rounded-full"></span>
-                            নতুন সুযোগ-সুবিধা সম্পর্কে আপডেট পান
+                            Get notified about new opportunities
                           </li>
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#004aad] rounded-full"></span>
-                            সফল অংশগ্রহণকারীদের অভিজ্ঞতা জানুন
+                            Learn from successful participants' experiences
                           </li>
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#004aad] rounded-full"></span>
-                            আমাদের কমিউনিটির সাথে যুক্ত থাকুন
+                            Stay connected with our community
                           </li>
                         </ul>
                       </div>
@@ -247,24 +261,24 @@ export default function NewsletterPage() {
                       </div>
                       <div>
                         <h3 className="font-bold text-lg text-[#ff7620] mb-3">
-                          নিউজলেটারে কী থাকে?
+                          What's Inside the Newsletter?
                         </h3>
                         <ul className="space-y-2.5">
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#ff7620] rounded-full"></span>
-                            সম্পন্ন ইভেন্টের হাইলাইটস ও ছবি
+                            Highlights & photos from past events
                           </li>
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#ff7620] rounded-full"></span>
-                            আসন্ন কর্মসূচির বিস্তারিত তথ্য
+                            Detailed info about upcoming programs
                           </li>
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#ff7620] rounded-full"></span>
-                            শিক্ষামূলক আর্টিকেল ও টিপস
+                            Educational articles & tips
                           </li>
                           <li className="flex items-center gap-2 text-gray-600">
                             <span className="w-1.5 h-1.5 bg-[#ff7620] rounded-full"></span>
-                            বিশেষ ঘোষণা ও অফার
+                            Special announcements & offers
                           </li>
                         </ul>
                       </div>
@@ -276,7 +290,7 @@ export default function NewsletterPage() {
                 <div className="mt-8 bg-gradient-to-r from-[#004aad] to-[#003882] rounded-2xl p-6 text-center">
                   <p className="text-white text-lg flex items-center justify-center gap-2 flex-wrap">
                     <span className="text-2xl">💡</span>
-                    <span>নিচে থেকে যেকোনো নিউজলেটার <strong>&quot;View&quot;</strong> করে পড়ুন অথবা <strong>&quot;Download&quot;</strong> করে সংরক্ষণ করুন!</span>
+                    <span>Browse any newsletter below by clicking <strong>&quot;View&quot;</strong> to read or <strong>&quot;Download&quot;</strong> to save!</span>
                   </p>
                 </div>
               </div>
@@ -297,14 +311,14 @@ export default function NewsletterPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="নিউজলেটার খুঁজুন..."
+                placeholder="Search newsletters..."
                 className="block w-full pl-11 pr-4 py-4 border-2 border-gray-100 rounded-2xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:bg-white focus:border-[#004aad]/30 focus:ring-4 focus:ring-[#004aad]/5 transition-all shadow-lg shadow-gray-100/50"
               />
               <button
                 type="submit"
                 className="absolute inset-y-2 right-2 px-6 bg-[#004aad] hover:bg-[#003882] text-white rounded-xl font-medium transition-colors shadow-md hover:shadow-lg"
               >
-                খুঁজুন
+                Search
               </button>
             </form>
           </div>

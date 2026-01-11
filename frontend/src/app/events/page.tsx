@@ -75,13 +75,13 @@ export default function EventsPage() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4">
-            আসন্ন ইভেন্টসমূহ
+            Upcoming Events
           </h1>
           <p className="text-lg sm:text-xl text-orange-400 font-semibold mb-2">
             জাগো বাংলাদেশ, জ্ঞান-গবেষণায়, আবিষ্কার-উদ্ভাবনে
           </p>
           <p className="text-blue-100 max-w-2xl mx-auto">
-            নতুন কিছু শিখুন, বিশেষজ্ঞদের সাথে সংযুক্ত হন এবং আপনার ক্যারিয়ারকে এগিয়ে নিন
+            Learn something new, connect with experts, and advance your career
           </p>
         </div>
       </section>
