@@ -12,7 +12,7 @@ import { TwoFactorUtil } from '../../utils/twoFactor.util.js';
 
 // Type for Prisma transaction client
 type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
-const googleClient = new OAuth2Client(env.google.clientId);
+let googleClient = new OAuth2Client(env.google.clientId);
 
 interface RegisterInput {
   email: string;
@@ -383,6 +383,9 @@ export class AuthService {
 
   async googleAuth(idToken: string) {
     try {
+      // Reinitialize client with current env values to ensure fresh credentials
+      googleClient = new OAuth2Client(env.google.clientId);
+      
       const ticket = await googleClient.verifyIdToken({
         idToken,
         audience: env.google.clientId,
@@ -390,7 +393,7 @@ export class AuthService {
 
       const payload = ticket.getPayload();
       if (!payload) {
-        throw new AppError('Invalid Google token', 400);
+        throw new AppError('Google sign-in failed. Please try again.', 400);
       }
 
       const { email, name, picture, sub: googleId } = payload;
@@ -458,7 +461,16 @@ export class AuthService {
     } catch (error: any) {
       console.error('Google Auth Error Detail:', error);
       if (error instanceof AppError) throw error;
-      throw new AppError(`Google authentication failed: ${error.message}`, 400);
+      
+      // User-friendly error messages
+      if (error.message?.includes('Wrong recipient') || error.message?.includes('audience')) {
+        throw new AppError('Google sign-in configuration error. Please contact support.', 400);
+      }
+      if (error.message?.includes('Token used too late') || error.message?.includes('expired')) {
+        throw new AppError('Google sign-in session expired. Please try again.', 400);
+      }
+      
+      throw new AppError('Unable to sign in with Google. Please try again or use email/password.', 400);
     }
   }
 
