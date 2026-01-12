@@ -8,7 +8,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Eye, EyeOff, Calendar, Clock } from 'lucide-react';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 import { authAPI } from '@/lib/api';
+  const [phone, setPhone] = useState('');
 import { Alert } from '@/components/ui';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/auth.slice';
@@ -346,10 +349,21 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Phone Number (Optional)</label>
+                <PhoneInput
+                  defaultCountry="bd"
+                  value={phone}
+                  onChange={(value) => {
+                    setPhone(value);
+                    // Update form value
+                    (document.querySelector('input[name="phone"]') as HTMLInputElement)?.setAttribute('value', value);
+                  }}
+                  className="w-full"
+                  inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
+                />
                 <input
-                  type="tel"
-                  placeholder="+880 1XXXXXXXXX"
-                  className="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
+                  type="hidden"
+                  name="phone"
+                  value={phone}
                   {...register('phone')}
                 />
               </div>
