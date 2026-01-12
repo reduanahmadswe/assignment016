@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { Calendar, Award, Clock, ArrowRight } from 'lucide-react';
+import { Calendar, Award, Clock, ArrowRight, CheckCircle } from 'lucide-react';
 import { userAPI, eventAPI } from '@/lib/api';
 import { useAppSelector } from '@/store/hooks';
 import { formatDate } from '@/lib/utils';
@@ -16,12 +16,19 @@ export default function DashboardPage() {
     queryKey: ['user-stats'],
     queryFn: async () => {
       const response = await userAPI.getDashboardStats();
-      const s = response.data; // e.g. { registered_events: 5, upcoming_events: 2, certificates: 3 }
+      const s = response.data.data; // Access the nested data object: { total_registrations: ..., ... }
+
+      const totalRegistrations = s?.total_registrations || 0;
+      const upcomingEvents = s?.upcoming_events || 0;
+      // Calculate past events: Total Joined - Upcoming
+      const pastEvents = Math.max(0, totalRegistrations - upcomingEvents);
+
       return {
-        registeredEvents: s.registered_events || 0,
-        upcomingEvents: s.upcoming_events || 0,
-        certificates: s.certificates || 0,
-        totalSpent: s.total_spent || 0,
+        registeredEvents: totalRegistrations,
+        upcomingEvents: upcomingEvents,
+        pastEvents: pastEvents,
+        certificates: s?.total_certificates || 0,
+        totalSpent: s?.total_spent || 0,
       };
     },
   });
@@ -60,12 +67,12 @@ export default function DashboardPage() {
       href: '/my-events?tab=upcoming',
     },
     {
-      label: 'Certificates',
-      value: stats?.certificates || 0,
-      icon: Award,
+      label: 'Past Events',
+      value: stats?.pastEvents || 0,
+      icon: CheckCircle,
       color: 'bg-purple-50 text-purple-600',
       borderColor: 'border-purple-100',
-      href: '/certificates',
+      href: '/my-events?tab=past',
     },
   ];
 
@@ -215,12 +222,14 @@ export default function DashboardPage() {
                         <Award className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors line-clamp-1">{cert.event_title}</h4>
-                        <p className="text-sm text-gray-500">Issued {formatDate(cert.issued_at)}</p>
+                        {/* Use cert.event.title because of include relations */}
+                        <h4 className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors line-clamp-1">{cert.event?.title || 'Certificate'}</h4>
+                        {/* Use cert.issuedAt because prisma returns camelCase */}
+                        <p className="text-sm text-gray-500">Issued {formatDate(cert.issuedAt)}</p>
                       </div>
                     </div>
                     <Link
-                      href={`/certificates/${cert.certificate_number}`}
+                      href={`/certificates/${cert.certificateId}`} // Use certificateId
                       className="px-4 py-2 text-sm font-medium text-purple-600 bg-white border border-purple-200 rounded-lg hover:bg-purple-600 hover:text-white transition-colors"
                     >
                       View

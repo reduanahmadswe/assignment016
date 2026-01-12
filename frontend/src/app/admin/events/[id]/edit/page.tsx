@@ -38,10 +38,10 @@ export default function EditEventPage() {
     startDate: '',
     endDate: '',
     registrationDeadline: '',
-    price: 0,
-    maxParticipants: 0,
+    price: 0 as string | number,
+    maxParticipants: 0 as string | number,
     status: 'upcoming',
-    isCertificateAvailable: false,
+    isCertificateAvailable: true,
     meetingPlatform: '',
     meetingLink: '',
     autoSendMeetingLink: true,
@@ -102,7 +102,7 @@ export default function EditEventPage() {
         price: event.price ? Number(event.price) : 0,
         maxParticipants: event.maxParticipants || 0,
         status: event.eventStatus || 'upcoming',
-        isCertificateAvailable: event.isCertificateAvailable || false,
+        isCertificateAvailable: true,
         meetingPlatform: event.meetingPlatform || '',
         meetingLink: event.meetingLink || '',
         autoSendMeetingLink: event.autoSendMeetingLink !== undefined ? event.autoSendMeetingLink : true,
@@ -143,6 +143,11 @@ export default function EditEventPage() {
 
     const submitData: any = {
       ...formData,
+      price: formData.price === '' ? 0 : Number(formData.price),
+      maxParticipants: formData.maxParticipants === '' ? 0 : Number(formData.maxParticipants),
+      startDate: new Date(formData.startDate).toISOString(),
+      endDate: new Date(formData.endDate).toISOString(),
+      registrationDeadline: new Date(formData.registrationDeadline).toISOString(),
     };
 
     if (thumbnailUrl) {
@@ -167,7 +172,7 @@ export default function EditEventPage() {
     let processedValue: string | number = value;
 
     if (name === 'price' || name === 'maxParticipants') {
-      processedValue = value === '' ? 0 : Number(value);
+      processedValue = value === '' ? '' : Number(value);
     }
 
     setFormData(prev => ({
@@ -212,65 +217,53 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Link href="/admin/events">
-            <Button variant="outline" size="sm" className="rounded-xl h-10 w-10 p-0 flex items-center justify-center hover:bg-gray-50 border-gray-200">
-              <ArrowLeft className="w-5 h-5 text-gray-500" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Edit Event</h1>
-            <p className="text-sm sm:text-base text-gray-500 mt-1 font-medium">Update event details</p>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-4 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 mt-6">
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-5">
             {/* Basic Information */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Basic Information</CardTitle>
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                <CardTitle className="text-base font-bold">Basic Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 p-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Event Title *
-                  </label>
-                  <Input
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    placeholder="Enter event title"
-                    required
-                    className="w-full rounded-xl"
-                  />
+              <CardContent className="space-y-4 p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Event Title *
+                    </label>
+                    <Input
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      placeholder="Enter event title"
+                      required
+                      className="w-full rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Slug *
+                    </label>
+                    <Input
+                      name="slug"
+                      value={formData.slug}
+                      onChange={handleInputChange}
+                      placeholder="your-event-name-2025"
+                      required
+                      className="w-full rounded-xl"
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1 font-medium bg-gray-50 px-2 py-1 rounded border border-gray-100 inline-block overflow-hidden text-ellipsis whitespace-nowrap max-w-full">
+                      Ex: <span className="font-mono text-primary-600 font-bold">ai-workshop</span> → .../events/ai-workshop
+                    </p>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Slug *
-                  </label>
-                  <Input
-                    name="slug"
-                    value={formData.slug}
-                    onChange={handleInputChange}
-                    placeholder="your-event-name-2025"
-                    required
-                    className="w-full rounded-xl"
-                  />
-                  <p className="text-xs text-gray-500 mt-2 font-medium bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
-                    Example: <span className="font-mono text-primary-600 font-bold">ai-workshop-dhaka</span> → URL will be: <span className="font-mono font-bold">oriyet.com/events/ai-workshop-dhaka</span>
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
                     Description *
                   </label>
                   <textarea
@@ -278,32 +271,32 @@ export default function EditEventPage() {
                     value={formData.description}
                     onChange={handleInputChange}
                     placeholder="Enter event description"
-                    rows={5}
+                    rows={4}
                     required
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium text-sm"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Event Type *
-                  </label>
-                  <select
-                    name="eventType"
-                    value={formData.eventType}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium bg-white"
-                  >
-                    <option value="workshop">Workshop</option>
-                    <option value="seminar">Seminar</option>
-                    <option value="webinar">Webinar</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Event Type *
+                    </label>
+                    <select
+                      name="eventType"
+                      value={formData.eventType}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium bg-white text-sm h-10"
+                    >
+                      <option value="workshop">Workshop</option>
+                      <option value="seminar">Seminar</option>
+                      <option value="webinar">Webinar</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
                       Event Mode *
                     </label>
                     <select
@@ -311,7 +304,7 @@ export default function EditEventPage() {
                       value={formData.eventMode}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium bg-white"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium bg-white text-sm h-10"
                     >
                       <option value="offline">Offline</option>
                       <option value="online">Online</option>
@@ -322,8 +315,8 @@ export default function EditEventPage() {
 
                 {/* Conditional fields based on event mode */}
                 {(formData.eventMode === 'offline' || formData.eventMode === 'hybrid') && (
-                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
                       Venue *
                     </label>
                     <Input
@@ -340,52 +333,52 @@ export default function EditEventPage() {
             </Card>
 
             {/* Guests/Speakers */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-lg font-bold">Guests/Speakers</CardTitle>
-                <Button type="button" size="sm" onClick={addGuest} className="rounded-lg h-9 font-bold px-4">
-                  <Plus className="w-4 h-4 mr-2" />
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-bold">Guests/Speakers</CardTitle>
+                <Button type="button" size="sm" onClick={addGuest} className="rounded-lg h-8 text-xs font-bold px-3">
+                  <Plus className="w-3 h-3 mr-1.5" />
                   Add Guest
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-4 p-6">
+              <CardContent className="space-y-4 p-5">
                 {guests.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                     <p className="text-sm font-bold text-gray-500">
                       No guests added yet
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">Click "Add Guest" to add speakers or hosts.</p>
+                    <p className="text-xs text-gray-400 mt-1">Click "Add Guest" to add speakers.</p>
                   </div>
                 ) : (
                   guests.map((guest, index) => (
-                    <div key={index} className="p-5 border border-gray-200 rounded-2xl space-y-4 relative bg-gray-50/30 hover:bg-white hover:shadow-sm transition-all group">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Guest {index + 1}</h4>
+                    <div key={index} className="p-4 border border-gray-200 rounded-xl space-y-3 relative bg-gray-50/30 hover:bg-white hover:shadow-sm transition-all group">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="text-xs font-extrabold text-gray-900 uppercase tracking-wide">Guest {index + 1}</h4>
                         <button
                           type="button"
                           onClick={() => removeGuest(index)}
-                          className="text-gray-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                          className="text-gray-400 hover:text-red-600 p-1 hover:bg-red-50 rounded-md transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
                             Name *
                           </label>
                           <Input
                             value={guest.name}
                             onChange={(e) => updateGuest(index, 'name', e.target.value)}
                             placeholder="Guest name"
-                            className="text-sm rounded-xl"
+                            className="text-sm rounded-lg h-9"
                             required
                           />
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
                             Email *
                           </label>
                           <Input
@@ -393,80 +386,61 @@ export default function EditEventPage() {
                             value={guest.email}
                             onChange={(e) => updateGuest(index, 'email', e.target.value)}
                             placeholder="guest@example.com"
-                            className="text-sm rounded-xl"
+                            className="text-sm rounded-lg h-9"
                             required
                           />
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                          Role
-                        </label>
-                        <select
-                          value={guest.role}
-                          onChange={(e) => updateGuest(index, 'role', e.target.value)}
-                          className="w-full px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                        >
-                          <option value="speaker">Speaker</option>
-                          <option value="moderator">Moderator</option>
-                          <option value="panelist">Panelist</option>
-                          <option value="host">Host</option>
-                        </select>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-1">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                            Role
+                          </label>
+                          <select
+                            value={guest.role}
+                            onChange={(e) => updateGuest(index, 'role', e.target.value)}
+                            className="w-full px-2 py-1.5 text-sm font-medium border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white h-9"
+                          >
+                            <option value="speaker">Speaker</option>
+                            <option value="moderator">Moderator</option>
+                            <option value="panelist">Panelist</option>
+                            <option value="host">Host</option>
+                          </select>
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                            Bio
+                          </label>
+                          <textarea
+                            value={guest.bio}
+                            onChange={(e) => updateGuest(index, 'bio', e.target.value)}
+                            placeholder="Brief guest bio"
+                            rows={1}
+                            className="w-full px-2 py-1.5 text-sm font-medium border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white min-h-[36px]"
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                          Bio
-                        </label>
-                        <textarea
-                          value={guest.bio}
-                          onChange={(e) => updateGuest(index, 'bio', e.target.value)}
-                          placeholder="Brief bio of the guest"
-                          rows={2}
-                          className="w-full px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                            Picture Link
-                          </label>
-                          <Input
-                            type="url"
-                            value={guest.pictureLink || ''}
-                            onChange={(e) => updateGuest(index, 'pictureLink', e.target.value)}
-                            placeholder="https://..."
-                            className="text-sm rounded-xl"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                            Website
-                          </label>
-                          <Input
-                            type="url"
-                            value={guest.website || ''}
-                            onChange={(e) => updateGuest(index, 'website', e.target.value)}
-                            placeholder="https://..."
-                            className="text-sm rounded-xl"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">
-                            CV Link
-                          </label>
-                          <Input
-                            type="url"
-                            value={guest.cvLink || ''}
-                            onChange={(e) => updateGuest(index, 'cvLink', e.target.value)}
-                            placeholder="https://..."
-                            className="text-sm rounded-xl"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {[
+                          { label: 'Picture', field: 'pictureLink' },
+                          { label: 'Website', field: 'website' },
+                          { label: 'CV', field: 'cvLink' },
+                        ].map((item: any) => (
+                          <div key={item.field}>
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                              {item.label} Link
+                            </label>
+                            <Input
+                              type="url"
+                              value={(guest as any)[item.field] || ''}
+                              onChange={(e) => updateGuest(index, item.field as keyof Guest, e.target.value)}
+                              placeholder="https://..."
+                              className="text-sm rounded-lg h-9"
+                            />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))
@@ -475,15 +449,15 @@ export default function EditEventPage() {
             </Card>
 
             {/* Date & Venue */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Date & Time</CardTitle>
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                <CardTitle className="text-base font-bold">Date & Time</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="space-y-4 p-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Start Date & Time *
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Start Date *
                     </label>
                     <Input
                       type="datetime-local"
@@ -491,13 +465,13 @@ export default function EditEventPage() {
                       value={formData.startDate}
                       onChange={handleInputChange}
                       required
-                      className="rounded-xl w-full"
+                      className="rounded-xl w-full text-xs"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      End Date & Time *
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      End Date *
                     </label>
                     <Input
                       type="datetime-local"
@@ -505,36 +479,35 @@ export default function EditEventPage() {
                       value={formData.endDate}
                       onChange={handleInputChange}
                       required
-                      className="rounded-xl w-full"
+                      className="rounded-xl w-full text-xs"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Registration Deadline *
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    name="registrationDeadline"
-                    value={formData.registrationDeadline}
-                    onChange={handleInputChange}
-                    required
-                    className="rounded-xl w-full"
-                  />
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Reg. Deadline *
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      name="registrationDeadline"
+                      value={formData.registrationDeadline}
+                      onChange={handleInputChange}
+                      required
+                      className="rounded-xl w-full text-xs"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Pricing & Capacity */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Pricing & Capacity</CardTitle>
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                <CardTitle className="text-base font-bold">Pricing & Capacity</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <CardContent className="space-y-4 p-5">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
                       Price (BDT) *
                     </label>
                     <Input
@@ -544,18 +517,14 @@ export default function EditEventPage() {
                       onChange={handleInputChange}
                       min="0"
                       step="0.01"
-                      placeholder="0"
+                      placeholder="If free input 0"
                       required
                       className="rounded-xl w-full"
                     />
-                    <p className="text-xs text-gray-500 mt-2 font-medium bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
-                      Enter 0 for free events
-                    </p>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Max Participants
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Max Users
                     </label>
                     <Input
                       type="number"
@@ -566,91 +535,60 @@ export default function EditEventPage() {
                       placeholder="0"
                       className="rounded-xl w-full"
                     />
-                    <p className="text-xs text-gray-500 mt-2 font-medium bg-gray-50 p-2 rounded-lg border border-gray-100 inline-block">
-                      Leave 0 for unlimited
-                    </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Certificate Configuration */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Certificate Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div>
-                    <label className="text-sm font-bold text-gray-900 block">
-                      Enable Certificates
-                    </label>
-                    <p className="text-xs text-gray-500 font-medium">
-                      Automatically generate certificates for participants
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    name="isCertificateAvailable"
-                    checked={formData.isCertificateAvailable}
-                    onChange={(e) =>
-                      setFormData({ ...formData, isCertificateAvailable: e.target.checked })
-                    }
-                    className="h-6 w-6 rounded-lg border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
-                  />
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Online Meeting Details */}
             {formData.eventMode === 'online' && (
-              <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-                <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                  <CardTitle className="text-lg font-bold">Online Meeting Details</CardTitle>
+              <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+                <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                  <CardTitle className="text-base font-bold">Online Meeting Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-5 p-6">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Meeting Platform *
-                    </label>
-                    <select
-                      name="meetingPlatform"
-                      value={formData.meetingPlatform}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium bg-white"
-                      required
-                    >
-                      <option value="">Select platform...</option>
-                      <option value="zoom">Zoom</option>
-                      <option value="google_meet">Google Meet</option>
-                      <option value="other">Other</option>
-                    </select>
+                <CardContent className="space-y-4 p-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                        Platform *
+                      </label>
+                      <select
+                        name="meetingPlatform"
+                        value={formData.meetingPlatform}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium bg-white h-10 text-sm"
+                        required
+                      >
+                        <option value="">Select...</option>
+                        <option value="zoom">Zoom</option>
+                        <option value="google_meet">Meet</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                        Meeting Link
+                      </label>
+                      <Input
+                        type="url"
+                        name="meetingLink"
+                        value={formData.meetingLink}
+                        onChange={handleInputChange}
+                        placeholder="https://..."
+                        className="w-full rounded-xl"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Meeting Link
-                    </label>
-                    <Input
-                      type="url"
-                      name="meetingLink"
-                      value={formData.meetingLink}
-                      onChange={handleInputChange}
-                      placeholder="https://zoom.us/j/123456789"
-                      className="w-full rounded-xl"
-                    />
-                    <p className="text-xs text-gray-500 mt-2 font-medium">
-                      Full URL to the online meeting
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                     <div>
                       <label className="text-sm font-bold text-gray-900 block">
-                        Auto-send Meeting Link
+                        Auto-send Link
                       </label>
-                      <p className="text-xs text-gray-500 font-medium">
-                        Automatically send meeting link upon registration
+                      <p className="text-[10px] text-gray-500 font-medium">
+                        Send via email upon reg.
                       </p>
                     </div>
                     <input
@@ -660,12 +598,12 @@ export default function EditEventPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, autoSendMeetingLink: e.target.checked })
                       }
-                      className="h-6 w-6 rounded-lg border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                      className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
                     />
                   </div>
                   {formData.autoSendMeetingLink && !formData.meetingLink && (
                     <p className="text-xs text-red-600 font-bold bg-red-50 p-2 rounded-lg border border-red-100 flex items-center">
-                      <span className="mr-1">⚠️</span> Meeting link is required when auto-send is enabled
+                      <span className="mr-1">⚠️</span> Link required
                     </p>
                   )}
                 </CardContent>
@@ -673,93 +611,83 @@ export default function EditEventPage() {
             )}
 
             {/* Contact & Support */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Contact & Support Information</CardTitle>
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                <CardTitle className="text-base font-bold">Contact & Support</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-5 p-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Event Contact Email
-                  </label>
-                  <Input
-                    type="email"
-                    name="eventContactEmail"
-                    value={formData.eventContactEmail}
-                    onChange={handleInputChange}
-                    placeholder="support@oriyet.com"
-                    className="w-full rounded-xl"
-                  />
-                  <p className="text-xs text-gray-500 mt-2 font-medium">
-                    Email for participants to reach out with questions
-                  </p>
+              <CardContent className="space-y-4 p-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Contact Email
+                    </label>
+                    <Input
+                      type="email"
+                      name="eventContactEmail"
+                      value={formData.eventContactEmail}
+                      onChange={handleInputChange}
+                      placeholder="support@oriyet.com"
+                      className="w-full rounded-xl"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                      Contact Phone
+                    </label>
+                    <Input
+                      type="tel"
+                      name="eventContactPhone"
+                      value={formData.eventContactPhone}
+                      onChange={handleInputChange}
+                      placeholder="+880..."
+                      className="w-full rounded-xl"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Event Contact Phone
-                  </label>
-                  <Input
-                    type="tel"
-                    name="eventContactPhone"
-                    value={formData.eventContactPhone}
-                    onChange={handleInputChange}
-                    placeholder="+880 1234-567890"
-                    className="w-full rounded-xl"
-                  />
-                  <p className="text-xs text-gray-500 mt-2 font-medium">
-                    Phone number for event inquiries
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Participant Instructions <span className="text-gray-400 font-normal">(Optional)</span>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                    Instructions <span className="text-gray-400 font-normal">(Optional)</span>
                   </label>
                   <textarea
                     name="participantInstructions"
                     value={formData.participantInstructions}
                     onChange={handleInputChange}
-                    rows={6}
-                    placeholder="Important instructions for participants, e.g.,&#10;• Check your email (inbox & spam) after registration&#10;• For offline events: Arrive 15 minutes early&#10;• For online events: Join the meeting 5 minutes before start time&#10;• Bring your government-issued ID for verification"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-medium"
+                    rows={3}
+                    placeholder="Instructions for participants..."
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-medium text-sm"
                   />
-                  <p className="text-xs text-gray-500 mt-2 font-medium">
-                    Instructions will be shown to participants after registration
-                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Thumbnail */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Event Thumbnail</CardTitle>
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                <CardTitle className="text-base font-bold">Thumbnail</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 p-6">
+              <CardContent className="space-y-3 p-5">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
                     Image URL
                   </label>
                   <Input
                     value={thumbnailUrl}
                     onChange={handleThumbnailUrlChange}
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="https://..."
                     className="w-full rounded-xl"
                   />
-                  <p className="text-xs text-gray-500 mt-2 font-medium">
-                    Paste an image URL from any platform
-                  </p>
                 </div>
                 {thumbnailUrl && (
                   <div className="relative rounded-xl overflow-hidden border border-gray-200">
                     <img
                       src={getImageUrl(thumbnailUrl)}
                       alt="Thumbnail preview"
-                      className="w-full h-48 object-cover"
+                      className="w-full h-32 object-cover"
                       referrerPolicy="no-referrer"
                     />
                   </div>
@@ -768,33 +696,30 @@ export default function EditEventPage() {
             </Card>
 
             {/* Status */}
-            <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-                <CardTitle className="text-lg font-bold">Publication Status</CardTitle>
+            <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-5 py-3">
+                <CardTitle className="text-base font-bold">Status</CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-5">
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium bg-white"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium bg-white text-sm"
                 >
                   <option value="upcoming">Upcoming</option>
                   <option value="ongoing">Ongoing</option>
                   <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-2 font-medium">
-                  Choose the appropriate status for this event
-                </p>
               </CardContent>
             </Card>
 
             {/* Actions */}
-            <div className="space-y-3 pt-6 lg:pt-0">
+            <div className="space-y-3 pt-2 lg:pt-0">
               <Button
                 type="submit"
-                className="w-full rounded-xl py-6 font-bold text-lg shadow-lg shadow-primary-500/30"
+                className="w-full rounded-xl py-4 font-bold text-base shadow-lg shadow-primary-500/30"
                 disabled={updateMutation.isPending}
               >
                 {updateMutation.isPending ? (
@@ -807,7 +732,7 @@ export default function EditEventPage() {
                 )}
               </Button>
               <Link href="/admin/events" className="block">
-                <Button type="button" variant="outline" className="w-full rounded-xl py-6 font-bold border-gray-200 bg-white hover:bg-gray-50 text-gray-600">
+                <Button type="button" variant="outline" className="w-full rounded-xl py-4 font-bold border-gray-200 bg-white hover:bg-gray-50 text-gray-600">
                   Cancel
                 </Button>
               </Link>

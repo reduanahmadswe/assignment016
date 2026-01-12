@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -26,10 +26,18 @@ export default function CertificatesPage() {
     const { user, isAuthenticated } = useAppSelector((state) => state.auth);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     // Redirect if not authenticated
-    if (!isAuthenticated && typeof window !== 'undefined') {
-        router.push('/login?redirect=/certificates');
-    }
+    useEffect(() => {
+        if (isMounted && !isAuthenticated) {
+            router.push('/login?redirect=/certificates');
+        }
+    }, [isMounted, isAuthenticated, router]);
 
     // Fetch user's certificates (using my-events for now as it contains certificate info)
     const { data: myEvents, isLoading } = useQuery({
@@ -61,7 +69,7 @@ export default function CertificatesPage() {
         cert.event_title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    if (isLoading) {
+    if (!isMounted || isLoading) {
         return <Loading fullScreen text="Loading your achievements..." />;
     }
 

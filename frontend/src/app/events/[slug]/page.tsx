@@ -163,7 +163,12 @@ export default function EventDetailsPage() {
     if (!dateStr) return 'TBA';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return 'TBA';
-    return formatDate(dateStr);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'Asia/Dhaka',
+    });
   };
 
   // Helper to safely format time
@@ -171,7 +176,11 @@ export default function EventDetailsPage() {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '';
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Dhaka',
+    });
   };
 
   // Helper to calculate duration
@@ -293,37 +302,6 @@ export default function EventDetailsPage() {
                 {event.participant_instructions}
               </div>
             </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: 'sessions',
-      label: 'Sessions',
-      content: (
-        <div className="space-y-4">
-          {event.sessions && event.sessions.length > 0 ? (
-            event.sessions.map((session: any, index: number) => (
-              <div key={session.id} className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-sm text-primary-600 font-medium">Session {index + 1}</span>
-                    <h4 className="font-semibold text-gray-900 mt-1">{session.title}</h4>
-                    {session.description && (
-                      <p className="text-gray-600 text-sm mt-1">{session.description}</p>
-                    )}
-                  </div>
-                  <Badge variant="outline">
-                    {formatDateTime(session.start_time)} - {new Date(session.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                  </Badge>
-                </div>
-                {session.host_name && (
-                  <p className="text-sm text-gray-500 mt-2">Speaker: {session.host_name}</p>
-                )}
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500">No sessions have been added yet.</p>
           )}
         </div>
       ),

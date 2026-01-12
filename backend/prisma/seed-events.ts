@@ -1,144 +1,210 @@
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-async function main() {
-    console.log("Starting event seeding...");
+const TOPICS = [
+    'Research AI',
+    'Bootcamp',
+    'Software Engineering',
+    'AI Engineering',
+    'Chemistry',
+    'Physics',
+    'Higher Study',
+    'Machine Learning',
+    'Data Science',
+    'Web Development',
+    'Cyber Security',
+    'Cloud Computing',
+    'Blockchain',
+    'IoT',
+    'Robotics'
+];
 
-    const events = [
-        {
-            title: "Full Stack Web Development Bootcamp",
-            slug: "full-stack-bootcamp-2026",
-            description: "Master Modern Web Development from Scratch to Advanced. Learn React, Node.js, and more.",
-            content: "<p>Deep dive into modern web development practices.</p>",
-            thumbnail: "https://images.unsplash.com/photo-1593720213428-28a5b9e94613",
-            eventType: "Bootcamp",
-            eventMode: "Online",
-            startDate: new Date("2026-02-01T10:00:00Z"),
-            endDate: new Date("2026-04-30T18:00:00Z"),
-            registrationDeadline: new Date("2026-01-31T23:59:59Z"),
-            isFree: false,
-            price: 1,
-            currency: "BDT",
-            maxParticipants: 50,
-            currentParticipants: 12,
-            registrationStatus: "open",
-            eventStatus: "upcoming",
-            onlinePlatform: "Google Meet",
-            onlineLink: "https://meet.google.com/abc-defg-hij",
-            isPublished: true,
-            hasCertificate: true,
-        },
-        {
-            title: "AI & Machine Learning Summit",
-            slug: "ai-ml-summit-2026",
-            description: "Explore the future of Artificial Intelligence with industry leaders.",
-            content: "<p>Join us for a two-day summit on AI trends.</p>",
-            thumbnail: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e",
-            eventType: "Summit",
-            eventMode: "Hybrid",
-            venueDetails: "BICC, Dhaka",
-            startDate: new Date("2026-03-15T09:00:00Z"),
-            endDate: new Date("2026-03-16T17:00:00Z"),
-            registrationDeadline: new Date("2026-03-10T23:59:59Z"),
-            isFree: false,
-            price: 1,
-            currency: "BDT",
-            maxParticipants: 200,
-            currentParticipants: 85,
-            registrationStatus: "open",
-            eventStatus: "upcoming",
-            isPublished: true,
-            hasCertificate: true,
-        },
-        {
-            title: "Data Science with Python Workshop",
-            slug: "data-science-workshop-2026",
-            description: "Hands-on workshop to learn Data Analysis and Visualization using Python.",
-            content: "<p>Practical session on Pandas, NumPy, and Matplotlib.</p>",
-            thumbnail: "https://images.unsplash.com/photo-1551288049-bebda4e38f71",
-            eventType: "Workshop",
-            eventMode: "Online",
-            startDate: new Date("2026-02-10T14:00:00Z"),
-            endDate: new Date("2026-02-10T18:00:00Z"),
-            registrationDeadline: new Date("2026-02-08T23:59:59Z"),
-            isFree: false,
-            price: 1,
-            currency: "BDT",
-            maxParticipants: 100,
-            currentParticipants: 45,
-            registrationStatus: "open",
-            eventStatus: "upcoming",
-            onlinePlatform: "Zoom",
-            isPublished: true,
-            hasCertificate: true,
-        },
-        {
-            title: "Cyber Security Awareness Seminar",
-            slug: "cyber-security-seminar-2026",
-            description: "Learn how to protect yourself and your organization from cyber threats.",
-            content: "<p>Expert talks on latest cyber security trends.</p>",
-            thumbnail: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b",
-            eventType: "Seminar",
-            eventMode: "Offline",
-            venueDetails: "KIB Complex, Dhaka",
-            startDate: new Date("2026-04-05T10:00:00Z"),
-            endDate: new Date("2026-04-05T13:00:00Z"),
-            registrationDeadline: new Date("2026-04-01T23:59:59Z"),
-            isFree: true,
-            price: 0,
-            currency: "BDT",
-            maxParticipants: 300,
-            currentParticipants: 150,
-            registrationStatus: "open",
-            eventStatus: "upcoming",
-            isPublished: true,
-            hasCertificate: true,
-        },
-        {
-            title: "StartUp Pitch Deck Masterclass",
-            slug: "startup-pitch-masterclass-2026",
-            description: "Learn how to craft a winning pitch deck for your startup.",
-            content: "<p>Guidance from successful founders and VCs.</p>",
-            thumbnail: "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
-            eventType: "Masterclass",
-            eventMode: "Online",
-            startDate: new Date("2026-05-20T19:00:00Z"),
-            endDate: new Date("2026-05-20T21:00:00Z"),
-            registrationDeadline: new Date("2026-05-18T23:59:59Z"),
-            isFree: false,
-            price: 1,
-            currency: "BDT",
-            maxParticipants: 80,
-            currentParticipants: 30,
-            registrationStatus: "open",
-            eventStatus: "upcoming",
-            onlinePlatform: "Zoom",
-            isPublished: true,
-            hasCertificate: true,
-        },
-    ];
+const EVENT_TYPES = ['Workshop', 'Seminar', 'Bootcamp', 'Webinar', 'Conference', 'Hackathon'];
 
-    for (const event of events) {
-        const existing = await prisma.event.findUnique({
-            where: { slug: event.slug }
-        });
+const IMAGES = [
+    'https://images.unsplash.com/photo-1593720213428-28a5b9e94613',
+    'https://images.unsplash.com/photo-1485827404703-89b55fcc595e',
+    'https://images.unsplash.com/photo-1551288049-bebda4e38f71',
+    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b',
+    'https://images.unsplash.com/photo-1519389950473-47ba0277781c',
+    'https://images.unsplash.com/photo-1544531586-fde5298cdd40', // Chemistry/Lab
+    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb', // Physics
+    'https://images.unsplash.com/photo-1523240795612-9a054b0db644', // Higher Study
+];
 
-        if (!existing) {
-            await prisma.event.create({
-                data: event
-            });
-            console.log(`✅ Created event: ${event.title}`);
-        } else {
-            await prisma.event.update({
-                where: { slug: event.slug },
-                data: { price: event.price }
-            });
-            console.log(`ℹ️ Updated event price: ${event.title}`);
-        }
+const GUESTS = [
+    {
+        name: "Dr. Ayesha Rahman",
+        email: "ayesha@example.com",
+        bio: "Professor of Computer Science, BUET. Expert in AI and Machine Learning.",
+        role: "speaker",
+        pictureLink: "https://randomuser.me/api/portraits/women/44.jpg",
+        website: "https://ayesha-rahman.com"
+    },
+    {
+        name: "Mr. Rahim Uddin",
+        email: "rahim@example.com",
+        bio: "Senior Software Engineer at Google. 10+ years of industry experience.",
+        role: "speaker",
+        pictureLink: "https://randomuser.me/api/portraits/men/32.jpg",
+        cvLink: "https://linkedin.com/in/rahim"
+    },
+    {
+        name: "Sarah Khan",
+        email: "sarah@example.com",
+        bio: "Data Scientist at Amazon. Specialized in Big Data technologies.",
+        role: "guest",
+        pictureLink: "https://randomuser.me/api/portraits/women/65.jpg"
+    },
+    {
+        name: "Dr. Kamal Hossain",
+        email: "kamal@example.com",
+        bio: "Physics Researcher at CERN. Quantum Computing enthusiast.",
+        role: "speaker",
+        pictureLink: "https://randomuser.me/api/portraits/men/11.jpg"
+    }
+];
+
+function getRandomItem<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getRandomInt(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+function generateGuests() {
+    const guest1 = getRandomItem(GUESTS);
+    let guest2 = getRandomItem(GUESTS);
+    while (guest1 === guest2) {
+        guest2 = getRandomItem(GUESTS);
+    }
+    return JSON.stringify([guest1, guest2]);
+}
+
+async function createEvent(
+    index: number,
+    status: 'upcoming' | 'completed' | 'cancelled',
+    mode: 'Online' | 'Offline' | 'Hybrid',
+    dateOffsetDays: number
+) {
+    const topic = getRandomItem(TOPICS);
+    const type = getRandomItem(EVENT_TYPES);
+    const title = `${topic} ${type} ${2025 + Math.floor(index / 20)} - Session ${index}`;
+    const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}-${index}`; // Ensure unique slug
+
+    const startDate = addDays(new Date(), dateOffsetDays);
+    const endDate = new Date(startDate.getTime() + getRandomInt(2, 6) * 60 * 60 * 1000); // 2-6 hours duration
+    const regDeadline = new Date(startDate.getTime() - 24 * 60 * 60 * 1000); // 1 day before
+
+    let venueDetails = null;
+    let onlineLink = null;
+    let onlinePlatform = null;
+
+    if (mode === 'Online' || mode === 'Hybrid') {
+        onlinePlatform = getRandomItem(['Zoom', 'Google Meet', 'Microsoft Teams']);
+        onlineLink = `https://meet.google.com/meet-${index}`;
     }
 
-    console.log("🎉 Event seeding completed!");
+    if (mode === 'Offline' || mode === 'Hybrid') {
+        venueDetails = JSON.stringify({
+            name: getRandomItem(['BICC, Dhaka', 'KIB Complex', 'Dhaka University', 'BUET Auditorium', 'North South University']),
+            address: "Dhaka, Bangladesh",
+            mapLink: "https://maps.google.com/..."
+        });
+    }
+
+    const isFree = Math.random() > 0.5;
+    const price = isFree ? 0 : getRandomInt(1, 10);
+
+    const event = {
+        title,
+        slug,
+        description: `Join us for an immersive ${type.toLowerCase()} on ${topic}. This event will cover fundamental to advanced concepts suitable for students and professionals.`,
+        content: `
+      <h2>About This Event</h2>
+      <p>This ${topic} ${type} is designed to provide deep insights into the subject matter.</p>
+      <h3>What you will learn:</h3>
+      <ul>
+        <li>Core concepts of ${topic}</li>
+        <li>Real-world applications</li>
+        <li>Industry best practices</li>
+        <li>Career guidance and opportunities</li>
+      </ul>
+      <p>Don't miss this opportunity to network with experts and like-minded individuals.</p>
+    `,
+        thumbnail: getRandomItem(IMAGES),
+        category: topic,
+        eventType: type,
+        eventMode: mode,
+        venueDetails: venueDetails?.includes('{') ? venueDetails : (venueDetails ? JSON.stringify({ name: venueDetails }) : null), // Ensure consistency
+        onlineLink,
+        onlinePlatform,
+        startDate,
+        endDate,
+        registrationDeadline: regDeadline,
+        isFree,
+        price,
+        currency: "BDT",
+        maxParticipants: getRandomInt(50, 500),
+        currentParticipants: getRandomInt(0, 50),
+        registrationStatus: status === 'cancelled' ? 'closed' : (new Date() > regDeadline ? 'closed' : 'open'),
+        eventStatus: status,
+        guests: generateGuests(),
+        isPublished: true,
+        hasCertificate: true,
+        isCertificateAvailable: true,
+        participantInstructions: "Please join 10 minutes before the session starts. Keep your microphone muted.",
+        autoSendMeetingLink: true
+    };
+
+    await prisma.event.create({ data: event });
+    console.log(`Created ${status} event [${mode}]: ${title}`);
+}
+
+async function main() {
+    console.log("Starting seeding...");
+
+    // Clear existing events
+    await prisma.event.deleteMany({});
+    console.log("✅ Cleared existing events");
+
+    // 15 Upcoming (10 Online, 5 Offline)
+    console.log("Seeding Upcoming Events...");
+    for (let i = 0; i < 10; i++) {
+        await createEvent(i, 'upcoming', 'Online', getRandomInt(5, 60)); // Future 5-60 days
+    }
+    for (let i = 0; i < 5; i++) {
+        await createEvent(i + 10, 'upcoming', 'Offline', getRandomInt(5, 60));
+    }
+
+    // 5 Cancelled (Can be future dates but cancelled status)
+    console.log("Seeding Cancelled Events...");
+    for (let i = 0; i < 5; i++) {
+        await createEvent(i + 15, 'cancelled', 'Online', getRandomInt(5, 30));
+    }
+
+    // 15 Past/Completed
+    console.log("Seeding Past Events...");
+    for (let i = 0; i < 15; i++) {
+        await createEvent(i + 20, 'completed', getRandomItem(['Online', 'Offline']), getRandomInt(-100, -1)); // Past 1-100 days
+    }
+
+    // 15 More Completed (to make total 30 past/completed)
+    console.log("Seeding Completed Events...");
+    for (let i = 0; i < 15; i++) {
+        await createEvent(i + 35, 'completed', getRandomItem(['Online', 'Offline']), getRandomInt(-200, -101)); // Past 101-200 days
+    }
+
+    console.log("Seeding Finished!");
 }
 
 main()

@@ -110,6 +110,9 @@ export default function CreateEventPage() {
       ...formData,
       price: formData.price === '' ? 0 : Number(formData.price),
       maxParticipants: formData.maxParticipants === '' ? 0 : Number(formData.maxParticipants),
+      startDate: new Date(formData.startDate).toISOString(),
+      endDate: new Date(formData.endDate).toISOString(),
+      registrationDeadline: new Date(formData.registrationDeadline).toISOString(),
     };
 
     if (thumbnailUrl) {

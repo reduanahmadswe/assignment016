@@ -43,6 +43,9 @@ interface EventFilters {
   is_free?: boolean;
   is_featured?: boolean;
   search?: string;
+  price_range?: string;
+  date_range?: string;
+  category?: string;
 }
 
 export class EventService {
@@ -215,6 +218,58 @@ export class EventService {
     if (filters.event_status) where.eventStatus = filters.event_status;
     if (filters.is_free !== undefined) where.isFree = filters.is_free;
     if (filters.is_featured !== undefined) where.isFeatured = filters.is_featured;
+    if (filters.category) where.category = filters.category;
+
+    // Price Filtering
+    if (filters.price_range) {
+      if (filters.price_range === 'free') {
+        where.isFree = true;
+      } else if (filters.price_range === 'paid') {
+        where.isFree = false;
+      } else if (filters.price_range === '0-500') {
+        where.price = { gte: 0, lte: 500 };
+      } else if (filters.price_range === '500-1000') {
+        where.price = { gte: 500, lte: 1000 };
+      } else if (filters.price_range === '1000+') {
+        where.price = { gt: 1000 };
+      }
+    }
+
+    // Date Filtering
+    if (filters.date_range) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      if (filters.date_range === 'today') {
+        where.startDate = {
+          gte: today,
+          lt: tomorrow,
+        };
+      } else if (filters.date_range === 'week') {
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        where.startDate = {
+          gte: today,
+          lte: nextWeek,
+        };
+      } else if (filters.date_range === 'month') {
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        where.startDate = {
+          gte: today,
+          lte: endOfMonth
+        };
+      } else if (filters.date_range === 'next_month') {
+        const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+        where.startDate = {
+          gte: startOfNextMonth,
+          lte: endOfNextMonth,
+        };
+      }
+    }
+
     if (filters.search) {
       where.OR = [
         { title: { contains: filters.search } },
@@ -222,6 +277,7 @@ export class EventService {
       ];
     }
 
+    // Re-evaluating types after prisma generate
     const [events, total] = await Promise.all([
       prisma.event.findMany({
         where,
@@ -231,6 +287,7 @@ export class EventService {
           slug: true,
           description: true,
           thumbnail: true,
+          category: true,
           eventType: true,
           eventMode: true,
           startDate: true,

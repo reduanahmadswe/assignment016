@@ -347,16 +347,6 @@ export default function LoginPage() {
                     >
                       👑 Admin
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setValue('email', 'demo@example.com');
-                        setValue('password', 'Demo@123');
-                      }}
-                      className="flex-1 px-4 py-2.5 bg-[#1d4ed8]/10 text-[#1d4ed8] hover:bg-[#1d4ed8] hover:text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border border-transparent hover:border-[#1d4ed8]"
-                    >
-                      👤 User
-                    </button>
                   </div>
                 </div>
 

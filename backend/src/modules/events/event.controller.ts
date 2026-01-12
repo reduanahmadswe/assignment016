@@ -15,6 +15,9 @@ export class EventController {
       is_free: req.query.is_free ? req.query.is_free === 'true' : undefined,
       is_featured: req.query.is_featured ? req.query.is_featured === 'true' : undefined,
       search: req.query.search as string,
+      price_range: req.query.price_range as string,
+      date_range: req.query.date_range as string,
+      category: req.query.category as string,
     };
     const result = await eventService.getAllEvents(page, limit, filters);
     res.json({
@@ -136,7 +139,7 @@ export class EventController {
     if (req.body.guests) {
       console.log('Guests length:', Array.isArray(req.body.guests) ? req.body.guests.length : 'Not an array');
     }
-    
+
     const event = await eventService.updateEvent(parseInt(req.params.id), req.body);
     res.json({
       success: true,

@@ -1,41 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { eventAPI } from '@/lib/api';
-import { EventCard, EventFilters, EventFiltersType } from '@/components/events';
-import { Loading, EventCardSkeleton, Pagination } from '@/components/ui';
-import { ServerCrash, RefreshCcw, Search, CalendarOff } from 'lucide-react';
-
-const categories = [
-  'Technology',
-  'Business',
-  'Design',
-  'Marketing',
-  'Personal Development',
-  'Language',
-  'Science',
-  'Health',
-  'Finance',
-  'Education',
-  'Bioinformatics',
-  'Nanotechnology',
-  'Research',
-];
+import { EventCard, EventFilters, EventFiltersData } from '@/components/events';
+import { EventCardSkeleton, Pagination } from '@/components/ui';
+import { CalendarOff } from 'lucide-react';
 
 export default function EventsPage() {
   const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<EventFiltersType>({
+  const [filters, setFilters] = useState<EventFiltersData>({
     search: searchParams.get('search') || '',
-    category: searchParams.get('category') || '',
-    eventType: searchParams.get('type') || '',
+    eventMode: searchParams.get('mode') || '',
     priceRange: searchParams.get('price') || '',
     dateRange: searchParams.get('date') || '',
   });
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['events', page, filters],
     queryFn: async () => {
       const params: any = {
@@ -46,8 +29,9 @@ export default function EventsPage() {
       };
 
       if (filters.search) params.search = filters.search;
-      if (filters.category) params.category = filters.category;
-      if (filters.eventType) params.event_type = filters.eventType;
+      if (filters.eventMode) params.event_mode = filters.eventMode;
+      if (filters.priceRange) params.price_range = filters.priceRange;
+      if (filters.dateRange) params.date_range = filters.dateRange;
 
       const response = await eventAPI.getAll(params);
       return response.data;
@@ -55,7 +39,7 @@ export default function EventsPage() {
     retry: 1,
   });
 
-  const handleFilterChange = (newFilters: EventFiltersType) => {
+  const handleFilterChange = (newFilters: EventFiltersData) => {
     setFilters(newFilters);
     setPage(1);
   };
@@ -91,7 +75,6 @@ export default function EventsPage() {
         <div className="mb-8">
           <EventFilters
             onFilterChange={handleFilterChange}
-            categories={categories}
           />
         </div>
 
@@ -125,7 +108,7 @@ export default function EventsPage() {
                 We couldn't find any upcoming events matching your filters. Try adjusting your search criteria.
               </p>
               <button
-                onClick={() => handleFilterChange({ search: '', category: '', eventType: '', priceRange: '', dateRange: '' })}
+                onClick={() => handleFilterChange({ search: '', eventMode: '', priceRange: '', dateRange: '' })}
                 className="px-6 py-2.5 text-[#004aad] border-2 border-[#004aad]/20 rounded-xl font-semibold hover:bg-[#004aad]/5 transition-colors"
               >
                 Clear All Filters

@@ -5,19 +5,18 @@ import { Search, Filter, X, ChevronDown, Calendar, Tag, Monitor, DollarSign, Sli
 
 export interface EventFiltersData {
   search: string;
-  category: string;
-  eventType: string;
+  eventMode: string;
   priceRange: string;
   dateRange: string;
 }
 
 interface EventFiltersProps {
   onFilterChange: (filters: EventFiltersData) => void;
-  categories: string[];
+  categories?: string[]; // Kept optional for backward compat if needed, but unused
 }
 
-const eventTypes = [
-  { value: '', label: 'All Type' },
+const eventModes = [
+  { value: '', label: 'All Modes' },
   { value: 'online', label: 'Online' },
   { value: 'offline', label: 'Offline' },
   { value: 'hybrid', label: 'Hybrid' },
@@ -40,11 +39,10 @@ const dateRanges = [
   { value: 'next_month', label: 'Next Month' },
 ];
 
-export default function EventFilters({ onFilterChange, categories }: EventFiltersProps) {
+export default function EventFilters({ onFilterChange }: EventFiltersProps) {
   const [filters, setFilters] = useState<EventFiltersData>({
     search: '',
-    category: '',
-    eventType: '',
+    eventMode: '',
     priceRange: '',
     dateRange: '',
   });
@@ -59,8 +57,7 @@ export default function EventFilters({ onFilterChange, categories }: EventFilter
   const clearFilters = () => {
     const emptyFilters: EventFiltersData = {
       search: '',
-      category: '',
-      eventType: '',
+      eventMode: '',
       priceRange: '',
       dateRange: '',
     };
@@ -108,36 +105,18 @@ export default function EventFilters({ onFilterChange, categories }: EventFilter
             {/* Divider */}
             <div className="w-px h-8 bg-gray-200 mx-1"></div>
 
-            {/* Category Filter */}
-            <div className="relative group">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#004aad] transition-colors">
-                <Tag className="w-4 h-4" />
-              </div>
-              <select
-                value={filters.category}
-                onChange={(e) => updateFilter('category', e.target.value)}
-                className="h-14 pl-9 pr-8 bg-transparent hover:bg-gray-50 border-0 rounded-lg text-sm font-semibold text-gray-700 focus:ring-0 cursor-pointer transition-colors appearance-none min-w-[140px]"
-              >
-                <option value="">Category</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
-
-            {/* Event Type Filter */}
+            {/* Event Mode Filter (formerly Type) */}
             <div className="relative group">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-[#004aad] transition-colors">
                 <Monitor className="w-4 h-4" />
               </div>
               <select
-                value={filters.eventType}
-                onChange={(e) => updateFilter('eventType', e.target.value)}
+                value={filters.eventMode}
+                onChange={(e) => updateFilter('eventMode', e.target.value)}
                 className="h-14 pl-9 pr-8 bg-transparent hover:bg-gray-50 border-0 rounded-lg text-sm font-semibold text-gray-700 focus:ring-0 cursor-pointer transition-colors appearance-none min-w-[120px]"
               >
-                {eventTypes.map((type) => (
-                  <option key={type.value} value={type.value}>{type.value === '' ? 'Type' : type.label}</option>
+                {eventModes.map((mode) => (
+                  <option key={mode.value} value={mode.value}>{mode.value === '' ? 'Mode' : mode.label}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -184,21 +163,15 @@ export default function EventFilters({ onFilterChange, categories }: EventFilter
           </button>
         </div>
 
-        {/* Active Filters Summary & Clear (Optional) */}
+        {/* Active Filters Summary & Clear */}
         {hasActiveFilters && (
           <div className="hidden md:flex items-center gap-2 mt-2 px-4 pb-1 animate-fade-in">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Filters:</span>
             <div className="flex flex-wrap gap-2">
-              {filters.category && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full border border-blue-100">
-                  {filters.category}
-                  <button onClick={() => updateFilter('category', '')}><X className="w-3 h-3 hover:text-blue-900" /></button>
-                </span>
-              )}
-              {filters.eventType && (
+              {filters.eventMode && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full border border-purple-100">
-                  {eventTypes.find(t => t.value === filters.eventType)?.label}
-                  <button onClick={() => updateFilter('eventType', '')}><X className="w-3 h-3 hover:text-purple-900" /></button>
+                  {eventModes.find(t => t.value === filters.eventMode)?.label}
+                  <button onClick={() => updateFilter('eventMode', '')}><X className="w-3 h-3 hover:text-purple-900" /></button>
                 </span>
               )}
               {filters.priceRange && (
@@ -239,43 +212,21 @@ export default function EventFilters({ onFilterChange, categories }: EventFilter
           </div>
 
           <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
-                Category
-              </label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select
-                  value={filters.category}
-                  onChange={(e) => updateFilter('category', e.target.value)}
-                  className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#004aad] focus:border-transparent outline-none appearance-none"
-                >
-                  <option value="">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
-                  Type
+                  Mode
                 </label>
                 <div className="relative">
                   <Monitor className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <select
-                    value={filters.eventType}
-                    onChange={(e) => updateFilter('eventType', e.target.value)}
+                    value={filters.eventMode}
+                    onChange={(e) => updateFilter('eventMode', e.target.value)}
                     className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-[#004aad] focus:border-transparent outline-none appearance-none"
                   >
-                    {eventTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
+                    {eventModes.map((mode) => (
+                      <option key={mode.value} value={mode.value}>
+                        {mode.label}
                       </option>
                     ))}
                   </select>
