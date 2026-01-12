@@ -5,9 +5,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   provider = "mysql"
+//   url      = "mysql://root:strongpassword@72.61.231.9:3306/oriyet"
+// }
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:strongpassword@72.61.231.9:3306/oriyet"
+  url      = env("DATABASE_URL")
 }
 
 model User {

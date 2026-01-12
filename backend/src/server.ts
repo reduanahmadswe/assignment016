@@ -3,7 +3,7 @@ import { env } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { verifyEmailConfig } from './config/mail.config.js';
 import { initCronJobs } from './cron/index.js';
-// Nudged to restart
+// Nudged to restart - resolved port conflict
 
 const startServer = async () => {
   try {

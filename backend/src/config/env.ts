@@ -14,11 +14,11 @@ export const env = {
 
   // Database
   db: {
-    host: process.env.DB_HOST || 'svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com',
-    port: parseInt(process.env.DB_PORT || '3333'),
-    user: process.env.DB_USER || 'aws-c370e',
-    password: process.env.DB_PASSWORD || 'v8n8wN_zp3x~j9Hd~*Tw(3@xf',
-    name: process.env.DB_NAME || 'db_aws_b6702',
+    host: process.env.DB_HOST || '72.61.231.9',
+    port: parseInt(process.env.DB_PORT || '3306'),
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'strongpassword',
+    name: process.env.DB_NAME || 'oriyet',
   },
 
   // JWT
@@ -33,7 +33,7 @@ export const env = {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL || '',
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/auth/google/callback',
   },
 
   // Email
