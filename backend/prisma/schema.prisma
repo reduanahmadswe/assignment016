@@ -153,33 +153,33 @@ model EventRegistration {
 }
 
 model PaymentTransaction {
-  id                   Int       @id @default(autoincrement())
-  registrationId       Int       @map("registration_id")
-  userId               Int       @map("user_id")
-  transactionId        String?   @unique @map("transaction_id")
-  invoiceId            String?   @unique @map("invoice_id")
-  gatewayTransactionId String?   @map("gateway_transaction_id")
+  id                   Int                @id @default(autoincrement())
+  registrationId       Int?               @map("registration_id") // ⭐ NULLABLE - set after payment success
+  userId               Int                @map("user_id")
+  transactionId        String?            @unique @map("transaction_id")
+  invoiceId            String?            @unique @map("invoice_id")
+  gatewayTransactionId String?            @map("gateway_transaction_id")
   amount               Float
-  currency             String    @default("BDT")
-  paymentMethod        String?   @map("payment_method")
-  senderNumber         String?   @map("sender_number")
-  gateway              String    @default("uddoktapay")
-  gatewayResponse      String?   @map("gateway_response") @db.Text
-  status               String    @default("pending") // pending | completed | failed | cancelled | expired | refunded
-  paidAt               DateTime? @map("paid_at")
-  refundedAt           DateTime? @map("refunded_at")
-  refundReason         String?   @map("refund_reason")
-  refundedBy           Int?      @map("refunded_by")
-  expiresAt            DateTime? @map("expires_at")
-  verificationAttempts Int       @default(0) @map("verification_attempts")
-  lastVerifiedAt       DateTime? @map("last_verified_at")
-  ipAddress            String?   @map("ip_address")
-  userAgent            String?   @map("user_agent")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
+  currency             String             @default("BDT")
+  paymentMethod        String?            @map("payment_method")
+  senderNumber         String?            @map("sender_number")
+  gateway              String             @default("uddoktapay")
+  gatewayResponse      String?            @map("gateway_response") @db.Text
+  status               String             @default("pending") // pending | completed | failed | cancelled | expired | refunded
+  paidAt               DateTime?          @map("paid_at")
+  refundedAt           DateTime?          @map("refunded_at")
+  refundReason         String?            @map("refund_reason")
+  refundedBy           Int?               @map("refunded_by")
+  expiresAt            DateTime?          @map("expires_at")
+  verificationAttempts Int                @default(0) @map("verification_attempts")
+  lastVerifiedAt       DateTime?          @map("last_verified_at")
+  ipAddress            String?            @map("ip_address")
+  userAgent            String?            @map("user_agent")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
 
-  registration EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registration EventRegistration? @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
   @@index([invoiceId, status])

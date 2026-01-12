@@ -44,8 +44,8 @@ interface UddoktaPayVerifyResponse {
   metadata: {
     user_id: string;
     event_id: string;
-    registration_id: string;
     transaction_id: string;
+    registration_id?: string; // Optional - only set after verification in webhook
   };
   payment_method: string;
   sender_number: string;
@@ -240,8 +240,9 @@ export class PaymentService {
     }
 
     // -------------------------------------------------------------------------
-    // 1.4 CREATE REGISTRATION & PAYMENT TRANSACTION (ATOMIC)
+    // 1.4 CREATE ONLY PAYMENT TRANSACTION (NO REGISTRATION YET)
     // -------------------------------------------------------------------------
+    // Registration will be created ONLY after successful payment verification
     const transactionId = generateTransactionId();
     const amount = data.amount || eventPrice;
 
@@ -252,54 +253,20 @@ export class PaymentService {
 
     const expiresAt = new Date(Date.now() + this.PAYMENT_TIMEOUT_MINUTES * 60 * 1000);
 
-    const { registration, payment } = await prisma.$transaction(async (tx) => {
-      // Generate unique registration number
-      const regNumber = `REG-${Date.now().toString(36).toUpperCase()}-${Math.random()
-        .toString(36)
-        .substring(2, 6)
-        .toUpperCase()}`;
-
-      // Create or update registration
-      let reg;
-      if (existingRegistration) {
-        reg = await tx.eventRegistration.update({
-          where: { id: existingRegistration.id },
-          data: {
-            status: 'pending',
-            paymentStatus: 'pending',
-            paymentAmount: amount,
-          },
-        });
-      } else {
-        reg = await tx.eventRegistration.create({
-          data: {
-            eventId: data.event_id,
-            userId,
-            registrationNumber: regNumber,
-            status: 'pending',
-            paymentStatus: 'pending',
-            paymentAmount: amount,
-          },
-        });
-      }
-
-      // Create payment transaction
-      const pmt = await tx.paymentTransaction.create({
-        data: {
-          registrationId: reg.id,
-          userId,
-          transactionId,
-          amount,
-          currency: event.currency,
-          gateway: 'uddoktapay',
-          status: 'pending',
-          expiresAt,
-          ipAddress: data.ip_address,
-          userAgent: data.user_agent,
-        },
-      });
-
-      return { registration: reg, payment: pmt };
+    // ⭐ NEW APPROACH: Create only payment transaction, NOT registration
+    const payment = await prisma.paymentTransaction.create({
+      data: {
+        registrationId: null, // Will be set after successful verification
+        userId,
+        transactionId,
+        amount,
+        currency: event.currency,
+        gateway: 'uddoktapay',
+        status: 'pending',
+        expiresAt,
+        ipAddress: data.ip_address,
+        userAgent: data.user_agent,
+      },
     });
 
     // -------------------------------------------------------------------------
@@ -312,7 +279,6 @@ export class PaymentService {
       metadata: {
         user_id: userId.toString(),
         event_id: data.event_id.toString(),
-        registration_id: registration.id.toString(),
         transaction_id: transactionId,
       },
       redirect_url: `${env.frontendUrl}/payment/success`,
@@ -349,16 +315,15 @@ export class PaymentService {
         success: true,
         payment_url: response.data.payment_url,
         transaction_id: transactionId,
-        registration_id: registration.id,
         expires_at: expiresAt.toISOString(),
+        invoice_id: null, // Will be set after payment completion
       };
     } catch (error: any) {
       console.error('[PAYMENT] Gateway error:', error.response?.data || error.message);
 
-      // Mark payment as failed
-      await prisma.paymentTransaction.update({
+      // Delete failed payment transaction immediately
+      await prisma.paymentTransaction.delete({
         where: { id: payment.id },
-        data: { status: 'failed' },
       });
 
       throw new AppError(
@@ -423,24 +388,17 @@ export class PaymentService {
       };
     }
 
+    // ⭐ NEW: If payment failed/cancelled, delete transaction immediately
     if (verifyData.status === 'ERROR' || verifyData.status !== 'COMPLETED') {
-      // Clean up failed/cancelled registration immediately
-      if (verifyData.metadata?.registration_id) {
+      const { metadata } = verifyData;
+      
+      if (metadata?.transaction_id) {
         try {
-          const regId = parseInt(verifyData.metadata.registration_id);
-          const existingReg = await prisma.eventRegistration.findUnique({
-            where: { id: regId },
-            include: { paymentTransactions: true }
+          // Delete payment transaction from database (no record kept)
+          await prisma.paymentTransaction.deleteMany({
+            where: { transactionId: metadata.transaction_id }
           });
-
-          if (existingReg && existingReg.status === 'pending') {
-            // Delete related payment transactions first if cascade is not reliable, 
-            // but schema says cascade onDelete so deleting registration is enough.
-            await prisma.eventRegistration.delete({
-              where: { id: regId }
-            });
-            console.log('[VERIFY] Deleted failed registration:', regId);
-          }
+          console.log('[VERIFY] Deleted failed/cancelled transaction:', metadata.transaction_id);
         } catch (cleanupError) {
           console.error('[VERIFY] Cleanup failed:', cleanupError);
         }
@@ -449,7 +407,7 @@ export class PaymentService {
       return {
         success: false,
         status: 'FAILED',
-        message: 'Payment failed or was cancelled. Please try again.',
+        message: 'Payment failed or was cancelled. No record has been kept. You can try again.',
       };
     }
 
@@ -458,7 +416,7 @@ export class PaymentService {
     // -------------------------------------------------------------------------
     const { metadata } = verifyData;
 
-    if (!metadata || !metadata.transaction_id || !metadata.registration_id) {
+    if (!metadata || !metadata.transaction_id || !metadata.event_id) {
       console.error('[VERIFY] Invalid metadata:', metadata);
       throw new AppError('Invalid payment metadata', 400);
     }
@@ -470,53 +428,61 @@ export class PaymentService {
     }
 
     // -------------------------------------------------------------------------
-    // 2.4 UPDATE PAYMENT & REGISTRATION (ATOMIC & IDEMPOTENT)
+    // 2.4 CREATE REGISTRATION & UPDATE PAYMENT (ATOMIC & IDEMPOTENT)
     // -------------------------------------------------------------------------
     const result = await prisma.$transaction(async (tx) => {
-      // Find transaction
+      // Find transaction by transaction_id
       const transaction = await tx.paymentTransaction.findFirst({
         where: { transactionId: metadata.transaction_id },
-        include: {
-          registration: {
-            include: {
-              event: {
-                select: {
-                  id: true,
-                  title: true,
-                  slug: true,
-                  price: true,
-                  startDate: true,
-                  endDate: true,
-                  onlineLink: true,
-                  onlinePlatform: true,
-                  eventMode: true,
-                  maxParticipants: true,
-                  currentParticipants: true,
-                },
-              },
-              user: {
-                select: { id: true, name: true, email: true },
-              },
-            },
-          },
-        },
       });
 
       if (!transaction) {
         throw new AppError('Transaction not found', 404);
       }
 
-      // IDEMPOTENCY CHECK - Already processed
-      if (transaction.status === 'completed') {
-        console.log('[VERIFY] Payment already processed (idempotent):', transaction.transactionId);
-        return {
-          success: true,
-          status: 'COMPLETED',
-          message: 'Payment already verified',
-          registration_number: transaction.registration.registrationNumber,
-          event_title: transaction.registration.event.title,
-          already_processed: true,
-        };
+      // ⭐ RACE CONDITION PROTECTION: Check if this transaction was already used
+      if (transaction.status === 'completed' && transaction.registrationId) {
+        const existingReg = await tx.eventRegistration.findUnique({
+          where: { id: transaction.registrationId },
+          include: {
+            event: { select: { id: true, title: true, slug: true } }
+          }
+        });
+
+        if (existingReg) {
+          console.log('[VERIFY] Transaction already used (idempotent):', transaction.transactionId);
+          return {
+            success: true,
+            status: 'COMPLETED',
+            message: 'Payment already verified. This transaction was already used for enrollment.',
+            registration_number: existingReg.registrationNumber,
+            event_title: existingReg.event.title,
+            already_processed: true,
+          };
+        }
+      }
+
+      // Fetch event details
+      const eventId = parseInt(metadata.event_id);
+      const event = await tx.event.findUnique({
+        where: { id: eventId },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          price: true,
+          startDate: true,
+          endDate: true,
+          onlineLink: true,
+          onlinePlatform: true,
+          eventMode: true,
+          maxParticipants: true,
+          currentParticipants: true,
+        },
+      });
+
+      if (!event) {
+        throw new AppError('Event not found', 404);
       }
 
       // Validate amount matches
@@ -528,10 +494,22 @@ export class PaymentService {
         throw new AppError('Payment amount mismatch', 400);
       }
 
+      // ⭐ Check if user already registered (prevent duplicate enrollment)
+      const existingUserReg = await tx.eventRegistration.findFirst({
+        where: {
+          eventId: event.id,
+          userId: transaction.userId,
+          status: 'confirmed',
+        }
+      });
+
+      if (existingUserReg) {
+        throw new AppError('You are already registered for this event with another payment', 400);
+      }
+
       // Check event capacity (race condition protection)
-      const event = transaction.registration.event;
       if (event.maxParticipants && event.currentParticipants >= event.maxParticipants) {
-        // Payment succeeded but event is full - refund needed
+        // Payment succeeded but event is full - mark for refund
         await tx.paymentTransaction.update({
           where: { id: transaction.id },
           data: {
@@ -544,10 +522,29 @@ export class PaymentService {
         throw new AppError('Event is full. Your payment will be refunded within 7 business days.', 409);
       }
 
-      // Update payment transaction
+      // ⭐ CREATE EVENT REGISTRATION (FIRST TIME - ONLY ON SUCCESS)
+      const regNumber = `REG-${Date.now().toString(36).toUpperCase()}-${Math.random()
+        .toString(36)
+        .substring(2, 6)
+        .toUpperCase()}`;
+
+      const registration = await tx.eventRegistration.create({
+        data: {
+          eventId: event.id,
+          userId: transaction.userId,
+          registrationNumber: regNumber,
+          status: 'confirmed',
+          paymentStatus: 'completed',
+          paymentAmount: transaction.amount,
+          confirmedAt: new Date(),
+        },
+      });
+
+      // Update payment transaction with registration link and completion
       await tx.paymentTransaction.update({
         where: { id: transaction.id },
         data: {
+          registrationId: registration.id,
           status: 'completed',
           invoiceId: verifyData.invoice_id,
           paymentMethod: verifyData.payment_method,
@@ -560,43 +557,22 @@ export class PaymentService {
         },
       });
 
-      // Confirm registration
-      const registration = await tx.eventRegistration.update({
-        where: { id: transaction.registrationId },
-        data: {
-          status: 'confirmed',
-          paymentStatus: 'completed',
-          confirmedAt: new Date(),
-        },
-        include: {
-          event: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              startDate: true,
-              endDate: true,
-              onlineLink: true,
-              onlinePlatform: true,
-              eventMode: true,
-            },
-          },
-          user: {
-            select: { id: true, name: true, email: true },
-          },
-        },
-      });
-
       // Increment participant count
       await tx.event.update({
         where: { id: event.id },
         data: { currentParticipants: { increment: 1 } },
       });
 
-      console.log('[VERIFY] Payment verified successfully:', {
+      // Fetch user details for email
+      const user = await tx.user.findUnique({
+        where: { id: transaction.userId },
+        select: { id: true, name: true, email: true },
+      });
+
+      console.log('[VERIFY] Payment verified and registration created:', {
         transactionId: transaction.transactionId,
         registrationId: registration.id,
-        userId: registration.userId,
+        userId: transaction.userId,
       });
 
       return {
@@ -604,8 +580,12 @@ export class PaymentService {
         status: 'COMPLETED',
         message: 'Payment verified and enrollment confirmed successfully',
         registration_number: registration.registrationNumber,
-        event_title: registration.event.title,
-        registration,
+        event_title: event.title,
+        registration: {
+          ...registration,
+          event,
+          user,
+        },
         transaction,
       };
     });
@@ -630,7 +610,7 @@ export class PaymentService {
    * Processes webhook notifications from UddoktaPay
    * - Validates webhook authenticity
    * - Idempotent processing
-   * - Updates payment and registration status
+   * - Creates registration on success, deletes transaction on failure
    */
   async handleWebhook(payload: any, apiKey: string, ipAddress?: string) {
     const config = await this._getPaymentConfig();
@@ -652,27 +632,6 @@ export class PaymentService {
     return await prisma.$transaction(async (tx) => {
       const transaction = await tx.paymentTransaction.findFirst({
         where: { transactionId: metadata.transaction_id },
-        include: {
-          registration: {
-            include: {
-              event: {
-                select: {
-                  id: true,
-                  title: true,
-                  slug: true,
-                  startDate: true,
-                  endDate: true,
-                  onlineLink: true,
-                  onlinePlatform: true,
-                  eventMode: true,
-                },
-              },
-              user: {
-                select: { id: true, name: true, email: true },
-              },
-            },
-          },
-        },
       });
 
       if (!transaction) {
@@ -681,7 +640,7 @@ export class PaymentService {
       }
 
       // Idempotency - already processed
-      if (transaction.status === 'completed') {
+      if (transaction.status === 'completed' && transaction.registrationId) {
         console.log('[WEBHOOK] Already processed (idempotent):', transaction.transactionId);
         return { message: 'Already processed', processed: false };
       }
@@ -689,49 +648,119 @@ export class PaymentService {
       // Check for COMPLETED status strictly
       const paymentStatus = status === 'COMPLETED' ? 'completed' : 'failed';
 
-      // Update payment
+      // ⭐ If failed, delete transaction immediately
+      if (paymentStatus === 'failed') {
+        await tx.paymentTransaction.delete({
+          where: { id: transaction.id },
+        });
+        console.log('[WEBHOOK] Deleted failed transaction:', transaction.transactionId);
+        return { message: 'Payment failed - transaction deleted', processed: true, status: 'failed' };
+      }
+
+      // ⭐ If completed, create registration
+      const eventId = parseInt(metadata.event_id);
+      const event = await tx.event.findUnique({
+        where: { id: eventId },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          maxParticipants: true,
+          currentParticipants: true,
+        },
+      });
+
+      if (!event) {
+        console.error('[WEBHOOK] Event not found:', eventId);
+        return { message: 'Event not found', processed: false };
+      }
+
+      // Check capacity
+      if (event.maxParticipants && event.currentParticipants >= event.maxParticipants) {
+        await tx.paymentTransaction.update({
+          where: { id: transaction.id },
+          data: {
+            status: 'refunded',
+            refundReason: 'Event full after payment',
+            refundedAt: new Date(),
+          },
+        });
+        return { message: 'Event full - marked for refund', processed: true, status: 'refunded' };
+      }
+
+      // Create registration
+      const regNumber = `REG-${Date.now().toString(36).toUpperCase()}-${Math.random()
+        .toString(36)
+        .substring(2, 6)
+        .toUpperCase()}`;
+
+      const registration = await tx.eventRegistration.create({
+        data: {
+          eventId: event.id,
+          userId: transaction.userId,
+          registrationNumber: regNumber,
+          status: 'confirmed',
+          paymentStatus: 'completed',
+          paymentAmount: transaction.amount,
+          confirmedAt: new Date(),
+        },
+      });
+
+      // Update payment with registration
       await tx.paymentTransaction.update({
         where: { id: transaction.id },
         data: {
-          status: paymentStatus,
+          registrationId: registration.id,
+          status: 'completed',
           invoiceId: invoice_id,
           paymentMethod: payment_method,
           senderNumber: sender_number,
           gatewayTransactionId: transaction_id,
           gatewayResponse: JSON.stringify(payload),
-          paidAt: paymentStatus === 'completed' ? new Date() : null,
+          paidAt: new Date(),
         },
       });
 
-      // If completed, confirm registration and increment participants
-      if (paymentStatus === 'completed') {
-        await tx.eventRegistration.update({
-          where: { id: transaction.registrationId },
-          data: {
-            status: 'confirmed',
-            paymentStatus: 'completed',
-            confirmedAt: new Date(),
+      // Increment participants
+      await tx.event.update({
+        where: { id: event.id },
+        data: { currentParticipants: { increment: 1 } },
+      });
+
+      console.log('[WEBHOOK] Registration created via webhook:', {
+        transactionId: transaction.transactionId,
+        registrationId: registration.id,
+      });
+
+      // Send Email Notification (Async)
+      const user = await tx.user.findUnique({
+        where: { id: transaction.userId },
+        select: { id: true, name: true, email: true },
+      });
+
+      if (user) {
+        const fullEvent = await tx.event.findUnique({
+          where: { id: event.id },
+          select: {
+            title: true,
+            slug: true,
+            startDate: true,
+            endDate: true,
+            onlineLink: true,
+            onlinePlatform: true,
+            eventMode: true,
           },
         });
 
-        await tx.event.update({
-          where: { id: transaction.registration.event.id },
-          data: { currentParticipants: { increment: 1 } },
-        });
-
-        console.log('[WEBHOOK] Payment confirmed via webhook:', transaction.transactionId);
-
-        // Send Email Notification (Async)
-        // We use the fetched registration data. Note: The status in 'transaction.registration' object 
-        // is still 'pending' in memory, but that shouldn't affect the email content which mostly uses title/date/name.
-        this.sendPaymentSuccessEmails(transaction.registration, payload).catch((error) => {
+        this.sendPaymentSuccessEmails(
+          { ...registration, event: fullEvent, user },
+          payload
+        ).catch((error) => {
           console.error('[WEBHOOK] Failed to send success email:', error);
         });
-      } else {
-        console.log('[WEBHOOK] Payment failed via webhook:', transaction.transactionId);
       }
 
-      return { message: 'Webhook processed successfully', processed: true, status: paymentStatus };
+      return { message: 'Webhook processed successfully', processed: true, status: 'completed' };
     });
   }
 
@@ -739,11 +768,11 @@ export class PaymentService {
    * ========================================================================
    * STEP 4: CANCEL PAYMENT
    * ========================================================================
+   * Deletes pending payment transaction (no record kept)
    */
   async cancelPayment(transactionId: string, userId: number) {
     const transaction = await prisma.paymentTransaction.findFirst({
       where: { transactionId, userId },
-      include: { registration: true },
     });
 
     if (!transaction) {
@@ -754,24 +783,14 @@ export class PaymentService {
       throw new AppError(`Cannot cancel payment with status: ${transaction.status}`, 400);
     }
 
-    await prisma.$transaction(async (tx) => {
-      await tx.paymentTransaction.update({
-        where: { id: transaction.id },
-        data: { status: 'cancelled' },
-      });
-
-      await tx.eventRegistration.update({
-        where: { id: transaction.registrationId },
-        data: {
-          status: 'cancelled',
-          paymentStatus: 'failed',
-          cancelledAt: new Date(),
-          cancelReason: 'User cancelled payment',
-        },
-      });
+    // ⭐ Delete transaction immediately (no record kept)
+    await prisma.paymentTransaction.delete({
+      where: { id: transaction.id },
     });
 
-    return { message: 'Payment cancelled successfully' };
+    console.log('[CANCEL] Deleted pending transaction:', transactionId);
+
+    return { message: 'Payment cancelled successfully. No record has been kept.' };
   }
 
   /**
@@ -864,6 +883,12 @@ export class PaymentService {
    * STEP 6: EXPIRE PENDING PAYMENTS (CRON JOB)
    * ========================================================================
    */
+  /**
+   * ========================================================================
+   * EXPIRE PENDING PAYMENTS (CRON JOB)
+   * ========================================================================
+   * Deletes expired pending payments (no record kept)
+   */
   async expirePendingPayments() {
     const now = new Date();
 
@@ -872,31 +897,21 @@ export class PaymentService {
         status: 'pending',
         expiresAt: { lte: now },
       },
-      include: { registration: true },
     });
 
-    console.log(`[CLEANUP] Found ${expiredTransactions.length} expired payments`);
+    console.log(`[CLEANUP] Found ${expiredTransactions.length} expired payments to delete`);
 
-    for (const transaction of expiredTransactions) {
-      await prisma.$transaction(async (tx) => {
-        await tx.paymentTransaction.update({
-          where: { id: transaction.id },
-          data: { status: 'expired' },
-        });
+    // ⭐ Delete expired transactions (no record kept)
+    const deleteResult = await prisma.paymentTransaction.deleteMany({
+      where: {
+        status: 'pending',
+        expiresAt: { lte: now },
+      },
+    });
 
-        await tx.eventRegistration.update({
-          where: { id: transaction.registrationId },
-          data: {
-            status: 'cancelled',
-            paymentStatus: 'failed',
-            cancelledAt: now,
-            cancelReason: 'Payment timeout - not completed within 30 minutes',
-          },
-        });
-      });
-    }
+    console.log(`[CLEANUP] Deleted ${deleteResult.count} expired transactions`);
 
-    return { expired_count: expiredTransactions.length };
+    return { expired_count: deleteResult.count };
   }
 
   /**
