@@ -340,7 +340,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setValue('email', 'reduanahmadswe@gmail.com');
+                        setValue('email', 'admin@oriyet.com');
                         setValue('password', 'Admin@123');
                       }}
                       className="flex-1 px-4 py-2.5 bg-[#8b5cf6]/10 text-[#7c3aed] hover:bg-[#8b5cf6] hover:text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 border border-transparent hover:border-[#7c3aed]"
