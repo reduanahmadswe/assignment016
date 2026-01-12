@@ -71,6 +71,9 @@ export const env = {
 
   // Certificate
   certificateBaseUrl: process.env.CERTIFICATE_BASE_URL || 'http://localhost:3000/verify',
+
+  // Timezone
+  timezone: process.env.TIMEZONE || 'Asia/Dhaka',
 };
 
 export default env;

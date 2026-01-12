@@ -9,6 +9,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { env } from '../../config/env.js';
 import { OTPUtil } from '../../utils/otp.util.js';
 import { TwoFactorUtil } from '../../utils/twoFactor.util.js';
+import { getExpirationTimeUTC } from '../../utils/timezone.util.js';
 
 // Type for Prisma transaction client
 type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
@@ -71,7 +72,7 @@ export class AuthService {
 
       // Generate and send OTP
       const otp = generateOTP();
-      const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+      const expiresAt = getExpirationTimeUTC(2); // 2 minutes
 
       await prisma.otpCode.create({
         data: {
@@ -113,7 +114,7 @@ export class AuthService {
         code: otp,
         type: 'verification',
         isUsed: false,
-        expiresAt: { gt: new Date() },
+        expiresAt: { gte: new Date() },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -177,7 +178,7 @@ export class AuthService {
 
     // Generate new OTP
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = getExpirationTimeUTC(10);
 
     await prisma.otpCode.create({
       data: {
@@ -232,7 +233,7 @@ export class AuthService {
       if (!user.isVerified) {
         // Send new OTP
         const otp = generateOTP();
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        const expiresAt = getExpirationTimeUTC(10);
 
         await prisma.otpCode.create({
           data: {
@@ -559,7 +560,7 @@ export class AuthService {
     }
 
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = getExpirationTimeUTC(10);
 
     await prisma.otpCode.create({
       data: {
@@ -582,7 +583,7 @@ export class AuthService {
         code: otp,
         type: 'password_reset',
         isUsed: false,
-        expiresAt: { gt: new Date() },
+        expiresAt: { gte: new Date() },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -664,7 +665,7 @@ export class AuthService {
     }
 
     const otp = generateOTP();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = getExpirationTimeUTC(10); // 10 minutes
 
     await prisma.otpCode.create({
       data: {
@@ -749,7 +750,7 @@ export class AuthService {
         code: otp,
         type: 'password_change',
         isUsed: false,
-        expiresAt: { gt: new Date() },
+        expiresAt: { gte: new Date() },
       },
       orderBy: { createdAt: 'desc' },
     });

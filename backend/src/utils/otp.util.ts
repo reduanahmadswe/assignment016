@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import { sendEmail } from './email.util.js';
 import { TwoFactorUtil } from './twoFactor.util.js';
+import { getExpirationTimeUTC } from './timezone.util.js';
 
 export class OTPUtil {
   /**
@@ -10,8 +11,8 @@ export class OTPUtil {
     // Generate 6-digit OTP
     const code = TwoFactorUtil.generateEmailOTP();
     
-    // Set expiration to 10 minutes from now
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    // Set expiration to 10 minutes from now (UTC)
+    const expiresAt = getExpirationTimeUTC(10);
 
     // Store OTP in database
     await prisma.otpCode.create({
@@ -69,7 +70,7 @@ export class OTPUtil {
         type,
         isUsed: false,
         expiresAt: {
-          gt: new Date(),
+          gte: new Date(), // Allow equal time (already stored in DB with timezone)
         },
       },
       orderBy: {
