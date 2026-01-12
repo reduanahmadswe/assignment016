@@ -21,13 +21,12 @@ jobs:
             set -e
 
             PROJECT_DIR="/root/oriyet"
-
-            echo "🚀 Deploy started"
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] 🚀 Deploy started"
             echo "📂 Project dir: $PROJECT_DIR"
 
             cd "$PROJECT_DIR"
 
-            echo "📥 Pull latest code"
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] 📥 Pull latest code"
             git fetch origin
             git reset --hard origin/main
 
@@ -35,9 +34,10 @@ jobs:
             # =====================
             # Backend (DEV MODE)
             # =====================
-            echo "⚙️ Backend (dev mode)"
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⚙️ Backend (dev mode)"
             cd backend
             pnpm install
+            npx prisma migrate deploy
             pm2 restart oriyet-backend || pm2 start ecosystem.config.cjs --only oriyet-backend
 
 
@@ -52,4 +52,5 @@ jobs:
 
             pm2 save
             echo "✅ Deploy completed successfully"
+            echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✅ Deploy completed successfully"
           EOF
