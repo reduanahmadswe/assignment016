@@ -11,13 +11,21 @@ export const validate = (validations: ValidationChain[]) => {
       return;
     }
 
+    const formattedErrors = errors.array().map(err => ({
+      field: 'path' in err ? err.path : 'unknown',
+      message: err.msg,
+    }));
+
+    // Create a readable error message
+    const fieldMessages = formattedErrors.map(err => {
+      const fieldName = err.field.charAt(0).toUpperCase() + err.field.slice(1);
+      return `${fieldName}: ${err.message}`;
+    });
+
     res.status(400).json({
       success: false,
-      message: 'Validation failed',
-      errors: errors.array().map(err => ({
-        field: 'path' in err ? err.path : 'unknown',
-        message: err.msg,
-      })),
+      message: fieldMessages.join(' | '),
+      errors: formattedErrors,
     });
   };
 };

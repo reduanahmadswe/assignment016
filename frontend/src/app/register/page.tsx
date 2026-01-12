@@ -170,8 +170,15 @@ export default function RegisterPage() {
       setEmail(data.email);
       setStep('verify');
     } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Unable to create account. Please try again.';
-      setError(message);
+      // Handle validation errors from backend
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        const backendErrors = err.response.data.errors;
+        const errorMessages = backendErrors.map((e: any) => `${e.field}: ${e.message}`).join(', ');
+        setError(errorMessages);
+      } else {
+        const message = err.response?.data?.message || err.message || 'Unable to create account. Please try again.';
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -187,8 +194,22 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      await authAPI.verifyEmail({ email, otp });
-      router.push('/login?verified=true');
+      const result = await authAPI.verifyEmail({ email, otp });
+      
+      // Auto login with returned tokens
+      if (result.data.accessToken && result.data.refreshToken) {
+        await dispatch(loginUser({
+          user: result.data.user,
+          accessToken: result.data.accessToken,
+          refreshToken: result.data.refreshToken,
+        }));
+        
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        // Fallback to login page if tokens not returned
+        router.push('/login?verified=true');
+      }
     } catch (err: any) {
       const message = err.response?.data?.message || err.message || 'Unable to verify email. Please check your code and try again.';
       setError(message);
@@ -273,24 +294,33 @@ export default function RegisterPage() {
               </div>
 
               {/* Verify Button */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Phone Number (Optional)</label>
-                <Controller
-                  name="phone"
-                  control={control}
-                  render={({ field }) => (
-                    <PhoneInput
-                      defaultCountry="us"
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      className="w-full"
-                      inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
-                    />
-                  )}
-                />
-                {errors.phone && (
-                  <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone.message as string}</p>
+              <button
+                onClick={handleVerifyOTP}
+                disabled={verifying || otp.length !== 6}
+                className="w-full py-4 bg-gradient-to-r from-[#3b82f6] to-[#2563eb] text-white font-semibold rounded-xl hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {verifying ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Verifying...
+                  </span>
+                ) : (
+                  'Verify Email'
                 )}
+              </button>
+
+              {/* Resend OTP */}
+              <div className="text-center">
+                <button
+                  onClick={handleResendOTP}
+                  disabled={timeLeft > 0}
+                  className="text-sm text-[#3b82f6] hover:text-[#2563eb] font-medium disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                >
+                  {timeLeft > 0 ? `Resend code in ${timeLeft}s` : 'Resend verification code'}
+                </button>
               </div>
 
               {/* Back to Register */}

@@ -47,10 +47,11 @@ export class AuthService {
     const { email, password, name, phone } = data;
 
     try {
-      // Check if user exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
+      // Check if email already exists in users or pending registrations
+      const [existingUser, pendingReg] = await Promise.all([
+        prisma.user.findUnique({ where: { email } }),
+        prisma.pendingRegistration.findUnique({ where: { email } })
+      ]);
 
       if (existingUser) {
         throw new AppError('This email is already registered. Please login or use a different email.', 400);
@@ -59,35 +60,45 @@ export class AuthService {
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      // Create user
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          name,
-          phone,
-          authProvider: 'local',
-        },
-      });
+      // Delete old pending registration if exists
+      if (pendingReg) {
+        await prisma.pendingRegistration.delete({ where: { email } });
+      }
 
       // Generate and send OTP
       const otp = generateOTP();
       const expiresAt = getExpirationTimeUTC(2); // 2 minutes
 
-      await prisma.otpCode.create({
-        data: {
-          email,
-          code: otp,
-          type: 'verification',
-          expiresAt,
-        },
+      // Store registration data temporarily (expires in 30 minutes)
+      const regExpiresAt = getExpirationTimeUTC(30);
+      
+      await prisma.$transaction(async (tx) => {
+        // Create pending registration
+        await tx.pendingRegistration.create({
+          data: {
+            email,
+            password: hashedPassword,
+            name,
+            phone,
+            expiresAt: regExpiresAt,
+          },
+        });
+
+        // Create OTP
+        await tx.otpCode.create({
+          data: {
+            email,
+            code: otp,
+            type: 'verification',
+            expiresAt,
+          },
+        });
       });
 
       await sendOTPEmail(email, otp, 'verification');
 
       return {
-        message: 'Registration successful! Please check your email for verification code.',
-        userId: user.id,
+        message: 'Registration initiated! Please check your email for verification code.',
       };
     } catch (error: any) {
       // If it's already an AppError, re-throw it
@@ -123,7 +134,16 @@ export class AuthService {
       throw new AppError('Invalid or expired OTP', 400);
     }
 
-    // Use Prisma transaction
+    // Find pending registration
+    const pendingReg = await prisma.pendingRegistration.findUnique({
+      where: { email },
+    });
+
+    if (!pendingReg) {
+      throw new AppError('Registration data not found. Please register again.', 404);
+    }
+
+    // Create user account now
     const result = await prisma.$transaction(async (tx: TransactionClient) => {
       // Mark OTP as used
       await tx.otpCode.update({
@@ -131,11 +151,22 @@ export class AuthService {
         data: { isUsed: true },
       });
 
-      // Verify user
-      const user = await tx.user.update({
-        where: { email },
-        data: { isVerified: true },
+      // Create actual user account
+      const user = await tx.user.create({
+        data: {
+          email: pendingReg.email,
+          password: pendingReg.password,
+          name: pendingReg.name,
+          phone: pendingReg.phone,
+          authProvider: 'local',
+          isVerified: true,
+        },
         select: { id: true, email: true, name: true, role: true },
+      });
+
+      // Delete pending registration
+      await tx.pendingRegistration.delete({
+        where: { email },
       });
 
       return user;
@@ -151,14 +182,15 @@ export class AuthService {
     await this.storeRefreshToken(result.id, tokens.refreshToken);
 
     return {
-      message: 'Email verified successfully',
+      message: 'Email verified successfully! Your account has been created.',
       user: {
         id: result.id,
         email: result.email,
         name: result.name,
         role: result.role,
       },
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
   }
 

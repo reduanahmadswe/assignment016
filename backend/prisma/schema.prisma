@@ -62,6 +62,18 @@ model OtpCode {
   @@map("otp_codes")
 }
 
+model PendingRegistration {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("pending_registrations")
+}
+
 model Event {
   id                     Int       @id @default(autoincrement())
   title                  String

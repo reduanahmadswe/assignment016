@@ -25,8 +25,17 @@ export const otpCleanupCron = cron.schedule(
           }
         }
       });
+
+      // Also cleanup expired pending registrations
+      const pendingCleanup = await prisma.pendingRegistration.deleteMany({
+        where: {
+          expiresAt: {
+            lt: new Date()
+          }
+        }
+      });
       
-      console.log(`[CRON] OTP cleanup completed: ${result.count} expired OTPs removed`);
+      console.log(`[CRON] OTP cleanup completed: ${result.count} expired OTPs and ${pendingCleanup.count} expired pending registrations removed`);
     } catch (error) {
       console.error('[CRON] OTP cleanup error:', error);
     }
