@@ -119,7 +119,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     const handleLogout = async () => {
         await dispatch(logoutUser());
-        router.push('/login');
+        router.push('/');
     };
 
     const toggleSidebar = () => {

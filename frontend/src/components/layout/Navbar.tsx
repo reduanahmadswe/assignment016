@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logoutUser } from '@/store/slices/auth.slice';
 import { Menu, X, User, LogOut, Calendar, Award, ChevronDown, Settings, LayoutDashboard, BookOpen, Shield, ChevronRight } from 'lucide-react';
@@ -31,6 +31,7 @@ export default function Navbar() {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
@@ -45,6 +46,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     await dispatch(logoutUser());
     setUserMenuOpen(false);
+    router.push('/');
   };
 
   return (
