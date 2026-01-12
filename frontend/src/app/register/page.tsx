@@ -4,23 +4,39 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, Eye, EyeOff, Calendar, Clock } from 'lucide-react';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import { authAPI } from '@/lib/api';
-  const [phone, setPhone] = useState('');
 import { Alert } from '@/components/ui';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/auth.slice';
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email'),
-  phone: z.string().optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  name: z
+    .string()
+    .min(2, 'Please enter your full name')
+    .max(50, 'Name must be under 50 characters')
+    .regex(/^[a-zA-Z\s.'-]+$/, 'Name can include letters, spaces, apostrophes, and dashes'),
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Enter a valid email like name@example.com'),
+  phone: z
+    .string()
+    .optional()
+    .refine((val) => !val || /^\+\d{8,15}$/.test(val), {
+      message: 'Enter a valid phone number with country code (e.g., +1 5555555555)',
+    }),
+  password: z
+    .string()
+    .min(8, 'Use at least 8 characters')
+    .refine((p) => /[A-Za-z]/.test(p) && /\d/.test(p), {
+      message: 'Include both letters and numbers',
+    }),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
@@ -133,9 +149,11 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { phone: '' },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -255,25 +273,24 @@ export default function RegisterPage() {
               </div>
 
               {/* Verify Button */}
-              <button
-                onClick={handleVerifyOTP}
-                disabled={verifying || otp.length !== 6}
-                className="w-full bg-gradient-to-r from-[#ff7620] to-[#ff8c42] hover:from-[#e36315] hover:to-[#ff7620] text-white font-bold py-3.5 sm:py-4 rounded-xl transition-all shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed text-base"
-              >
-                {verifying ? 'Verifying...' : 'Verify Email'}
-              </button>
-
-              {/* Resend Link */}
-              <div className="text-center pt-2">
-                <p className="text-sm text-gray-600">
-                  Didn't receive the code?{' '}
-                  <button
-                    onClick={handleResendOTP}
-                    className="text-[#3b82f6] font-semibold hover:underline transition-colors block sm:inline mt-1 sm:mt-0"
-                  >
-                    Resend Code
-                  </button>
-                </p>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Phone Number (Optional)</label>
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      defaultCountry="us"
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      className="w-full"
+                      inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
+                    />
+                  )}
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone.message as string}</p>
+                )}
               </div>
 
               {/* Back to Register */}
@@ -349,23 +366,22 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Phone Number (Optional)</label>
-                <PhoneInput
-                  defaultCountry="bd"
-                  value={phone}
-                  onChange={(value) => {
-                    setPhone(value);
-                    // Update form value
-                    (document.querySelector('input[name="phone"]') as HTMLInputElement)?.setAttribute('value', value);
-                  }}
-                  className="w-full"
-                  inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
-                />
-                <input
-                  type="hidden"
+                <Controller
                   name="phone"
-                  value={phone}
-                  {...register('phone')}
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      defaultCountry="us"
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      className="w-full"
+                      inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
+                    />
+                  )}
                 />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone.message as string}</p>
+                )}
               </div>
 
               <div className="relative">
