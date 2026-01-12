@@ -366,23 +366,22 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Phone Number (Optional)</label>
-                <PhoneInput
-                  defaultCountry="bd"
-                  value={phone}
-                  onChange={(value) => {
-                    setPhone(value);
-                    // Update form value
-                    (document.querySelector('input[name="phone"]') as HTMLInputElement)?.setAttribute('value', value);
-                  }}
-                  className="w-full"
-                  inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
-                />
-                <input
-                  type="hidden"
+                <Controller
                   name="phone"
-                  value={phone}
-                  {...register('phone')}
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      defaultCountry="us"
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      className="w-full"
+                      inputClassName="w-full px-5 py-3.5 text-sm sm:text-base bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all"
+                    />
+                  )}
                 />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone.message as string}</p>
+                )}
               </div>
 
               <div className="relative">
