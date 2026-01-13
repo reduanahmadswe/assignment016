@@ -20,7 +20,7 @@ import {
 import { api, newsletterAPI } from '@/lib/api';
 import { Button, Input, Modal, Loading, Spinner, Badge, Pagination } from '@/components/ui';
 import { formatDate } from '@/lib/utils';
-import toast from 'react-hot-toast';
+import toast from '@/lib/toast';
 
 interface Newsletter {
   id: number;
@@ -105,7 +105,7 @@ export default function AdminNewsletterPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-newsletters'] });
       closeFormModal();
-      toast.success('Newsletter created successfully');
+      toast.success('✅ Newsletter created successfully');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to create newsletter');
@@ -118,7 +118,7 @@ export default function AdminNewsletterPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-newsletters'] });
       closeFormModal();
-      toast.success('Newsletter updated successfully');
+      toast.success('✅ Newsletter updated successfully');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update newsletter');
@@ -131,7 +131,7 @@ export default function AdminNewsletterPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-newsletters'] });
       setIsDeleteModalOpen(false);
       setSelectedNewsletter(null);
-      toast.success('Newsletter deleted successfully');
+      toast.success('✅ Newsletter deleted successfully');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete newsletter');
@@ -142,7 +142,7 @@ export default function AdminNewsletterPage() {
     mutationFn: (id: number) => newsletterAPI.togglePublish(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-newsletters'] });
-      toast.success('Newsletter status updated');
+      toast.success('✅ Newsletter status updated');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update status');
@@ -194,12 +194,12 @@ export default function AdminNewsletterPage() {
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      toast.error('Title is required');
+      toast.error('❌ Title is required');
       return;
     }
     
     if (!formData.pdf_link.trim()) {
-      toast.error('PDF link is required');
+      toast.error('❌ PDF link is required');
       return;
     }
 

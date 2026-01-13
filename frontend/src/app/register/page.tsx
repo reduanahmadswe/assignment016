@@ -13,7 +13,7 @@ import 'react-international-phone/style.css';
 import { authAPI } from '@/lib/api';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/auth.slice';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from '@/lib/toast';
 
 // ============================================
 // VALIDATION SCHEMA
@@ -81,57 +81,6 @@ const getErrorMessage = (err: any): string => {
 
   // Return backend message directly, or default message
   return message || 'Unable to create account. Please try again.';
-};
-
-// ============================================
-// TOAST NOTIFICATIONS
-// ============================================
-const showSuccessToast = (message: string) => {
-  toast.success(message, {
-    duration: 4000,
-    position: 'top-center',
-    style: {
-      background: '#D1FAE5', // Light green background
-      border: '2px solid #059669', // Green border
-      padding: '12px 20px', // Compact padding
-      fontSize: '14px',
-      fontWeight: '600',
-      color: '#065F46', // Dark green text
-      maxWidth: '450px', // Smaller max width
-      borderRadius: '10px',
-      boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
-      lineHeight: '1.5',
-    },
-    icon: '✅',
-    iconTheme: {
-      primary: '#059669',
-      secondary: '#D1FAE5',
-    },
-  });
-};
-
-const showErrorToast = (message: string) => {
-  toast.error(message, {
-    duration: 6000, // 6 seconds
-    position: 'top-center',
-    style: {
-      background: '#FEE2E2', // Light red background
-      border: '2px solid #DC2626', // Red border
-      padding: '12px 20px', // Compact padding
-      fontSize: '14px', // Normal text size
-      fontWeight: '600', // Semi-bold
-      color: '#7F1D1D', // Dark red text
-      maxWidth: '450px', // Smaller max width
-      borderRadius: '10px',
-      boxShadow: '0 4px 12px rgba(220, 38, 38, 0.25)', // Subtle shadow
-      lineHeight: '1.5',
-    },
-    icon: '⚠️',
-    iconTheme: {
-      primary: '#DC2626',
-      secondary: '#FEE2E2',
-    },
-  });
 };
 
 // ============================================
@@ -274,11 +223,11 @@ export default function RegisterPage() {
         refreshToken: result.data.refreshToken,
       }));
 
-      showSuccessToast('Login successful!');
+      toast.success('Login successful!');
       router.push('/dashboard');
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);
-      showErrorToast(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -297,11 +246,11 @@ export default function RegisterPage() {
 
       setEmail(data.email);
       setStep('verify');
-      showSuccessToast('OTP sent! Please check your email.');
+      toast.success('OTP sent! Please check your email.');
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);
       // Show toast notification only
-      showErrorToast(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -309,7 +258,7 @@ export default function RegisterPage() {
 
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) {
-      showErrorToast('Please enter a 6-digit OTP');
+      toast.error('❌ Please enter a 6-digit OTP');
       return;
     }
 
@@ -325,14 +274,14 @@ export default function RegisterPage() {
           refreshToken: result.data.refreshToken,
         }));
 
-        showSuccessToast('✅ Email verified successfully!');
+        toast.success('Email verified successfully!');
         router.push('/dashboard');
       } else {
         router.push('/login?verified=true');
       }
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);
-      showErrorToast(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setVerifying(false);
     }
@@ -343,12 +292,12 @@ export default function RegisterPage() {
       await authAPI.resendOTP(email);
       setOtp(''); // Clear old OTP
       setResendSuccess(true);
-      setTimeLeft(120); // Reset timer to 2 minutes
-      showSuccessToast('New OTP sent successfully!');
+      setTimeLeft(120); 
+      toast.success('New OTP sent successfully!');
       setTimeout(() => setResendSuccess(false), 3000);
     } catch (err: any) {
       const errorMessage = getErrorMessage(err);
-      showErrorToast(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -358,21 +307,6 @@ export default function RegisterPage() {
   if (step === 'verify') {
     return (
       <>
-        {/* Global Toaster - works for all steps */}
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          containerStyle={{
-            top: 20,
-            zIndex: 99999,
-          }}
-          toastOptions={{
-            style: {
-              margin: '0 auto',
-              zIndex: 99999,
-            },
-          }}
-        />
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md">
             <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-10 border border-gray-100">
@@ -481,21 +415,6 @@ export default function RegisterPage() {
   // ============================================
   return (
     <>
-      {/* Global Toaster - works for all steps */}
-      <Toaster
-        position="top-center"
-        reverseOrder={false}
-        containerStyle={{
-          top: 20,
-          zIndex: 99999,
-        }}
-        toastOptions={{
-          style: {
-            margin: '0 auto',
-            zIndex: 99999,
-          },
-        }}
-      />
       <div className="min-h-screen bg-[#f3f4f6] flex items-center justify-center p-4 sm:p-6 lg:p-8">
 
         <div className="w-full max-w-6xl bg-white rounded-3xl sm:rounded-[2.5rem] shadow-2xl overflow-hidden min-h-[auto] lg:min-h-[700px] flex flex-col lg:flex-row">

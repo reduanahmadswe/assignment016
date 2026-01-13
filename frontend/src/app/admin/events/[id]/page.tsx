@@ -21,7 +21,7 @@ import {
 import { adminAPI } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Card, CardHeader, CardTitle, CardContent, Loading, Badge, Button, Modal, Input } from '@/components/ui';
-import { toast } from 'react-hot-toast';
+import toast from '@/lib/toast';
 
 export default function AdminEventDetailsPage() {
     const router = useRouter();
@@ -57,7 +57,7 @@ export default function AdminEventDetailsPage() {
             await adminAPI.updateEvent(realEventId, { videoLink: link });
         },
         onSuccess: () => {
-            toast.success('Video link saved successfully');
+            toast.success('✅ Video link saved successfully');
             setIsVideoModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['admin-event-stats', eventId] });
         },

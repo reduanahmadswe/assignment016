@@ -43,24 +43,55 @@ export function Providers({ children }: { children: ReactNode }) {
           {children}
           <Toaster
             position="top-right"
+            reverseOrder={false}
+            gutter={8}
+            containerStyle={{
+              top: 20,
+            }}
             toastOptions={{
+              // Global defaults - individual toasts can override these
               duration: 4000,
               style: {
                 background: '#363636',
                 color: '#fff',
+                padding: '16px',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '500',
+                maxWidth: '500px',
               },
+              // Success-specific defaults
               success: {
-                duration: 3000,
+                duration: 4000,
+                style: {
+                  background: '#D1FAE5',
+                  color: '#065F46',
+                  border: '2px solid #059669',
+                },
                 iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
+                  primary: '#059669',
+                  secondary: '#D1FAE5',
                 },
               },
+              // Error-specific defaults
               error: {
-                duration: 4000,
+                duration: 6000,
+                style: {
+                  background: '#FEE2E2',
+                  color: '#7F1D1D',
+                  border: '2px solid #DC2626',
+                },
                 iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                  primary: '#DC2626',
+                  secondary: '#FEE2E2',
+                },
+              },
+              // Loading-specific defaults
+              loading: {
+                style: {
+                  background: '#F3F4F6',
+                  color: '#374151',
+                  border: '2px solid #9CA3AF',
                 },
               },
             }}

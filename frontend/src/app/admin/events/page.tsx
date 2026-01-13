@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
 import { formatDate, formatCurrency, getEventTypeLabel } from '@/lib/utils';
-import { toast } from 'react-hot-toast';
+import toast from '@/lib/toast';
 import {
   Card,
   Button,
@@ -59,7 +59,7 @@ export default function AdminEventsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       setDeleteId(null);
-      toast.success('Event deleted successfully');
+      toast.success('✅ Event deleted successfully');
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.message || 'Unable to delete event. Please try again.';
@@ -75,7 +75,7 @@ export default function AdminEventsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       setVideoModalOpen(false);
-      toast.success('Video link saved successfully');
+      toast.success('✅ Video link saved successfully');
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.message || 'Unable to save video link. Please try again.';

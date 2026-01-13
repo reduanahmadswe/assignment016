@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { User, Mail, Phone, Lock, Image as ImageIcon, Upload } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Loading, Spinner } from '@/components/ui';
-import { toast } from 'react-hot-toast';
+import toast from '@/lib/toast';
 
 export default function AdminProfilePage() {
   const queryClient = useQueryClient();
@@ -85,17 +85,17 @@ export default function AdminProfilePage() {
     // Validate password change if provided
     if (formData.newPassword) {
       if (!formData.currentPassword) {
-        toast.error('Current password is required to change password');
+        toast.error('❌ Current password is required to change password');
         return;
       }
 
       if (formData.newPassword !== formData.confirmPassword) {
-        toast.error('New passwords do not match');
+        toast.error('❌ New passwords do not match');
         return;
       }
 
       if (formData.newPassword.length < 6) {
-        toast.error('New password must be at least 6 characters long');
+        toast.error('❌ New password must be at least 6 characters long');
         return;
       }
     }
@@ -138,11 +138,11 @@ export default function AdminProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
+        toast.error('❌ File size must be less than 5MB');
         return;
       }
       if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+        toast.error('❌ Please select an image file');
         return;
       }
       setAvatarFile(file);

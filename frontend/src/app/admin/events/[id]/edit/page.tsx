@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { getImageUrl } from '@/lib/utils';
 import { adminAPI } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Loading, Spinner } from '@/components/ui';
-import { toast } from 'react-hot-toast';
+import toast from '@/lib/toast';
 
 interface Guest {
   name: string;
