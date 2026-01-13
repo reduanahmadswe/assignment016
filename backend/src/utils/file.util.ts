@@ -8,20 +8,8 @@ import { env } from '../config/env.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure upload directory exists
+// Define upload directory path (Lazy creation used in storage)
 const uploadDir = path.join(__dirname, '../../', env.upload.dir);
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Create subdirectories
-const subdirs = ['images', 'certificates', 'documents', 'avatars'];
-subdirs.forEach(dir => {
-  const dirPath = path.join(uploadDir, dir);
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-});
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -32,7 +20,14 @@ const storage = multer.diskStorage({
     } else if (file.mimetype.startsWith('image/')) {
       folder = 'images';
     }
-    cb(null, path.join(uploadDir, folder));
+
+    // Lazy creation: Create directory only when uploading
+    const targetDir = path.join(uploadDir, folder);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    cb(null, targetDir);
   },
   filename: (req, file, cb) => {
     const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
