@@ -93,6 +93,7 @@ export const ClassicCertificate: React.FC<CertificateProps> = ({ data, qrData })
                         <QRCodeSVG value={qrData} size={70} level="M" fgColor="#004085" />
                     </div>
                     <div className="text-[9px] mt-1 font-bold text-[#004085] tracking-widest uppercase">Scan to Verify</div>
+                    <div className="text-[10px] font-bold text-[#004085] mt-1">{data.certificateId}</div>
                 </div>
 
                 {/* Right Signature - Gulam Sarwar Chuwdhury */}

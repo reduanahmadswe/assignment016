@@ -70,7 +70,8 @@ export class CertificateService {
 
     // Generate certificate ID
     const certificateId = generateCertificateId();
-    const verificationUrl = `${env.certificateBaseUrl}/${certificateId}`;
+    // Use frontend URL with query param for new verification page structure
+    const verificationUrl = `${env.frontendUrl}/verify-certificate?id=${certificateId}`;
 
     // Save to database (no file stored, just metadata)
     await prisma.certificate.create({
@@ -134,7 +135,7 @@ export class CertificateService {
     });
 
     // Generate QR code
-    const verificationUrl = `${env.certificateBaseUrl}/${certificateId}`;
+    const verificationUrl = `${env.frontendUrl}/verify-certificate?id=${certificateId}`;
     const qrCodeData = await QRCode.toDataURL(verificationUrl, { color: { dark: '#581c87', light: '#ffffff' } });
 
     // Create PDF document
@@ -355,12 +356,14 @@ export class CertificateService {
   }
 
   async verifyCertificate(certificateId: string, ipAddress?: string, userAgent?: string) {
-    const certificate = await prisma.certificate.findFirst({
-      where: { certificateId },
+    // 1. Logging and trimming
+    console.log(`[VERIFY] Checking Certificate ID: '${certificateId}'`);
+    const cleanId = certificateId.trim();
+
+    let certificate = await prisma.certificate.findFirst({
+      where: { certificateId: cleanId },
       include: {
-        user: {
-          select: { name: true },
-        },
+        user: { select: { name: true } },
         event: {
           select: {
             title: true,
@@ -371,6 +374,85 @@ export class CertificateService {
         },
       },
     });
+
+    if (certificate) {
+      console.log(`[VERIFY] Exact match found for '${cleanId}'`);
+    }
+
+    // 2. Fuzzy Matching & Deep Search
+    if (!certificate) {
+      console.log(`[VERIFY] Exact match failed for '${cleanId}'. Starting Deep Search...`);
+
+      const variants = [
+        cleanId.replace(/-/g, ' '),            // All dashes to spaces
+        cleanId.replace(/ /g, '-'),            // All spaces to dashes
+        cleanId.replace(/[ -]/g, ''),          // Remove all separators
+        cleanId.replace(/^CERT[-]/i, 'CERT '), // Force 'CERT-' to 'CERT '
+        cleanId.replace(/^CERT /i, 'CERT-'),   // Force 'CERT ' to 'CERT-'
+      ];
+
+      const uniqueVariants = [...new Set(variants)].filter(v => v !== cleanId);
+
+      // Strategy B: Substring Search (The key part)
+      // Extract main parts "MKCYSV4Q"
+      const parts = cleanId.split(/[- ]/);
+      const uniquePart = parts.length > 1 ? parts[1] : null;
+      const fallbackPart = parts.length > 2 ? parts[2] : null;
+
+      console.log(`[VERIFY] Deep Search | Variants: ${uniqueVariants.length} | Unique Part: '${uniquePart}'`);
+
+      // Try fetching candidates that might match
+      let candidates = await prisma.certificate.findMany({
+        where: {
+          OR: [
+            { certificateId: { in: uniqueVariants } },
+            uniquePart ? { certificateId: { contains: uniquePart } } : {},
+            fallbackPart ? { certificateId: { contains: fallbackPart } } : {}
+          ]
+        },
+        include: {
+          user: { select: { name: true } },
+          event: { select: { title: true, eventType: true, startDate: true, endDate: true } },
+        },
+        take: 5
+      });
+
+      console.log(`[VERIFY] Deep Search | Candidates found: ${candidates.length}`);
+
+      // Filter candidates using aggressive normalization (remove ALL non-alphanumeric)
+      const normalizedInput = cleanId.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+      for (const cand of candidates) {
+        const normalizedCand = cand.certificateId.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+        console.log(`   > Comparing: Input(${normalizedInput}) vs Cand(${normalizedCand}) [Orig: ${cand.certificateId}]`);
+
+        if (normalizedInput === normalizedCand) {
+          certificate = cand;
+          console.log(`[VERIFY] MATCH FOUND via Normalization!`);
+
+          // Self-Healing
+          if (cand.certificateId !== cleanId) {
+            console.log(`[VERIFY] Self-Healing: Updating DB ID from '${cand.certificateId}' to '${cleanId}'`);
+            try {
+              await prisma.certificate.update({
+                where: { id: cand.id },
+                data: { certificateId: cleanId }
+              });
+              // Update local object
+              certificate.certificateId = cleanId;
+            } catch (e) {
+              console.error('[VERIFY] Self-Healing Failed:', e);
+            }
+          }
+          break; // Stop after first match
+        }
+      }
+
+      if (!certificate) {
+        console.warn(`[VERIFY] Deep Search failed. No matching certificate found for '${cleanId}'`);
+      }
+    }
 
     if (!certificate) {
       throw new AppError('Certificate not found', 404);
