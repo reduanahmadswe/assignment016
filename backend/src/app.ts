@@ -16,6 +16,7 @@ const __dirname = path.dirname(__filename);
 import { env } from './config/env.js';
 import routes from './routes.js';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware.js';
+import { licenseMiddleware } from './middlewares/license.middleware.js';
 
 const createApp = (): Application => {
   const app = express();
@@ -60,6 +61,10 @@ const createApp = (): Application => {
 
   // Static files
   app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+  // License Verification Middleware
+  // Blocks access if the system is expired
+  app.use(licenseMiddleware);
 
   // API Routes
   app.use('/api', routes);

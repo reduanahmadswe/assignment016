@@ -74,6 +74,12 @@ export const env = {
 
   // Timezone
   timezone: process.env.TIMEZONE || 'Asia/Dhaka',
+
+  // License / Access Control
+  license: {
+    startDate: process.env.PROJECT_START_DATE || '2025-01-01',
+    expiryDate: process.env.PROJECT_EXPIRY_DATE, // Optional override
+  },
 };
 
 export default env;
