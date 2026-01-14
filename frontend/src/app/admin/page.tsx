@@ -90,30 +90,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm mt-10">
-        <div >
-          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Dashboard Overview</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Welcome back, Admin! Here's your daily summary.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="hidden sm:flex items-center px-4 py-2.5 bg-gray-50 rounded-xl text-sm font-medium text-gray-600 border border-gray-200">
-            <Clock className="w-4 h-4 mr-2.5 text-gray-400" />
-            {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </div>
-          <Button
-            variant="primary"
-            className="rounded-xl shadow-lg shadow-primary-500/20 w-full sm:w-auto justify-center py-2.5 sm:py-2"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create New
-          </Button>
-        </div>
-      </div>
-
+     
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-10">
         {statsLoading
           ? Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="bg-white rounded-[1.5rem] p-6 border border-gray-100 shadow-sm h-40">

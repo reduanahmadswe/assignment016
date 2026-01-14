@@ -20,17 +20,32 @@ export class AdminService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
     const [totalUsers, newUsers30d, totalEvents, upcomingEvents, totalRegistrations,
-      registrations30d, totalRevenue, revenue30d, totalCertificates] = await Promise.all([
+      registrations30d, transactionRevenue, registrationRevenue, revenue30d, totalCertificates] = await Promise.all([
         prisma.user.count(),
         prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
         prisma.event.count(),
         prisma.event.count({ where: { eventStatus: 'upcoming' } }),
         prisma.eventRegistration.count(),
         prisma.eventRegistration.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
+        // Check PaymentTransaction
         prisma.paymentTransaction.aggregate({
-          where: { status: 'completed' },
+          where: {
+            status: { in: ['completed', 'COMPLETED'] },
+            createdAt: { gte: startOfMonth }
+          },
           _sum: { amount: true },
+        }),
+        // Check EventRegistration as fallback
+        prisma.eventRegistration.aggregate({
+          where: {
+            paymentStatus: { in: ['completed', 'COMPLETED', 'paid'] },
+            createdAt: { gte: startOfMonth }
+          },
+          _sum: { paymentAmount: true }
         }),
         prisma.paymentTransaction.aggregate({
           where: { status: 'completed', createdAt: { gte: thirtyDaysAgo } },
@@ -38,6 +53,11 @@ export class AdminService {
         }),
         prisma.certificate.count(),
       ]);
+
+    // Use transaction revenue if available, otherwise fallback to registration revenue
+    const currentMonthRevenue = (transactionRevenue._sum.amount || 0) > 0
+      ? (transactionRevenue._sum.amount || 0)
+      : (registrationRevenue._sum.paymentAmount || 0);
 
     // Get recent registrations
     const recentRegistrations = await prisma.eventRegistration.findMany({
@@ -66,7 +86,7 @@ export class AdminService {
       upcoming_events: upcomingEvents,
       total_registrations: totalRegistrations,
       registrations_30d: registrations30d,
-      total_revenue: totalRevenue._sum.amount || 0,
+      total_revenue: currentMonthRevenue,
       revenue_30d: revenue30d._sum.amount || 0,
       total_certificates: totalCertificates,
       recentRegistrations: recentRegistrations.map((r: any) => ({
@@ -678,28 +698,28 @@ export class AdminService {
     // Handle thumbnail URL with Google Drive support
     if (data.thumbnailUrl || data.thumbnail) {
       let imageUrl = data.thumbnailUrl || data.thumbnail;
-      
+
       // Convert Google Drive share links to direct image URLs
       if (imageUrl.includes('drive.google.com')) {
         let fileId = null;
-        
+
         // Format: https://drive.google.com/file/d/FILE_ID/view
         const viewMatch = imageUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (viewMatch) fileId = viewMatch[1];
-        
+
         // Format: https://drive.google.com/open?id=FILE_ID
         const openMatch = imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (openMatch) fileId = openMatch[1];
-        
+
         // Format: https://drive.google.com/uc?id=FILE_ID
         const ucMatch = imageUrl.match(/\/uc\?id=([a-zA-Z0-9_-]+)/);
         if (ucMatch) fileId = ucMatch[1];
-        
+
         if (fileId) {
           imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
         }
       }
-      
+
       eventData.thumbnail = imageUrl;
     }
 
@@ -778,36 +798,36 @@ export class AdminService {
     // Handle thumbnail - support both field names and Google Drive links
     if (data.thumbnail || data.thumbnailUrl) {
       let imageUrl = data.thumbnail || data.thumbnailUrl;
-      
+
       // Convert Google Drive share links to direct image URLs
       if (imageUrl.includes('drive.google.com')) {
         // Extract file ID from various Google Drive URL formats
         let fileId = null;
-        
+
         // Format: https://drive.google.com/file/d/FILE_ID/view
         const viewMatch = imageUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (viewMatch) {
           fileId = viewMatch[1];
         }
-        
+
         // Format: https://drive.google.com/open?id=FILE_ID
         const openMatch = imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
         if (openMatch) {
           fileId = openMatch[1];
         }
-        
+
         // Format: https://drive.google.com/uc?id=FILE_ID
         const ucMatch = imageUrl.match(/\/uc\?id=([a-zA-Z0-9_-]+)/);
         if (ucMatch) {
           fileId = ucMatch[1];
         }
-        
+
         if (fileId) {
           // Convert to direct image URL
           imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
         }
       }
-      
+
       eventData.thumbnail = imageUrl;
     }
     if (data.videoLink !== undefined) eventData.videoLink = data.videoLink;
@@ -1099,7 +1119,7 @@ export class AdminService {
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    
+
     if (eventId) {
       where.eventId = eventId;
     }
@@ -1171,7 +1191,7 @@ export class AdminService {
     search?: string;
   }) {
     const where: any = {};
-    
+
     if (params.eventId) {
       where.eventId = params.eventId;
     }
