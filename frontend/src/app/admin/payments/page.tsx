@@ -13,16 +13,16 @@ import {
   DollarSign,
   ArrowLeft,
   Calendar,
-  ChevronRight,
   TrendingUp,
-  Activity
+  Activity,
+  FileText,
+  Users,
+  X,
 } from 'lucide-react';
-import { api, adminAPI } from '@/lib/api';
-import { Button, Modal, Loading, Badge, Pagination, Card, CardContent, Input } from '@/components/ui';
+import { adminAPI } from '@/lib/api';
+import { Button, Modal, Loading, Badge, Pagination } from '@/components/ui';
 import { formatDate, formatCurrency } from '@/lib/utils';
-import Link from 'next/link';
 
-// ... (keep interface Payment and statusConfig as is)
 interface Payment {
   id: string;
   transactionId: string;
@@ -37,6 +37,7 @@ interface Payment {
     title: string;
     slug: string;
   };
+  registrationNumber?: string;
   amount: number;
   fee: number;
   netAmount: number;
@@ -57,46 +58,85 @@ const statusConfig = {
 
 export default function AdminPaymentsPage() {
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [eventId, setEventId] = useState<string | null>(null); // Null means "List Mode"
+  const [statusFilter, setStatusFilter] = useState('');
+  const [eventId, setEventId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const [eventSearch, setEventSearch] = useState('');
+  const [eventsPage, setEventsPage] = useState(1);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const eventsPerPage = 12;
 
-  // Events query (for selection list)
+
+  // Events query
   const { data: eventsData, isLoading: eventsLoading } = useQuery({
     queryKey: ['admin-events-list'],
-    queryFn: () => adminAPI.getEvents({ limit: 100 }).then(res => res.data),
+    queryFn: async () => {
+      const response = await adminAPI.getEvents({ limit: 100 });
+      return response.data.data; // Extract the data.data to get { events: [...], pagination: {...} }
+    },
   });
 
   // Stats query
   const { data: statsData } = useQuery({
     queryKey: ['admin-payment-stats', eventId],
-    queryFn: () => api.get('/admin/payments/stats', { params: { eventId } }).then(res => res.data),
+    queryFn: async () => {
+      const response = await adminAPI.getPaymentStats(eventId || undefined);
+      return response.data.data;
+    },
   });
 
   // Payments query
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin-payments', page, search, status, eventId],
-    queryFn: () =>
-      adminAPI.getPayments({ page, limit: 20, search, status, eventId })
-        .then(res => res.data),
+  const { data: paymentsData, isLoading: paymentsLoading } = useQuery({
+    queryKey: ['admin-payments', page, search, statusFilter, eventId],
+    queryFn: async () => {
+      const response = await adminAPI.getPayments({
+        page,
+        limit: 20,
+        search,
+        status: statusFilter,
+        eventId: eventId || undefined,
+      });
+      return response.data.data;
+    },
     enabled: !!eventId,
   });
 
+  // Filter events - show all events
+  const filteredEvents = eventsData?.events?.filter((event: any) => {
+    if (!eventSearch) return true;
+    const searchLower = eventSearch.toLowerCase();
+    return event.title?.toLowerCase().includes(searchLower);
+  }) || [];
+
+  // Count only upcoming events for Active Events stat
+  const upcomingEventsCount = eventsData?.events?.filter(
+    (event: any) => event.eventStatus === 'upcoming'
+  ).length || 0;
+
+  // Paginate filtered events
+  const totalEventsPages = Math.ceil(filteredEvents.length / eventsPerPage);
+  const paginatedEvents = filteredEvents.slice(
+    (eventsPage - 1) * eventsPerPage,
+    eventsPage * eventsPerPage
+  );
+
   const exportPayments = async () => {
     try {
-      const response = await api.get('/admin/payments/export', {
-        responseType: 'blob',
-        params: { search, status, eventId }
+      const response = await adminAPI.exportPayments({
+        eventId: eventId || undefined,
+        status: statusFilter,
+        search,
       });
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `payments-${eventId || 'all'}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `payments_${Date.now()}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Export failed:', error);
     }
@@ -104,295 +144,510 @@ export default function AdminPaymentsPage() {
 
   const selectedEvent = eventsData?.events?.find((e: any) => e.id === eventId);
 
-  // RENDER: EVENT SELECTION VIEW
+
+  // EVENT SELECTION VIEW
   if (!eventId) {
     if (eventsLoading) return (
-      <div className="flex justify-center items-center h-96">
-        <Loading text="Loading payments dashboard..." />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <Loading />
+          <p className="text-gray-500 font-medium mt-4 text-sm sm:text-base">Loading payments dashboard...</p>
+        </div>
       </div>
     );
 
     return (
-      <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Payments</h1>
-            <p className="text-sm sm:text-base text-gray-500 mt-1">Select an event to view its transactions and revenue.</p>
-          </div>
-          {/* Could add a 'All Transactions' global view button later */}
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="w-full max-w-[2000px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10">
+          
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+                Payments
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
+                Select an event to view its transactions and revenue
+              </p>
+            </div>
 
-        {/* Global Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-          {/* Total Revenue */}
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[1.5rem] p-5 sm:p-6 border border-blue-100 relative overflow-hidden group">
-            <div className="absolute top-4 right-4 p-2 bg-blue-200/50 text-blue-700 rounded-xl">
-              <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <p className="text-xs sm:text-sm font-bold text-blue-600 mb-1 uppercase tracking-wide">Total System Revenue</p>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{formatCurrency(statsData?.totalRevenue || 0)}</h3>
-            <div className="mt-4 flex items-center text-xs sm:text-sm text-blue-700 font-bold">
-              <TrendingUp className="w-4 h-4 mr-1.5" />
-              <span>Overall Income</span>
-            </div>
-          </div>
-
-          {/* Successful Transactions */}
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-[1.5rem] p-5 sm:p-6 border border-emerald-100 relative overflow-hidden group">
-            <div className="absolute top-4 right-4 p-2 bg-emerald-200/50 text-emerald-700 rounded-xl">
-              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <p className="text-xs sm:text-sm font-bold text-emerald-600 mb-1 uppercase tracking-wide">Successful Transactions</p>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{statsData?.successfulTransactions || 0}</h3>
-            <div className="mt-4 flex items-center text-xs sm:text-sm text-emerald-700 font-bold">
-              <Activity className="w-4 h-4 mr-1.5" />
-              <span>Completed Payments</span>
+            <div className="relative w-full lg:w-96 xl:w-[480px]">
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search events..."
+                value={eventSearch}
+                onChange={(e) => setEventSearch(e.target.value)}
+                className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-3.5 text-sm sm:text-base bg-white border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl transition-all outline-none placeholder:text-gray-400 font-medium min-h-[44px] shadow-sm"
+              />
             </div>
           </div>
 
-          {/* Active Events */}
-          <div className="bg-gradient-to-br from-violet-50 to-violet-100/50 rounded-[1.5rem] p-5 sm:p-6 border border-violet-100 relative overflow-hidden group">
-            <div className="absolute top-4 right-4 p-2 bg-violet-200/50 text-violet-700 rounded-xl">
-              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <p className="text-xs sm:text-sm font-bold text-violet-600 mb-1 uppercase tracking-wide">Active Events</p>
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900">{eventsData?.events?.length || 0}</h3>
-            <div className="mt-4 flex items-center text-xs sm:text-sm text-violet-700 font-bold">
-              <Activity className="w-4 h-4 mr-1.5" />
-              <span>With Transactions</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Events Grid */}
-        <div className="bg-white border border-gray-100 rounded-[1.5rem] shadow-sm overflow-hidden p-4 sm:p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Events Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {eventsData?.events?.map((event: any) => (
-              <div
-                key={event.id}
-                onClick={() => setEventId(event.id)}
-                className="group cursor-pointer bg-white rounded-2xl border border-gray-200 p-5 hover:border-primary-300 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <Badge variant={event.eventStatus === 'ongoing' ? 'success' : event.eventStatus === 'upcoming' ? 'primary' : 'secondary'} className="capitalize font-bold">
-                    {event.eventStatus}
-                  </Badge>
-                  <div className="p-1.5 rounded-full bg-gray-50 group-hover:bg-primary-50 text-gray-400 group-hover:text-primary-600 transition-colors">
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
+          {/* Overview Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            {/* Total Revenue */}
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-blue-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-blue-500 rounded-xl">
+                  <DollarSign className="w-6 h-6 text-white" />
                 </div>
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-xs sm:text-sm font-bold text-blue-600 uppercase tracking-wide mb-1">
+                Total System Revenue
+              </p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-blue-900">
+                {formatCurrency(statsData?.totalRevenue || 0)}
+              </p>
+              <p className="text-xs text-blue-600 mt-2 font-semibold flex items-center gap-1">
+                <Activity className="w-3 h-3" />
+                Overall Income
+              </p>
+            </div>
 
-                <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] group-hover:text-primary-700 transition-colors text-lg">
-                  {event.title}
-                </h3>
-
-                <div className="flex items-center text-sm font-medium text-gray-500 mb-auto">
-                  <Calendar className="w-3.5 h-3.5 mr-2" />
-                  {formatDate(event.startDate)}
-                </div>
-
-                <div className="pt-4 border-t border-gray-100 mt-4 flex justify-between items-center text-sm">
-                  <div className="flex flex-col">
-                    <span className="text-xs text-gray-500 font-bold uppercase tracking-wide">Ticket Price</span>
-                    <span className="font-extrabold text-gray-900">{formatCurrency(event.price)}</span>
-                  </div>
-                  <span className="text-xs font-bold text-primary-600 bg-primary-50 px-2.5 py-1.5 rounded-lg group-hover:bg-primary-100 transition-colors">View Transactions</span>
+            {/* Successful Transactions */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-green-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-green-500 rounded-xl">
+                  <CheckCircle className="w-6 h-6 text-white" />
                 </div>
               </div>
-            ))}
+              <p className="text-xs sm:text-sm font-bold text-green-600 uppercase tracking-wide mb-1">
+                Successful Transactions
+              </p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-green-900">
+                {statsData?.successfulTransactions || 0}
+              </p>
+              <p className="text-xs text-green-600 mt-2 font-semibold">
+                ✓ Completed Payments
+              </p>
+            </div>
+
+            {/* Active Events */}
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl sm:rounded-2xl p-5 sm:p-6 border-2 border-purple-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-purple-500 rounded-xl">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm font-bold text-purple-600 uppercase tracking-wide mb-1">
+                Active Events
+              </p>
+              <p className="text-2xl sm:text-3xl md:text-4xl font-black text-purple-900">
+                {upcomingEventsCount}
+              </p>
+              <p className="text-xs text-purple-600 mt-2 font-semibold">
+                ★ Upcoming Events
+              </p>
+            </div>
+          </div>
+
+          {/* Events Grid */}
+          <div className="space-y-4 sm:space-y-6">
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900">Events Overview</h2>
+            
+            {filteredEvents.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+                  {paginatedEvents.map((event: any) => (
+                    <div
+                      key={event.id}
+                      onClick={() => setEventId(event.id)}
+                      className="group bg-white rounded-xl sm:rounded-2xl border-2 border-gray-100 hover:border-primary-300 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col min-h-[260px] active:scale-95"
+                    >
+                      <div className="p-5 sm:p-6 flex-1">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="p-3 rounded-xl bg-gradient-to-br from-primary-50 to-indigo-50 text-primary-600">
+                            <Calendar className="w-5 h-5" />
+                          </div>
+                          <Badge 
+                            variant={
+                              event.eventStatus === 'upcoming' ? 'primary' :
+                              event.eventStatus === 'ongoing' ? 'success' : 'default'
+                            }
+                            className="capitalize font-bold text-xs px-2.5 py-1"
+                          >
+                            {event.eventStatus}
+                          </Badge>
+                        </div>
+
+                        <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors min-h-[44px] flex items-center">
+                          {event.title}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-gray-500 mb-4 flex items-center gap-1.5 font-semibold">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {formatDate(event.startDate)}
+                        </p>
+
+                        <div className="space-y-2 pt-3 border-t-2 border-gray-50">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 font-bold">Ticket Price</span>
+                            <span className="text-base font-black text-gray-900">
+                              {event.isFree ? 'Free' : formatCurrency(event.price)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 px-5 py-3 flex items-center justify-between border-t border-gray-100 min-h-[48px]">
+                        <span className="text-xs font-bold text-gray-500">Revenue</span>
+                        <span className="text-sm font-black text-green-600">View →</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalEventsPages > 1 && (
+                  <div className="flex justify-center pt-4 sm:pt-6">
+                    <Pagination
+                      currentPage={eventsPage}
+                      totalPages={totalEventsPages}
+                      onPageChange={(newPage) => {
+                        setEventsPage(newPage);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+                <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-black text-gray-900 mb-2">No events found</h3>
+                <p className="text-sm text-gray-500">Try adjusting your search</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // RENDER: PAYMENTS LIST VIEW (Existing Logic adapted)
-  return (
-    <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      {/* Header with Back Button */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
-        <div>
-          <button
-            onClick={() => setEventId(null)}
-            className="flex items-center text-sm text-gray-500 hover:text-primary-600 mb-2 transition-colors font-bold"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Events
-          </button>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">{selectedEvent?.title || 'Event Payments'}</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Managing transactions and financial details for this event</p>
-        </div>
-        <Button onClick={exportPayments} variant="outline" className="shadow-sm w-full md:w-auto justify-center rounded-xl" leftIcon={<Download className="w-4 h-4" />}>
-          Export Statement
-        </Button>
-      </div>
 
-      {/* Stats for Selected Event */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Revenue', value: statsData?.totalRevenue, icon: DollarSign, color: 'blue', isCurrency: true },
-          { label: 'Total Transactions', value: statsData?.totalTransactions, icon: CreditCard, color: 'indigo', isCurrency: false },
-          { label: 'Successful', value: statsData?.successfulTransactions, icon: CheckCircle, color: 'emerald', isCurrency: false },
-          { label: 'Pending', value: statsData?.pendingTransactions, icon: Clock, color: 'amber', isCurrency: false },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className={`p-3 rounded-xl bg-${stat.color}-50 text-${stat.color}-600`}>
-              <stat.icon className="w-6 h-6" />
-            </div>
+  // PAYMENTS LIST VIEW
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="w-full max-w-[2000px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10">
+        
+        {/* Header with Back Button */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Button
+              onClick={() => {
+                setEventId(null);
+                setPage(1);
+                setSearch('');
+                setStatusFilter('');
+              }}
+              variant="outline"
+              className="flex items-center gap-2 rounded-xl min-h-[44px] px-3 sm:px-4"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Back</span>
+            </Button>
+            
             <div>
-              <p className="text-sm font-bold text-gray-500">{stat.label}</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5">
-                {stat.isCurrency ? formatCurrency(stat.value || 0) : (stat.value || 0)}
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+                {selectedEvent?.title || 'Event Payments'}
+              </h1>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
+                Transactions and financial details
               </p>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Main Content Card */}
-      <div className="bg-white border border-gray-100 rounded-[1.5rem] shadow-sm overflow-hidden flex flex-col h-full">
-        {/* Filters */}
-        <div className="p-4 sm:p-5 border-b border-gray-100 bg-gray-50/50">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <div className="relative flex-1 max-w-md w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Search user, transaction ID, invoice..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-sm border-gray-200 rounded-xl focus:ring-primary-500 focus:border-primary-500 bg-white"
-              />
-            </div>
+          <Button 
+            onClick={exportPayments} 
+            variant="outline" 
+            className="flex items-center gap-2 rounded-xl min-h-[44px] font-bold"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export Statement</span>
+            <span className="sm:hidden">Export</span>
+          </Button>
+        </div>
 
-            <div className="w-full sm:w-48">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm font-medium border-gray-200 rounded-xl focus:ring-primary-500 focus:border-primary-500 bg-white cursor-pointer"
-              >
-                <option value="">All Statuses</option>
-                <option value="completed">Completed</option>
-                <option value="pending">Pending</option>
-                <option value="failed">Failed</option>
-                <option value="refunded">Refunded</option>
-              </select>
+        {/* Stats for Selected Event */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 sm:p-3 rounded-xl bg-blue-50 text-blue-600">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
             </div>
+            <p className="text-xs sm:text-sm font-bold text-gray-500 mb-1">Total Revenue</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-gray-900">
+              {formatCurrency(statsData?.totalRevenue || 0).replace('BDT', '৳')}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 sm:p-3 rounded-xl bg-indigo-50 text-indigo-600">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-gray-500 mb-1">Transactions</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-gray-900">
+              {statsData?.totalTransactions || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 sm:p-3 rounded-xl bg-green-50 text-green-600">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-gray-500 mb-1">Successful</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-gray-900">
+              {statsData?.successfulTransactions || 0}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl sm:rounded-2xl border-2 border-gray-100 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 sm:p-3 rounded-xl bg-amber-50 text-amber-600">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
+            </div>
+            <p className="text-xs sm:text-sm font-bold text-gray-500 mb-1">Pending</p>
+            <p className="text-lg sm:text-xl md:text-2xl font-black text-gray-900">
+              {statsData?.pendingTransactions || 0}
+            </p>
           </div>
         </div>
 
-        {/* Payments Table */}
-        {isLoading ? (
-          <div className="p-12 flex justify-center">
-            <Loading text="Loading transactions..." />
+        {/* Filters */}
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg shadow-gray-100/50 overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-5 md:p-6 space-y-4">
+            <div className="relative w-full">
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by user, transaction ID, invoice..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 text-sm sm:text-base bg-gray-50 border-2 border-transparent focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl sm:rounded-2xl transition-all outline-none font-medium min-h-[44px]"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div className="flex-1">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full text-sm sm:text-base font-semibold border-2 border-gray-100 rounded-xl sm:rounded-2xl py-3 px-4 bg-gray-50 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 transition-all outline-none cursor-pointer hover:border-gray-200 appearance-none min-h-[44px]"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.75rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em',
+                    paddingRight: '2.5rem'
+                  }}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="completed">✓ Completed</option>
+                  <option value="pending">⏳ Pending</option>
+                  <option value="failed">✕ Failed</option>
+                  <option value="refunded">↩ Refunded</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active Filters */}
+            {(statusFilter || search) && (
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+                <span className="text-xs sm:text-sm font-bold text-gray-500">Active Filters:</span>
+                {search && (
+                  <Badge variant="default" className="font-semibold text-xs sm:text-sm px-3 py-1 rounded-lg">
+                    Search: "{search}"
+                    <X className="w-3 h-3 ml-1.5 cursor-pointer" onClick={() => setSearch('')} />
+                  </Badge>
+                )}
+                {statusFilter && (
+                  <Badge variant="primary" className="font-semibold text-xs sm:text-sm px-3 py-1 rounded-lg capitalize">
+                    Status: {statusFilter}
+                    <X className="w-3 h-3 ml-1.5 cursor-pointer" onClick={() => setStatusFilter('')} />
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px]">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Transaction Info</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">User</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Amount Details</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {data?.payments?.map((payment: Payment) => {
+        </div>
+
+
+        {/* Payments Display */}
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg shadow-gray-100/50 overflow-hidden">
+          {paymentsLoading ? (
+            <div className="flex justify-center items-center py-20 sm:py-32">
+              <div className="text-center">
+                <Loading />
+                <p className="text-gray-500 font-medium mt-4 text-sm sm:text-base">Loading transactions...</p>
+              </div>
+            </div>
+          ) : paymentsData?.payments?.length > 0 ? (
+            <>
+              {/* Mobile Card View */}
+              <div className="block lg:hidden divide-y divide-gray-100">
+                {paymentsData.payments.map((payment: Payment) => {
                   const statusInfo = statusConfig[payment.status];
                   const StatusIcon = statusInfo.icon;
 
                   return (
-                    <tr key={payment.id} className="group hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-gray-900 font-mono">
-                            {payment.transactionId}
-                          </span>
-                          <span className="text-xs text-gray-500 mt-1 font-medium">
-                            INV: <span className="font-bold">{payment.invoiceId}</span>
-                          </span>
+                    <div key={payment.id} className="p-4 sm:p-5 hover:bg-gray-50 transition-colors">
+                      {/* User Info */}
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-base font-black shadow-lg shrink-0">
+                          {(payment.user.name?.charAt(0) || 'U').toUpperCase()}
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600">
-                            {(payment.user.name?.charAt(0) || 'U').toUpperCase()}
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-bold text-gray-900">
-                              {payment.user.name}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                              {payment.user.email}
-                            </span>
-                          </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-gray-900 text-base truncate">{payment.user.name}</h4>
+                          <p className="text-xs text-gray-500 truncate">{payment.user.email}</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-extrabold text-gray-900">
-                            {formatCurrency(payment.amount)}
-                          </span>
-                          {payment.fee > 0 && (
-                            <span className="text-xs text-gray-400 font-medium">
-                              Fee: {formatCurrency(payment.fee)}
-                            </span>
-                          )}
+                      </div>
+
+                      {/* Transaction Details */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <p className="text-xs text-gray-500 font-bold mb-1">Transaction ID</p>
+                          <p className="font-mono text-xs font-bold text-gray-900 truncate">{payment.transactionId}</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Badge variant={statusInfo.color} className="capitalize px-2.5 py-0.5 font-bold">
+                        <div className="bg-gray-50 rounded-xl p-3">
+                          <p className="text-xs text-gray-500 font-bold mb-1">Invoice</p>
+                          <p className="font-mono text-xs font-bold text-gray-900 truncate">{payment.invoiceId}</p>
+                        </div>
+                      </div>
+
+                      {/* Status & Amount */}
+                      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-100">
+                        <Badge variant={statusInfo.color} className="capitalize font-bold text-xs px-2.5 py-1 rounded-lg">
                           {statusInfo.label}
                         </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-500 whitespace-nowrap">
-                        {formatDate(payment.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedPayment(payment);
-                            setIsDetailModalOpen(true);
-                          }}
-                          className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500 font-bold">Amount</p>
+                          <p className="text-lg font-black text-green-600">{formatCurrency(payment.amount)}</p>
+                        </div>
+                      </div>
+
+                      {/* View Details */}
+                      <button
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setIsDetailModalOpen(true);
+                        }}
+                        className="w-full mt-3 flex items-center justify-center gap-2 text-sm font-bold text-primary-600 bg-primary-50 hover:bg-primary-100 py-2 rounded-lg transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Details
+                      </button>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-
-            {data?.payments?.length === 0 && (
-              <div className="text-center py-20">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CreditCard className="w-8 h-8 text-gray-300" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">No payments found</h3>
-                <p className="text-gray-500 font-medium">No transactions recorded for this event yet.</p>
               </div>
-            )}
-          </div>
-        )}
 
-        {/* Pagination */}
-        {data?.pagination && data.pagination.totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-50 bg-gray-50/30">
-            <Pagination
-              currentPage={page}
-              totalPages={data.pagination.totalPages}
-              onPageChange={setPage}
-            />
-          </div>
-        )}
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b-2 border-gray-100">
+                      <th className="px-4 xl:px-6 py-4 text-left text-xs xl:text-sm font-black text-gray-700 uppercase tracking-wider">Transaction Info</th>
+                      <th className="px-4 xl:px-6 py-4 text-left text-xs xl:text-sm font-black text-gray-700 uppercase tracking-wider">User</th>
+                      <th className="px-4 xl:px-6 py-4 text-left text-xs xl:text-sm font-black text-gray-700 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 xl:px-6 py-4 text-left text-xs xl:text-sm font-black text-gray-700 uppercase tracking-wider">Status</th>
+                      <th className="px-4 xl:px-6 py-4 text-left text-xs xl:text-sm font-black text-gray-700 uppercase tracking-wider">Date</th>
+                      <th className="px-4 xl:px-6 py-4 text-right text-xs xl:text-sm font-black text-gray-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {paymentsData.payments.map((payment: Payment) => {
+                      const statusInfo = statusConfig[payment.status];
+
+                      return (
+                        <tr key={payment.id} className="hover:bg-gray-50/70 transition-colors group">
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-gray-900 font-mono">
+                                {payment.transactionId}
+                              </span>
+                              <span className="text-xs text-gray-500 mt-1">
+                                INV: <span className="font-bold">{payment.invoiceId}</span>
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-black shadow-md group-hover:scale-110 transition-transform">
+                                {(payment.user.name?.charAt(0) || 'U').toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-gray-900 text-sm truncate max-w-[200px]">{payment.user.name}</p>
+                                <p className="text-xs text-gray-500 truncate max-w-[200px]">{payment.user.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-black text-gray-900">
+                                {formatCurrency(payment.amount)}
+                              </span>
+                              {payment.fee > 0 && (
+                                <span className="text-xs text-gray-400 font-medium">
+                                  Fee: {formatCurrency(payment.fee)}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4">
+                            <Badge variant={statusInfo.color} className="capitalize font-bold text-xs px-3 py-1 rounded-lg">
+                              {statusInfo.label}
+                            </Badge>
+                          </td>
+                          <td className="px-4 xl:px-6 py-4 whitespace-nowrap text-xs xl:text-sm font-semibold text-gray-600">
+                            {formatDate(payment.createdAt)}
+                          </td>
+                          <td className="px-4 xl:px-6 py-4 text-right">
+                            <button
+                              onClick={() => {
+                                setSelectedPayment(payment);
+                                setIsDetailModalOpen(true);
+                              }}
+                              className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-20 sm:py-32">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+              </div>
+              <h3 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 mb-2">No payments found</h3>
+              <p className="text-sm sm:text-base text-gray-500 font-semibold">No transactions recorded for this event</p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {paymentsData?.pagination && paymentsData.pagination.totalPages > 1 && (
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-t-2 border-gray-100 bg-gray-50/50">
+              <Pagination
+                currentPage={page}
+                totalPages={paymentsData.pagination.totalPages}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Detail Modal */}
@@ -404,50 +659,54 @@ export default function AdminPaymentsPage() {
       >
         {selectedPayment && (
           <div className="space-y-6">
-            {/* Payment Summary Ticket */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
-              <div className="bg-gray-50/50 p-6 border-b border-gray-100 text-center">
+            {/* Payment Summary */}
+            <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 border-b-2 border-gray-100 text-center">
                 <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Total Paid Amount</p>
-                <h2 className="text-4xl font-extrabold text-gray-900">{formatCurrency(selectedPayment.amount)}</h2>
+                <h2 className="text-4xl font-black text-gray-900">{formatCurrency(selectedPayment.amount)}</h2>
                 <div className="flex justify-center mt-3">
-                  <Badge variant={statusConfig[selectedPayment.status].color} className="text-sm px-3 py-1 font-bold">
+                  <Badge variant={statusConfig[selectedPayment.status].color} className="text-sm px-4 py-1.5 font-bold">
                     {selectedPayment.status}
                   </Badge>
                 </div>
               </div>
               <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Date</p>
-                  <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(selectedPayment.createdAt)}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1.5">Date</p>
+                  <p className="text-sm font-semibold text-gray-900">{formatDate(selectedPayment.createdAt)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Payment Method</p>
-                  <p className="text-sm font-medium text-gray-900 mt-1 capitalize">{selectedPayment.method || 'Online Payment'}</p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1.5">Payment Method</p>
+                  <p className="text-sm font-semibold text-gray-900 capitalize">{selectedPayment.method || 'Online Payment'}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Transaction ID</p>
-                  <p className="text-sm font-mono text-gray-900 mt-1 break-all bg-gray-50 p-1.5 rounded-lg border border-gray-100 inline-block font-medium">
+                <div className="sm:col-span-2">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1.5">Transaction ID</p>
+                  <p className="text-sm font-mono text-gray-900 bg-gray-50 p-2.5 rounded-lg border border-gray-200 font-semibold break-all">
                     {selectedPayment.transactionId}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Invoice No</p>
-                  <p className="text-sm font-mono text-gray-900 mt-1 break-all font-medium">
-                    {selectedPayment.invoiceId}
-                  </p>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1.5">Invoice No</p>
+                  <p className="text-sm font-mono text-gray-900 font-semibold">{selectedPayment.invoiceId}</p>
                 </div>
+                {selectedPayment.registrationNumber && (
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-bold mb-1.5">Registration</p>
+                    <p className="text-sm font-mono text-gray-900 font-semibold">{selectedPayment.registrationNumber}</p>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Customer & Event Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                  <Activity className="w-4 h-4 mr-2 text-gray-400" />
+              <div className="bg-white border-2 border-gray-200 rounded-xl p-5">
+                <h4 className="font-black text-gray-900 mb-4 flex items-center text-base">
+                  <Users className="w-5 h-5 mr-2 text-gray-400" />
                   Customer Information
                 </h4>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-lg font-black">
                     {(selectedPayment.user.name?.charAt(0) || 'U').toUpperCase()}
                   </div>
                   <div>
@@ -457,9 +716,9 @@ export default function AdminPaymentsPage() {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                  <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+              <div className="bg-white border-2 border-gray-200 rounded-xl p-5">
+                <h4 className="font-black text-gray-900 mb-4 flex items-center text-base">
+                  <Calendar className="w-5 h-5 mr-2 text-gray-400" />
                   Event Details
                 </h4>
                 <div>

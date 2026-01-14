@@ -488,7 +488,7 @@ export default function RegisterPage() {
                 {/* Phone Number */}
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">
-                    Phone Number (Optional)
+                    Phone Number
                   </label>
                   <Controller
                     name="phone"

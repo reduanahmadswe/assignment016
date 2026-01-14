@@ -40,34 +40,34 @@ interface Newsletter {
 // Function to get Google Drive thumbnail URL
 const getGoogleDriveThumbnailUrl = (url: string) => {
   if (!url) return '';
-  
+
   // Check if it's already a direct image URL (not Google Drive)
   if (!url.includes('drive.google.com') && !url.includes('docs.google.com')) {
     return url;
   }
-  
+
   let fileId = '';
-  
+
   const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (fileMatch) {
     fileId = fileMatch[1];
   }
-  
+
   const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
   if (openMatch) {
     fileId = openMatch[1];
   }
-  
+
   const ucMatch = url.match(/\/uc\?.*id=([a-zA-Z0-9_-]+)/);
   if (ucMatch) {
     fileId = ucMatch[1];
   }
-  
+
   if (fileId) {
     // Use thumbnail API - more reliable
     return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
   }
-  
+
   return url;
 };
 
@@ -192,12 +192,12 @@ export default function AdminNewsletterPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       toast.error('❌ Title is required');
       return;
     }
-    
+
     if (!formData.pdf_link.trim()) {
       toast.error('❌ PDF link is required');
       return;
@@ -212,8 +212,8 @@ export default function AdminNewsletterPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header & Actions */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Newspaper className="w-7 h-7 text-[#004aad]" />
@@ -221,32 +221,20 @@ export default function AdminNewsletterPage() {
           </h1>
           <p className="text-gray-500 mt-1">Manage and publish newsletters</p>
         </div>
-        <Button
-          onClick={() => openFormModal()}
-          className="bg-[#004aad] hover:bg-[#003882] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Newsletter
-        </Button>
-      </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search newsletters..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad]"
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative min-w-[300px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search newsletters..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad] bg-white"
+            />
           </div>
           <select
             value={isPublished}
@@ -260,6 +248,13 @@ export default function AdminNewsletterPage() {
             <option value="true">Published</option>
             <option value="false">Draft</option>
           </select>
+          <Button
+            onClick={() => openFormModal()}
+            className="bg-[#004aad] hover:bg-[#003882] text-white whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Newsletter
+          </Button>
         </div>
       </div>
 
@@ -431,19 +426,19 @@ export default function AdminNewsletterPage() {
         isOpen={isFormModalOpen}
         onClose={closeFormModal}
         title={selectedNewsletter ? 'Edit Newsletter' : 'Create Newsletter'}
-        size="lg"
+        size="3xl"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad]"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 font-medium min-h-[44px] transition-all"
               placeholder="Enter newsletter title"
               required
             />
@@ -451,21 +446,21 @@ export default function AdminNewsletterPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad] resize-none"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 resize-none font-medium transition-all"
               placeholder="Enter a brief description (optional)"
             />
           </div>
 
           {/* Thumbnail Link */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               <ImageIcon className="w-4 h-4 inline mr-1" />
               Thumbnail (Google Drive Link)
             </label>
@@ -473,7 +468,7 @@ export default function AdminNewsletterPage() {
               type="url"
               value={formData.thumbnail}
               onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad]"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 font-medium min-h-[44px] transition-all"
               placeholder="https://drive.google.com/file/d/..."
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -483,7 +478,7 @@ export default function AdminNewsletterPage() {
 
           {/* PDF Link */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               <LinkIcon className="w-4 h-4 inline mr-1" />
               PDF Link (Google Drive) <span className="text-red-500">*</span>
             </label>
@@ -491,7 +486,7 @@ export default function AdminNewsletterPage() {
               type="url"
               value={formData.pdf_link}
               onChange={(e) => setFormData({ ...formData, pdf_link: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad]"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 font-medium min-h-[44px] transition-all"
               placeholder="https://drive.google.com/file/d/..."
               required
             />
@@ -502,32 +497,32 @@ export default function AdminNewsletterPage() {
 
           {/* Date Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-bold text-gray-700 mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
-              নিউজলেটার সময়কাল (Date Range)
+              Newsletter Period (Date Range)
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">শুরুর তারিখ</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Start Date</label>
                 <input
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad]"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 font-medium min-h-[44px] transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">শেষের তারিখ</label>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">End Date</label>
                 <input
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004aad]/20 focus:border-[#004aad]"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 font-medium min-h-[44px] transition-all"
                 />
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              এই নিউজলেটার কোন তারিখ থেকে কোন তারিখ পর্যন্ত সময়ের জন্য (যেমন: ১ জানুয়ারি - ১৫ জানুয়ারি)
+              The time period this newsletter covers (e.g., January 1 - January 15)
             </p>
           </div>
 
@@ -540,25 +535,26 @@ export default function AdminNewsletterPage() {
                 onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#004aad]/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#004aad]"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-bold text-gray-700">
               {formData.is_published ? 'Published' : 'Save as Draft'}
             </span>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t-2 border-gray-100">
             <Button
               type="button"
               variant="outline"
               onClick={closeFormModal}
+              className="min-h-[44px] font-bold"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-[#004aad] hover:bg-[#003882] text-white"
+              className="bg-primary-600 hover:bg-primary-700 text-white min-h-[44px] font-bold"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               {(createMutation.isPending || updateMutation.isPending) ? (
@@ -615,6 +611,6 @@ export default function AdminNewsletterPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </div >
   );
 }

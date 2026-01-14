@@ -231,6 +231,44 @@ export class AdminController {
       data: updatedProfile,
     });
   });
+
+  // Payment Management
+  getPaymentStats = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { eventId } = req.query;
+    const stats = await adminService.getPaymentStats(eventId ? parseInt(eventId as string) : undefined);
+    res.json({
+      success: true,
+      data: stats,
+    });
+  });
+
+  getPayments = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { page, limit, search, status, eventId } = req.query;
+    const result = await adminService.getPayments({
+      page: page ? parseInt(page as string) : 1,
+      limit: limit ? parseInt(limit as string) : 20,
+      search: search as string,
+      status: status as string,
+      eventId: eventId ? parseInt(eventId as string) : undefined,
+    });
+    res.json({
+      success: true,
+      data: result,
+    });
+  });
+
+  exportPayments = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { eventId, status, search } = req.query;
+    const result = await adminService.exportPayments({
+      eventId: eventId ? parseInt(eventId as string) : undefined,
+      status: status as string,
+      search: search as string,
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=payments_${Date.now()}.csv`);
+    res.send(result);
+  });
 }
 
 export const adminController = new AdminController();

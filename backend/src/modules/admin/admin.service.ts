@@ -1065,6 +1065,177 @@ export class AdminService {
 
     return updatedUser;
   }
+
+  // Payment Management
+  async getPaymentStats(eventId?: number) {
+    const where = eventId ? { eventId } : {};
+
+    const [totalRevenue, totalTransactions, successfulTransactions, pendingTransactions] = await Promise.all([
+      prisma.paymentTransaction.aggregate({
+        where: { ...where, status: 'completed' },
+        _sum: { amount: true },
+      }),
+      prisma.paymentTransaction.count({ where }),
+      prisma.paymentTransaction.count({ where: { ...where, status: 'completed' } }),
+      prisma.paymentTransaction.count({ where: { ...where, status: 'pending' } }),
+    ]);
+
+    return {
+      totalRevenue: totalRevenue._sum.amount || 0,
+      totalTransactions,
+      successfulTransactions,
+      pendingTransactions,
+    };
+  }
+
+  async getPayments(params: {
+    page: number;
+    limit: number;
+    search?: string;
+    status?: string;
+    eventId?: number;
+  }) {
+    const { page, limit, search, status, eventId } = params;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    
+    if (eventId) {
+      where.eventId = eventId;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { transactionId: { contains: search, mode: 'insensitive' } },
+        { invoiceId: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const [payments, total] = await Promise.all([
+      prisma.paymentTransaction.findMany({
+        where,
+        include: {
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+          event: {
+            select: { id: true, title: true, slug: true },
+          },
+          registration: {
+            select: { registrationNumber: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.paymentTransaction.count({ where }),
+    ]);
+
+    return {
+      payments: payments.map((p: any) => ({
+        id: p.id,
+        transactionId: p.transactionId,
+        invoiceId: p.invoiceId,
+        user: p.user,
+        event: p.event,
+        registrationNumber: p.registration?.registrationNumber,
+        amount: p.amount,
+        fee: p.fee || 0,
+        netAmount: p.netAmount || p.amount,
+        currency: p.currency || 'BDT',
+        method: p.method,
+        status: p.status,
+        paymentData: p.paymentData,
+        createdAt: p.createdAt,
+        completedAt: p.completedAt,
+      })),
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    };
+  }
+
+  async exportPayments(params: {
+    eventId?: number;
+    status?: string;
+    search?: string;
+  }) {
+    const where: any = {};
+    
+    if (params.eventId) {
+      where.eventId = params.eventId;
+    }
+
+    if (params.status) {
+      where.status = params.status;
+    }
+
+    if (params.search) {
+      where.OR = [
+        { transactionId: { contains: params.search, mode: 'insensitive' } },
+        { user: { name: { contains: params.search, mode: 'insensitive' } } },
+        { user: { email: { contains: params.search, mode: 'insensitive' } } },
+      ];
+    }
+
+    const payments = await prisma.paymentTransaction.findMany({
+      where,
+      include: {
+        user: {
+          select: { name: true, email: true },
+        },
+        event: {
+          select: { title: true },
+        },
+        registration: {
+          select: { registrationNumber: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Create CSV
+    const csvStringifier = createObjectCsvStringifier({
+      header: [
+        { id: 'transactionId', title: 'Transaction ID' },
+        { id: 'invoiceId', title: 'Invoice ID' },
+        { id: 'userName', title: 'User Name' },
+        { id: 'userEmail', title: 'User Email' },
+        { id: 'eventTitle', title: 'Event' },
+        { id: 'registrationNumber', title: 'Registration Number' },
+        { id: 'amount', title: 'Amount (BDT)' },
+        { id: 'status', title: 'Status' },
+        { id: 'method', title: 'Payment Method' },
+        { id: 'createdAt', title: 'Date' },
+      ],
+    });
+
+    const records = payments.map((p: any) => ({
+      transactionId: p.transactionId,
+      invoiceId: p.invoiceId,
+      userName: p.user.name,
+      userEmail: p.user.email,
+      eventTitle: p.event.title,
+      registrationNumber: p.registration?.registrationNumber || 'N/A',
+      amount: p.amount,
+      status: p.status,
+      method: p.method || 'Online',
+      createdAt: new Date(p.createdAt).toLocaleString(),
+    }));
+
+    const csv = csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(records);
+    return csv;
+  }
 }
 
 export const adminService = new AdminService();

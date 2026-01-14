@@ -249,7 +249,12 @@ export const adminAPI = {
   updateHost: (id: number, data: any) => api.put(`/hosts/${id}`, data),
   deleteHost: (id: number) => api.delete(`/hosts/${id}`),
   // Payments management
-  getPayments: (params?: any) => api.get('/payments/admin/all', { params }),
+  getPaymentStats: (eventId?: number) => api.get('/admin/payments/stats', { params: { eventId } }),
+  getPayments: (params?: any) => api.get('/admin/payments', { params }),
+  exportPayments: (params?: any) => api.get('/admin/payments/export', { 
+    params,
+    responseType: 'blob'
+  }),
   // Certificates management
   getCertificates: (params?: any) => api.get('/admin/certificates', { params }),
   issueCertificate: (data: any) => api.post('/admin/certificates/issue', data),

@@ -7,7 +7,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { Loading } from '@/components/ui/Loading';
 
-import { ChevronLeft, ChevronRight, Briefcase, ServerCrash, RefreshCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, ServerCrash, RefreshCcw, MapPin, Clock, Calendar } from 'lucide-react';
 
 interface Opportunity {
     id: number;
@@ -102,58 +102,94 @@ export default function OpportunitiesPage() {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {opportunities.map((opp) => (
-                                <Card key={opp.id} padding="none" className="hover:shadow-lg transition-shadow bg-white flex flex-col justify-between overflow-hidden border border-gray-100 rounded-xl">
-                                    {opp.banner && (
-                                        <div className="relative h-48 w-full bg-gray-50">
-                                            <img
-                                                src={getImageUrl(opp.banner)}
-                                                alt={opp.title}
-                                                className="w-full h-full object-contain p-2"
-                                                referrerPolicy="no-referrer"
-                                            />
-                                            <div className="absolute top-4 left-4">
-                                                <Badge variant={opp.type === 'INTERNSHIP' ? 'primary' : 'secondary'} className="shadow-sm">
+                                <Link key={opp.id} href={`/opportunities/${opp.slug}`} className="group h-full">
+                                    <div className="relative overflow-hidden h-full flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 hover:-translate-y-1">
+
+                                        {/* Image Section - Top - Compact Aspect Ratio */}
+                                        <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-50">
+                                            {opp.banner ? (
+                                                <img
+                                                    src={getImageUrl(opp.banner)}
+                                                    alt={opp.title}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                    referrerPolicy="no-referrer"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-300">
+                                                    <Briefcase size={32} />
+                                                </div>
+                                            )}
+
+                                            {/* Gradient Overlay on Hover */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                                            {/* Logo/Brand - Top Left on Image */}
+                                            <div className="absolute top-2 left-2 z-10">
+                                                <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm group-hover:shadow-md transition-shadow duration-300">
+                                                    <div className="w-4 h-4 rounded-full bg-[#004aad] flex items-center justify-center group-hover:bg-[#0056cc] transition-colors duration-300">
+                                                        <Briefcase className="w-2.5 h-2.5 text-white" />
+                                                    </div>
+                                                    <span className="text-[9px] font-bold text-[#004aad] tracking-wide">ORIYET</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Type Badge - Top Right on Image */}
+                                            <div className="absolute top-2 right-2 z-10">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider backdrop-blur-md shadow-sm group-hover:shadow-md transition-all duration-300 ${opp.type === 'INTERNSHIP'
+                                                    ? 'bg-[#004aad]/90 text-white group-hover:bg-[#004aad]'
+                                                    : 'bg-[#ff7620]/90 text-white group-hover:bg-[#ff7620]'
+                                                    }`}>
                                                     {opp.type}
-                                                </Badge>
+                                                </span>
                                             </div>
                                         </div>
-                                    )}
-                                    <div className="p-6 flex flex-col flex-grow">
-                                        {!opp.banner && (
-                                            <div className="mb-4">
-                                                <Badge variant={opp.type === 'INTERNSHIP' ? 'primary' : 'secondary'}>
-                                                    {opp.type}
-                                                </Badge>
-                                            </div>
-                                        )}
 
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h2 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">{opp.title}</h2>
-                                        </div>
+                                        {/* Content Section - Bottom */}
+                                        <div className="flex-1 flex flex-col p-4">
+                                            {/* Title */}
+                                            <h3 className="text-base font-bold leading-tight mb-1.5 text-gray-900 line-clamp-2">
+                                                {opp.title}
+                                            </h3>
 
-                                        {opp.deadline && (
-                                            <p className="text-xs text-gray-500 mb-4 font-medium flex items-center">
-                                                <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                                                Deadline: {new Date(opp.deadline).toLocaleDateString()}
+                                            {/* Description */}
+                                            <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-3 flex-1">
+                                                {opp.description}
                                             </p>
-                                        )}
 
-                                        <p className="text-gray-600 mb-6 line-clamp-3 text-sm leading-relaxed">{opp.description}</p>
+                                            {/* Footer: Metadata */}
+                                            <div className="space-y-1.5 pt-1 border-t border-gray-50/50">
+                                                {opp.location && (
+                                                    <div className="flex items-center text-[11px] font-medium text-gray-600">
+                                                        <MapPin className="w-3 h-3 mr-1.5 text-[#004aad] flex-shrink-0" />
+                                                        <span className="truncate">{opp.location}</span>
+                                                    </div>
+                                                )}
 
-                                        <div className="flex flex-col gap-2 mb-6 text-sm text-gray-500 mt-auto border-t border-gray-50 pt-4">
-                                            {opp.location && <p className="flex items-center gap-2"><span className="w-4">📍</span> {opp.location}</p>}
-                                            {opp.duration && <p className="flex items-center gap-2"><span className="w-4">⏱️</span> {opp.duration}</p>}
+                                                {opp.duration && (
+                                                    <div className="flex items-center text-[11px] font-medium text-gray-600">
+                                                        <Clock className="w-3 h-3 mr-1.5 text-[#ff7620] flex-shrink-0" />
+                                                        <span className="truncate">{opp.duration}</span>
+                                                    </div>
+                                                )}
+
+                                                {opp.deadline && (
+                                                    <div className="flex items-center justify-between mt-2 pt-1">
+                                                        <div className="flex items-center text-[10px] font-semibold text-gray-500">
+                                                            <Calendar className="w-3 h-3 mr-1 text-gray-400" />
+                                                            {new Date(opp.deadline).toLocaleDateString()}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-[#004aad] font-bold text-[10px]">
+                                                            <span className="uppercase tracking-wide">Apply Now</span>
+                                                            <ChevronRight className="w-3 h-3" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-
-                                        <Link href={`/opportunities/${opp.slug}`} className="w-full mt-2">
-                                            <Button className="w-full justify-center bg-[#004aad] hover:bg-[#003882] text-white font-medium py-2.5 rounded-lg transition-all" variant="primary">
-                                                View Details & Apply
-                                            </Button>
-                                        </Link>
                                     </div>
-                                </Card>
+                                </Link>
                             ))}
                         </div>
 

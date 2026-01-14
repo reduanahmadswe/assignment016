@@ -230,22 +230,9 @@ export default function AdminBlogPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Blog Posts</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Create, edit, and manage your blog articles.</p>
-        </div>
-        <Link href="/admin/blog/new" className="w-full md:w-auto">
-          <Button className="rounded-xl shadow-md shadow-primary-500/20 w-full md:w-auto justify-center">
-            <Plus className="w-4 h-4 mr-2" />
-            New Post
-          </Button>
-        </Link>
-      </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mt-10">
         {/* Total Posts */}
         <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-[1.5rem] p-5 sm:p-6 border border-blue-100 relative overflow-hidden group">
           <div className="absolute top-4 right-4 p-2 bg-blue-200/50 text-blue-700 rounded-xl">
@@ -302,16 +289,24 @@ export default function AdminBlogPage() {
               />
             </div>
 
-            <div className="w-full sm:w-48">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm font-medium border-gray-200 rounded-xl focus:ring-primary-500 focus:border-primary-500 bg-white cursor-pointer"
-              >
-                <option value="">All Statuses</option>
-                <option value="published">Published</option>
-                <option value="draft">Draft</option>
-              </select>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <div className="w-full sm:w-48">
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm font-medium border-gray-200 rounded-xl focus:ring-primary-500 focus:border-primary-500 bg-white cursor-pointer"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+              <Link href="/admin/blog/new" className="w-full sm:w-auto">
+                <Button className="rounded-xl shadow-md shadow-primary-500/20 w-full sm:w-auto justify-center whitespace-nowrap">
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Post
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

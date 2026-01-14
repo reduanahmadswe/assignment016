@@ -133,7 +133,7 @@ export class EventService {
   }
 
   async getEventById(eventId: number) {
-    const event = await prisma.event.findUnique({
+    let event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
         _count: {
@@ -150,6 +150,28 @@ export class EventService {
 
     if (!event) {
       throw new AppError('Event not found', 404);
+    }
+
+    // Lazy update: Check if event has ended but status not updated
+    if (new Date(event.endDate) < new Date() && ['upcoming', 'ongoing'].includes(event.eventStatus)) {
+      event = await prisma.event.update({
+        where: { id: eventId },
+        data: {
+          eventStatus: 'completed',
+          registrationStatus: 'closed'
+        },
+        include: {
+          _count: {
+            select: {
+              registrations: {
+                where: {
+                  status: { not: 'cancelled' },
+                },
+              },
+            },
+          },
+        },
+      });
     }
 
     // Parse guests JSON
@@ -170,7 +192,7 @@ export class EventService {
   }
 
   async getEventBySlug(slug: string) {
-    const event = await prisma.event.findFirst({
+    let event = await prisma.event.findFirst({
       where: {
         slug,
         isPublished: true,
@@ -190,6 +212,28 @@ export class EventService {
 
     if (!event) {
       throw new AppError('Event not found', 404);
+    }
+
+    // Lazy update: Check if event has ended but status not updated
+    if (new Date(event.endDate) < new Date() && ['upcoming', 'ongoing'].includes(event.eventStatus)) {
+      event = await prisma.event.update({
+        where: { id: event.id },
+        data: {
+          eventStatus: 'completed',
+          registrationStatus: 'closed'
+        },
+        include: {
+          _count: {
+            select: {
+              registrations: {
+                where: {
+                  status: { not: 'cancelled' },
+                },
+              },
+            },
+          },
+        },
+      });
     }
 
     // Parse guests JSON

@@ -123,6 +123,8 @@ export default function EditEventPage() {
     }
   }, [eventData]);
 
+
+
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       if (!realEventId) throw new Error("Event ID not loaded");

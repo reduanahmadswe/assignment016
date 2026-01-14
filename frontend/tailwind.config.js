@@ -64,6 +64,9 @@ module.exports = {
         'slide-down': 'slideDown 0.5s ease-out',
         'bounce-slow': 'bounce 3s infinite',
         'scale-in': 'scaleIn 0.2s ease-out',
+        'spin-slow': 'spin 2s linear infinite',
+        'spin-reverse': 'spin-reverse 3s linear infinite',
+        'gradient': 'gradient 3s ease infinite',
       },
       keyframes: {
         fadeIn: {
@@ -81,6 +84,13 @@ module.exports = {
         scaleIn: {
           '0%': { transform: 'scale(0.95)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'spin-reverse': {
+          to: { transform: 'rotate(-360deg)' },
+        },
+        gradient: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
         },
       },
     },

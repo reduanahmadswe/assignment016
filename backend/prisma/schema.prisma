@@ -226,7 +226,7 @@ model BlogPost {
   title           String
   slug            String    @unique
   excerpt         String?
-  content         String?
+  content         String?   @db.LongText
   thumbnail       String?
   authorId        Int?      @map("author_id")
   status          String    @default("draft")
@@ -261,7 +261,7 @@ model Opportunity {
   id              Int      @id @default(autoincrement())
   title           String
   slug            String   @unique
-  description     String?
+  description     String?  @db.Text
   type            String   // INTERNSHIP, FELLOWSHIP, PROGRAM, etc.
   location        String?
   duration        String?

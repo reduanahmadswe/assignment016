@@ -24,14 +24,25 @@ const TOPICS = [
 const EVENT_TYPES = ['Workshop', 'Seminar', 'Bootcamp', 'Webinar', 'Conference', 'Hackathon'];
 
 const IMAGES = [
-    'https://images.unsplash.com/photo-1593720213428-28a5b9e94613',
-    'https://images.unsplash.com/photo-1485827404703-89b55fcc595e',
-    'https://images.unsplash.com/photo-1551288049-bebda4e38f71',
-    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b',
-    'https://images.unsplash.com/photo-1519389950473-47ba0277781c',
-    'https://images.unsplash.com/photo-1544531586-fde5298cdd40', // Chemistry/Lab
-    'https://images.unsplash.com/photo-1635070041078-e363dbe005cb', // Physics
-    'https://images.unsplash.com/photo-1523240795612-9a054b0db644', // Higher Study
+    'https://drive.google.com/file/d/1u6QLUa_mS1HG82-BGtmaOdtq_2ch89Ts/view?usp=sharing',
+    'https://drive.google.com/file/d/116DWut2HR_RHuff53td93OU5o-rkSKks7/view?usp=sharing',
+    'https://drive.google.com/file/d/1lCE3PaeaTl6qqpdusyuQDxxu9OT8-W8K/view?usp=sharing',
+    'https://drive.google.com/file/d/1AAUb40cd5JC_VBfVY1_LaeJgVQ04DS6T/view?usp=sharing',
+    'https://drive.google.com/file/d/1_HoaiK4aFjbaafvyRWVSKce1dZtgsVZc/view?usp=sharing',
+    'https://drive.google.com/file/d/1MALlWZo7rq0IE2dikYsVsm1je0v-0mLV/view?usp=sharing',
+    'https://drive.google.com/file/d/1M9e-jXdUePFVk_zTdjPKSE-y8XUa8Dqq/view?usp=sharing',
+    'https://drive.google.com/file/d/1PlJyuj_MMbKR96X5DAvnNrupCUms9D-g/view?usp=sharing',
+    'https://drive.google.com/file/d/1BSyz7AxPkITIw5DL-fECOub80HBViqp4/view?usp=sharing',
+    'https://drive.google.com/file/d/1h6KX5Jt-tjUlHpGF6OjQ5_8O_G9AVoTt/view?usp=sharing',
+    'https://drive.google.com/file/d/1kVGRvF-aAbiFyYVW8zdO6uchfNGoh33W/view?usp=sharing',
+    'https://drive.google.com/file/d/1XMKW8bVmD_4WOJLOEjqNwSUui-3iOVhT/view?usp=sharing',
+    'https://drive.google.com/file/d/1z4hpzpCQRGeh2z8K7uV0LDk_3lepY9Iw/view?usp=sharing',
+    'https://drive.google.com/file/d/17NmndZg_RblF95gNvmvkxK8VxBHHedob/view?usp=sharing',
+    'https://drive.google.com/file/d/1AjxvbA358NhiT2N1Vn81SDQI4nc88JoO/view?usp=sharing',
+    'https://drive.google.com/file/d/1nERwBTnbWpPNmJD-GGOo_u_yFMDjHgPs/view?usp=sharing',
+    'https://drive.google.com/file/d/1LlRoyrtc3XvIfCgNhvqewZqzDZ9ZyYB3/view?usp=sharing',
+    'https://drive.google.com/file/d/1TE0AjlLGezIs8jzk-mfqIJRo4cMCV46v/view?usp=sharing',
+    'https://drive.google.com/file/d/1Xf5GPlrUfiXziPb95pgmYtKVafmCDRbA/view?usp=sharing'
 ];
 
 const GUESTS = [

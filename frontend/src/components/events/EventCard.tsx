@@ -177,7 +177,7 @@ export default function EventCard({ event, variant = 'default', className }: Eve
             alt={event.title}
             fill
             unoptimized={thumbnailSrc.startsWith('data:')}
-            className="object-contain group-hover:scale-105 transition-transform duration-700 ease-out p-1"
+            className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
             referrerPolicy="no-referrer"
           />
 

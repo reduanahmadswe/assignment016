@@ -42,6 +42,11 @@ router.put('/pages/:slug', adminController.updatePage);
 // Export
 router.get('/export/registrations', adminController.exportRegistrations);
 
+// Payments
+router.get('/payments/stats', adminController.getPaymentStats);
+router.get('/payments', adminController.getPayments);
+router.get('/payments/export', adminController.exportPayments);
+
 // Admin Profile
 router.get('/profile', adminController.getAdminProfile);
 router.put('/profile', uploadImage.single('avatar'), adminController.updateAdminProfile);

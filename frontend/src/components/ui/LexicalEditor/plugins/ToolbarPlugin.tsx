@@ -39,6 +39,7 @@ import { $getNearestNodeOfType, mergeRegister } from '@lexical/utils';
 import {
   INSERT_TABLE_COMMAND,
 } from '@lexical/table';
+import Modal from '@/components/ui/Modal';
 import {
   Bold,
   Italic,
@@ -446,6 +447,19 @@ export default function ToolbarPlugin() {
   const [bgColor, setBgColor] = useState('#ffffff');
   const [showInsertDropdown, setShowInsertDropdown] = useState(false);
   const [showAlignDropdown, setShowAlignDropdown] = useState(false);
+  
+  // Modal states
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [showYouTubeModal, setShowYouTubeModal] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [tableRows, setTableRows] = useState('3');
+  const [tableColumns, setTableColumns] = useState('3');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  
   const insertDropdownRef = useRef<HTMLDivElement>(null);
   const alignDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -590,43 +604,63 @@ export default function ToolbarPlugin() {
 
   const insertLink = useCallback(() => {
     if (!isLink) {
-      const url = prompt('Enter link URL:');
-      if (url) {
-        editor.dispatchCommand(TOGGLE_LINK_COMMAND, url);
-      }
+      setShowLinkModal(true);
     } else {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
     }
   }, [editor, isLink]);
 
-  const insertImage = useCallback(() => {
-    const url = prompt('Enter image URL:');
-    if (url) {
-      const altText = prompt('Enter alt text (optional):') || '';
-      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: url, altText });
+  const handleInsertLink = () => {
+    if (linkUrl) {
+      editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl);
     }
+    setShowLinkModal(false);
+    setLinkUrl('');
+  };
+
+  const insertImage = useCallback(() => {
+    setShowImageModal(true);
     setShowInsertDropdown(false);
-  }, [editor]);
+  }, []);
+
+  const handleInsertImage = () => {
+    if (imageUrl) {
+      editor.dispatchCommand(INSERT_IMAGE_COMMAND, { src: imageUrl, altText: imageAlt });
+    }
+    setShowImageModal(false);
+    setImageUrl('');
+    setImageAlt('');
+  };
 
   const insertYouTubeVideo = useCallback(() => {
-    const url = prompt('Enter YouTube URL:');
-    if (url) {
-      editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, url);
-    }
+    setShowYouTubeModal(true);
     setShowInsertDropdown(false);
-  }, [editor]);
+  }, []);
+
+  const handleInsertYouTube = () => {
+    if (youtubeUrl) {
+      editor.dispatchCommand(INSERT_YOUTUBE_COMMAND, youtubeUrl);
+    }
+    setShowYouTubeModal(false);
+    setYoutubeUrl('');
+  };
 
   const insertTable = useCallback(() => {
-    const rows = prompt('Number of rows:', '3');
-    const columns = prompt('Number of columns:', '3');
-    if (rows && columns) {
+    setShowTableModal(true);
+    setShowInsertDropdown(false);
+  }, []);
+
+  const handleInsertTable = () => {
+    if (tableRows && tableColumns) {
       editor.dispatchCommand(INSERT_TABLE_COMMAND, {
-        rows: rows,
-        columns: columns,
+        rows: tableRows,
+        columns: tableColumns,
       });
     }
-    setShowInsertDropdown(false);
-  }, [editor]);
+    setShowTableModal(false);
+    setTableRows('3');
+    setTableColumns('3');
+  };
 
   const insertHorizontalRule = useCallback(() => {
     editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
@@ -655,7 +689,8 @@ export default function ToolbarPlugin() {
   }, [editor]);
 
   return (
-    <div className="toolbar">
+    <>
+      <div className="toolbar">
       {/* Undo/Redo */}
       <button
         type="button"
@@ -950,5 +985,223 @@ export default function ToolbarPlugin() {
         )}
       </div>
     </div>
+
+    {/* Modern Modals */}
+    {/* Image Insert Modal */}
+    <Modal
+        isOpen={showImageModal}
+        onClose={() => {
+          setShowImageModal(false);
+          setImageUrl('');
+          setImageAlt('');
+        }}
+        title="Insert Image"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              Image URL <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[44px] transition-all outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              Alt Text (Optional)
+            </label>
+            <input
+              type="text"
+              value={imageAlt}
+              onChange={(e) => setImageAlt(e.target.value)}
+              placeholder="Describe the image"
+              className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[44px] transition-all outline-none"
+            />
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t-2 border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                setShowImageModal(false);
+                setImageUrl('');
+                setImageAlt('');
+              }}
+              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleInsertImage}
+              disabled={!imageUrl}
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+            >
+              Insert Image
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Link Insert Modal */}
+      <Modal
+        isOpen={showLinkModal}
+        onClose={() => {
+          setShowLinkModal(false);
+          setLinkUrl('');
+        }}
+        title="Insert Link"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              Link URL <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="url"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[44px] transition-all outline-none"
+            />
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t-2 border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                setShowLinkModal(false);
+                setLinkUrl('');
+              }}
+              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleInsertLink}
+              disabled={!linkUrl}
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+            >
+              Insert Link
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* YouTube Insert Modal */}
+      <Modal
+        isOpen={showYouTubeModal}
+        onClose={() => {
+          setShowYouTubeModal(false);
+          setYoutubeUrl('');
+        }}
+        title="Insert YouTube Video"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              YouTube URL <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="url"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[44px] transition-all outline-none"
+            />
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t-2 border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                setShowYouTubeModal(false);
+                setYoutubeUrl('');
+              }}
+              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleInsertYouTube}
+              disabled={!youtubeUrl}
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+            >
+              Insert Video
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Table Insert Modal */}
+      <Modal
+        isOpen={showTableModal}
+        onClose={() => {
+          setShowTableModal(false);
+          setTableRows('3');
+          setTableColumns('3');
+        }}
+        title="Insert Table"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Rows <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="20"
+                value={tableRows}
+                onChange={(e) => setTableRows(e.target.value)}
+                className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[44px] transition-all outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Columns <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={tableColumns}
+                onChange={(e) => setTableColumns(e.target.value)}
+                className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[44px] transition-all outline-none"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t-2 border-gray-100">
+            <button
+              type="button"
+              onClick={() => {
+                setShowTableModal(false);
+                setTableRows('3');
+                setTableColumns('3');
+              }}
+              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleInsertTable}
+              disabled={!tableRows || !tableColumns}
+              className="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px]"
+            >
+              Insert Table
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 }

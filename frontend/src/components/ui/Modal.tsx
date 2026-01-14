@@ -48,17 +48,17 @@ export default function Modal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div
           className={cn(
-            'bg-white rounded-xl shadow-xl w-full animate-scale-in',
+            'bg-white rounded-xl shadow-xl w-full animate-scale-in my-auto max-h-[90vh] flex flex-col',
             sizes[size]
           )}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           {(title || showClose) && (
-            <div className="flex items-start justify-between p-6 border-b border-gray-100">
+            <div className="flex items-start justify-between p-6 border-b border-gray-100 flex-shrink-0">
               <div>
                 {title && (
                   <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
@@ -79,7 +79,7 @@ export default function Modal({
           )}
 
           {/* Content */}
-          <div className="p-6">{children}</div>
+          <div className="p-6 overflow-y-auto flex-1">{children}</div>
         </div>
       </div>
     </Fragment>

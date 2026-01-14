@@ -84,12 +84,7 @@ export default function BlogPostPage() {
               <span className="font-medium">Back to Blog</span>
             </Link>
 
-            {/* Tags */}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-6">
-                <Badge variant="primary">{post.tags[0]}</Badge>
-              </div>
-            )}
+
 
             {/* Title - Responsive Scaling */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight tracking-tight">

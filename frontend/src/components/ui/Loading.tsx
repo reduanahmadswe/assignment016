@@ -143,11 +143,51 @@ export function Loading({ text = 'Loading...', fullScreen = false }: LoadingProp
   return (
     <div className={cn(
       'flex flex-col items-center justify-center',
-      fullScreen ? 'fixed inset-0 bg-white/80 backdrop-blur-sm z-50' : 'py-12'
+      fullScreen ? 'fixed inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-50 z-50' : 'py-12'
     )}>
-      <div className="text-center">
-        <Spinner size="lg" />
-        <p className="mt-4 text-gray-600">{text}</p>
+      <div className="text-center space-y-6">
+        {/* Modern 3D Loading Animation */}
+        <div className="relative w-24 h-24 mx-auto">
+          {/* Outer rotating ring */}
+          <div className="absolute inset-0 animate-spin-slow">
+            <div className="w-full h-full rounded-full border-4 border-transparent border-t-primary-500 border-r-primary-400" />
+          </div>
+          
+          {/* Middle counter-rotating ring */}
+          <div className="absolute inset-2 animate-spin-reverse">
+            <div className="w-full h-full rounded-full border-4 border-transparent border-b-indigo-500 border-l-indigo-400" />
+          </div>
+          
+          {/* Inner pulsing ring */}
+          <div className="absolute inset-4 animate-pulse">
+            <div className="w-full h-full rounded-full border-4 border-transparent border-t-purple-400 border-b-purple-300" />
+          </div>
+          
+          {/* Center glow */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary-400/30 to-purple-400/30 rounded-full blur-xl animate-pulse" />
+          </div>
+          
+          {/* Center dot */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-3 h-3 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full animate-ping" />
+            <div className="absolute w-3 h-3 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full" />
+          </div>
+        </div>
+
+        {/* Text with gradient animation */}
+        <div className="space-y-2">
+          <p className="text-lg font-bold bg-gradient-to-r from-primary-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+            {text}
+          </p>
+          
+          {/* Animated dots */}
+          <div className="flex items-center justify-center gap-1.5">
+            <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce [animation-delay:0ms]" />
+            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:150ms]" />
+            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce [animation-delay:300ms]" />
+          </div>
+        </div>
       </div>
     </div>
   );

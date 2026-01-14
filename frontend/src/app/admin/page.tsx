@@ -91,8 +91,8 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-[1.5rem] border border-gray-100 shadow-sm mt-10">
+        <div >
           <h1 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Dashboard Overview</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">Welcome back, Admin! Here's your daily summary.</p>
         </div>
