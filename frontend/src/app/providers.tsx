@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { ReduxProvider } from '@/store/ReduxProvider';
 import { useAppDispatch } from '@/store/hooks';
 import { checkAuth } from '@/store/slices/auth.slice';
+import { CookieConsent } from '@/components/CookieConsent';
 
 function ScrollToTop() {
   const pathname = usePathname();
@@ -53,6 +54,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <AuthInitializer>
           <ScrollToTop />
           {children}
+          <CookieConsent />
           <Toaster
             position="top-right"
             reverseOrder={false}
