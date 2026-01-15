@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Image from 'next/image';
 import {
   Search,
   Download,
@@ -18,7 +19,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { adminAPI } from '@/lib/api';
-import { formatDate, formatCurrency } from '@/lib/utils';
+import { formatDate, formatCurrency, getImageUrl } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -142,7 +143,7 @@ export default function AdminRegistrationsPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Main Container with responsive padding */}
       <div className="w-full max-w-[2000px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10">
-        
+
         {/* Header Section - Simple & Clean */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Title & Back Button */}
@@ -163,14 +164,14 @@ export default function AdminRegistrationsPage() {
                 <span className="hidden sm:inline">Back</span>
               </Button>
             )}
-            
+
             <div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
                 Event Registrations
               </h1>
               <p className="text-xs sm:text-sm text-gray-500 mt-1 font-medium">
-                {selectedEvent 
-                  ? 'Viewing detailed registration data' 
+                {selectedEvent
+                  ? 'Viewing detailed registration data'
                   : 'Select an event to view registrations'}
               </p>
             </div>
@@ -205,88 +206,131 @@ export default function AdminRegistrationsPage() {
               <>
                 {/* Responsive Grid - 1 col mobile, 2 tablet, 3 laptop, 4 desktop */}
                 <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-                  {paginatedEvents.map((event: any) => (
-                    <div
-                      key={event.id}
-                      onClick={() => setSelectedEvent(event.id)}
-                      className="group bg-white rounded-xl sm:rounded-2xl border-2 border-gray-100 hover:border-primary-300 shadow-sm hover:shadow-2xl hover:shadow-primary-100/50 hover:-translate-y-2 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col min-h-[280px] sm:min-h-[320px] active:scale-95"
-                      role="button"
-                      tabIndex={0}
-                      onKeyPress={(e) => e.key === 'Enter' && setSelectedEvent(event.id)}
-                    >
-                      {/* Card Header */}
-                      <div className="p-4 sm:p-5 md:p-6 flex-1 flex flex-col">
-                        <div className="flex items-start justify-between mb-3 sm:mb-4">
-                          <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-50 to-indigo-50 text-primary-600 group-hover:from-primary-100 group-hover:to-indigo-100 transition-all duration-300 group-hover:scale-110">
-                            <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
+                  {paginatedEvents.map((event: any) => {
+                    // Get event thumbnail
+                    const getThumbnail = () => {
+                      const thumb = event.thumbnail;
+                      if (!thumb) return '/images/event-placeholder.svg';
+                      if (thumb.startsWith('http') || thumb.startsWith('data:') || thumb.startsWith('/') || thumb.startsWith('uploads/')) {
+                        return getImageUrl(thumb);
+                      }
+                      return '/images/event-placeholder.svg';
+                    };
+                    const thumbnailSrc = getThumbnail();
+
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() => setSelectedEvent(event.id)}
+                        className="group relative overflow-hidden h-full flex flex-col bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-primary-300 hover:-translate-y-2 hover:scale-[1.02] cursor-pointer active:scale-95"
+                        role="button"
+                        tabIndex={0}
+                        onKeyPress={(e) => e.key === 'Enter' && setSelectedEvent(event.id)}
+                      >
+                        {/* Image Section - Top */}
+                        <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-50">
+                          <Image
+                            src={thumbnailSrc}
+                            alt={event.title}
+                            fill
+                            unoptimized={thumbnailSrc.startsWith('data:')}
+                            className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                            referrerPolicy="no-referrer"
+                          />
+
+                          {/* Gradient Overlay on Hover */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+                          {/* Logo/Brand - Top Left on Image */}
+                          <div className="absolute top-2 left-2 z-10 transition-transform duration-300 group-hover:scale-110">
+                            <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm group-hover:shadow-md transition-shadow duration-300">
+                              <div className="w-4 h-4 rounded-full bg-primary-600 flex items-center justify-center group-hover:bg-primary-700 transition-colors duration-300">
+                                <Calendar className="w-2.5 h-2.5 text-white" />
+                              </div>
+                              <span className="text-[9px] font-bold text-primary-600 tracking-wide">ORIYET</span>
+                            </div>
                           </div>
-                          <Badge
-                            variant={
-                              event.eventStatus === 'upcoming' ? 'primary' :
-                              event.eventStatus === 'ongoing' ? 'success' : 'default'
-                            }
-                            className="capitalize font-bold text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-lg"
-                          >
-                            {event.eventStatus}
-                          </Badge>
+
+                          {/* Status Badge - Top Right on Image */}
+                          <div className="absolute top-2 right-2 z-10 transition-transform duration-300 group-hover:scale-110">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider backdrop-blur-md shadow-sm group-hover:shadow-md transition-all duration-300 ${event.eventStatus === 'upcoming' ? 'bg-primary-500/90 text-white group-hover:bg-primary-500' :
+                              event.eventStatus === 'ongoing' ? 'bg-green-500/90 text-white group-hover:bg-green-500' :
+                                'bg-gray-500/90 text-white group-hover:bg-gray-500'
+                              }`}>
+                              {event.eventStatus}
+                            </span>
+                          </div>
                         </div>
 
-                        {/* Event Title */}
-                        <h3 className="font-bold text-gray-900 text-base sm:text-lg md:text-xl mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors leading-snug min-h-[44px] flex items-center">
-                          {event.title}
-                        </h3>
-                        
-                        {/* Event Date */}
-                        <p className="text-xs sm:text-sm font-semibold text-gray-500 mb-4 sm:mb-6 flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                          {formatDate(event.startDate)}
-                        </p>
+                        {/* Content Section - Bottom */}
+                        <div className="flex-1 flex flex-col p-4">
+                          {/* Event Title */}
+                          <h3 className="text-base font-bold leading-tight mb-1.5 text-gray-900 group-hover:text-primary-600 transition-colors duration-300 line-clamp-2 min-h-[44px] flex items-center">
+                            {event.title}
+                          </h3>
 
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t-2 border-gray-50 mt-auto">
-                          <div className="bg-gray-50 rounded-xl p-2.5 sm:p-3 group-hover:bg-primary-50/50 transition-colors">
-                            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-bold mb-1">Registrations</p>
-                            <p className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 group-hover:text-primary-600 transition-colors">
-                              {event.totalRegistrations}
-                            </p>
+                          {/* Event Date */}
+                          <div className="flex items-center text-[11px] font-medium text-gray-600 group-hover:text-primary-600 transition-colors duration-300 mb-4">
+                            <Calendar className="w-3 h-3 mr-1 text-primary-600 group-hover:scale-110 transition-transform duration-300" />
+                            {formatDate(event.startDate)}
                           </div>
-                          <div className="bg-gray-50 rounded-xl p-2.5 sm:p-3 group-hover:bg-green-50/50 transition-colors">
-                            <p className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide font-bold mb-1">Revenue</p>
-                            <p className={`text-lg sm:text-xl md:text-2xl font-black transition-colors ${
-                              event.isFree ? 'text-gray-400' : 
-                              event.totalRevenue > 0 ? 'text-green-600 group-hover:text-green-700' : 'text-gray-900'
-                            }`}>
-                              {event.isFree ? 'Free' : formatCurrency(event.totalRevenue)}
-                            </p>
+
+                          {/* Compact Stats - Inline */}
+                          <div className="flex items-center gap-4 text-xs font-semibold mt-auto">
+                            {/* Registrations */}
+                            <div className="flex items-center gap-1.5 text-gray-600">
+                              <div className="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                <Users className="w-3.5 h-3.5 text-primary-600" />
+                              </div>
+                              <div>
+                                <p className="text-[9px] text-gray-400 uppercase tracking-wide">Regs</p>
+                                <p className="text-sm font-black text-gray-900 leading-none">{event.totalRegistrations}</p>
+                              </div>
+                            </div>
+
+                            {/* Revenue */}
+                            <div className="flex items-center gap-1.5 text-gray-600">
+                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${event.isFree ? 'bg-gray-50' : 'bg-green-50 group-hover:bg-green-100'
+                                }`}>
+                                <DollarSign className={`w-3.5 h-3.5 ${event.isFree ? 'text-gray-400' : 'text-green-600'}`} />
+                              </div>
+                              <div>
+                                <p className="text-[9px] text-gray-400 uppercase tracking-wide">Revenue</p>
+                                <p className={`text-sm font-black leading-none ${event.isFree ? 'text-gray-400' :
+                                  event.totalRevenue > 0 ? 'text-green-600' : 'text-gray-900'
+                                  }`}>
+                                  {event.isFree ? 'Free' : formatCurrency(event.totalRevenue)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Footer - Sleeker */}
+                        <div className="bg-gradient-to-r from-gray-50/50 to-transparent px-4 py-2.5 flex items-center justify-between group-hover:from-primary-50/30 transition-all border-t border-gray-100">
+                          <div className="flex -space-x-1.5">
+                            {[...Array(Math.min(3, event.totalRegistrations))].map((_, i) => (
+                              <div
+                                key={i}
+                                className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-white flex items-center justify-center shadow-sm"
+                              >
+                                <Users className="w-2.5 h-2.5 text-white" />
+                              </div>
+                            ))}
+                            {event.totalRegistrations > 3 && (
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 border-2 border-white flex items-center justify-center text-[9px] text-gray-700 font-black shadow-sm">
+                                +{event.totalRegistrations - 3}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-[11px] font-bold text-primary-600 group-hover:text-primary-700 transition-all group-hover:gap-1.5">
+                            <span>View</span>
+                            <Eye className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                           </div>
                         </div>
                       </div>
-
-                      {/* Card Footer */}
-                      <div className="bg-gradient-to-r from-gray-50 to-gray-100/50 px-4 sm:px-5 md:px-6 py-3 sm:py-4 flex items-center justify-between group-hover:from-primary-50/30 group-hover:to-indigo-50/30 transition-all border-t border-gray-100 min-h-[52px]">
-                        <div className="flex -space-x-2">
-                          {[...Array(Math.min(3, event.totalRegistrations))].map((_, i) => (
-                            <div 
-                              key={i} 
-                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 border-2 border-white flex items-center justify-center shadow-sm ring-1 ring-gray-100"
-                            >
-                              <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" />
-                            </div>
-                          ))}
-                          {event.totalRegistrations > 3 && (
-                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white flex items-center justify-center text-[10px] sm:text-xs text-gray-700 font-black shadow-sm ring-1 ring-gray-100">
-                              +{event.totalRegistrations - 3}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-primary-600 group-hover:text-primary-700 transition-all group-hover:gap-3">
-                          <span className="hidden sm:inline">View Details</span>
-                          <span className="sm:hidden">View</span>
-                          <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Pagination - Responsive */}
@@ -319,11 +363,11 @@ export default function AdminRegistrationsPage() {
         {/* Detailed View - Responsive Registration Details */}
         {selectedEvent && (
           <div className="space-y-4 sm:space-y-6">
-            
+
             {/* Filters Bar - Fully Responsive */}
             <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg shadow-gray-100/50 overflow-hidden">
               <div className="p-4 sm:p-5 md:p-6 space-y-4">
-                
+
                 {/* Search Input - Full Width on Mobile */}
                 <div className="relative w-full">
                   <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -338,7 +382,7 @@ export default function AdminRegistrationsPage() {
 
                 {/* Filters Row - Stack on Mobile, Row on Desktop */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                  
+
                   {/* Status Filter */}
                   <div className="flex-1 sm:flex-none sm:min-w-[180px]">
                     <select
@@ -388,27 +432,27 @@ export default function AdminRegistrationsPage() {
 
                   {/* Export Buttons - Full Width on Mobile */}
                   <div className="flex items-center gap-2 sm:gap-3">
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 sm:flex-none justify-center rounded-xl sm:rounded-2xl font-bold border-2 hover:border-green-500 hover:bg-green-50 hover:text-green-700 transition-all min-h-[44px] text-sm sm:text-base" 
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center rounded-xl sm:rounded-2xl font-bold border-2 hover:border-green-500 hover:bg-green-50 hover:text-green-700 transition-all min-h-[44px] text-sm sm:text-base"
                       onClick={() => handleExport('excel')}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       <span className="hidden sm:inline">Excel</span>
                       <span className="sm:hidden">XLS</span>
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 sm:flex-none justify-center rounded-xl sm:rounded-2xl font-bold border-2 hover:border-red-500 hover:bg-red-50 hover:text-red-700 transition-all min-h-[44px] text-sm sm:text-base" 
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center rounded-xl sm:rounded-2xl font-bold border-2 hover:border-red-500 hover:bg-red-50 hover:text-red-700 transition-all min-h-[44px] text-sm sm:text-base"
                       onClick={() => handleExport('pdf')}
                     >
                       <Download className="w-4 h-4 mr-2" />
                       <span className="hidden sm:inline">PDF</span>
                       <span className="sm:hidden">PDF</span>
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      className="flex-1 sm:flex-none justify-center rounded-xl sm:rounded-2xl font-bold border-2 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-all min-h-[44px] text-sm sm:text-base" 
+                    <Button
+                      variant="outline"
+                      className="flex-1 sm:flex-none justify-center rounded-xl sm:rounded-2xl font-bold border-2 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 transition-all min-h-[44px] text-sm sm:text-base"
                       onClick={() => handleExport('csv')}
                     >
                       <Download className="w-4 h-4 mr-2" />
@@ -447,7 +491,7 @@ export default function AdminRegistrationsPage() {
 
             {/* Registrations Display - Responsive Cards for Mobile, Table for Desktop */}
             <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg shadow-gray-100/50 overflow-hidden">
-              
+
               {registrationsLoading ? (
                 <div className="flex justify-center items-center py-20 sm:py-32">
                   <div className="text-center">
@@ -460,8 +504,8 @@ export default function AdminRegistrationsPage() {
                   {/* Mobile Card View - Hidden on Desktop */}
                   <div className="block lg:hidden divide-y divide-gray-100">
                     {registrationsData.registrations.map((reg: any) => (
-                      <div 
-                        key={reg.id} 
+                      <div
+                        key={reg.id}
                         className="p-4 sm:p-5 hover:bg-gray-50 transition-colors active:bg-gray-100"
                       >
                         {/* User Info */}

@@ -99,7 +99,6 @@ export default function AdminPaymentsPage() {
       });
       return response.data.data;
     },
-    enabled: !!eventId,
   });
 
   // Filter events - show all events

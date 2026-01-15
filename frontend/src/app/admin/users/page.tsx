@@ -84,7 +84,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      
+
       {/* Main Content Card */}
       <div className="bg-white border border-gray-100 rounded-[1.5rem] shadow-sm overflow-hidden flex flex-col h-full mt-10">
         {/* Filters and Search */}
@@ -110,11 +110,11 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex items-center gap-3">
-          <div className="w-full sm:w-auto bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-bold border border-blue-100 flex items-center justify-center">
-            <Users className="w-4 h-4 mr-2" />
-            Total Users: {data?.pagination?.total || 0}
-          </div>
-        </div>
+              <div className="w-full sm:w-auto bg-blue-50 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-bold border border-blue-100 flex items-center justify-center">
+                <Users className="w-4 h-4 mr-2" />
+                Total Users: {data?.pagination?.total || 0}
+              </div>
+            </div>
 
             {/* Search */}
             <div className="relative w-full lg:w-72">
@@ -155,9 +155,17 @@ export default function AdminUsersPage() {
                   <tr key={user.id} className="group hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm ring-2 ring-white flex-shrink-0">
-                          {(user?.name?.charAt(0) ?? user?.email?.charAt(0) ?? 'U').toUpperCase()}
-                        </div>
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover shadow-sm ring-2 ring-white flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm ring-2 ring-white flex-shrink-0">
+                            {(user?.name?.charAt(0) ?? user?.email?.charAt(0) ?? 'U').toUpperCase()}
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <p className="font-bold text-gray-900 truncate max-w-[200px]">{user.name}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[200px]">{user.email}</p>
@@ -184,7 +192,7 @@ export default function AdminUsersPage() {
                       {user.events_count || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => {
                             setSelectedUser(user);
