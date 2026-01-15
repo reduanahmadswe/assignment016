@@ -347,7 +347,7 @@ model EventHost {
 model Newsletter {
   id          Int      @id @default(autoincrement())
   title       String
-  description String?
+  description String?  @db.Text
   thumbnail   String?  // Google Drive link for thumbnail
   pdfLink     String   @map("pdf_link") // Google Drive link for PDF
   startDate   DateTime? @map("start_date") // Newsletter coverage start date

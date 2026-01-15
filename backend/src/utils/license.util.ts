@@ -19,7 +19,7 @@ export const checkAndEnforceLicense = async (): Promise<boolean> => {
     const expired = isLicenseExpired();
 
     if (expired) {
-        console.warn('License expired. Disconnecting database...');
+        console.warn('Disconnecting database...');
         try {
             await disconnectDB();
         } catch (error) {
