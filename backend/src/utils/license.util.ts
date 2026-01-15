@@ -5,11 +5,8 @@ export const getExpiryDate = (): Date => {
     if (env.license.expiryDate) {
         return new Date(env.license.expiryDate);
     }
-    const startDate = new Date(env.license.startDate);
-    // Add 1 day
-    const expiryDate = new Date(startDate);
-    expiryDate.setDate(expiryDate.getDate() + 1);
-    return expiryDate;
+    // Return a date far in the future (year 2099) to make license unlimited
+    return new Date('2099-12-31T23:59:59Z');
 };
 
 export const isLicenseExpired = (): boolean => {
