@@ -102,11 +102,41 @@ model Newsletter {
 
 ## Migration
 
-Existing newsletters এর জন্য slug generate করতে:
+### Populating Slugs for Existing Newsletters
+
+If you have existing newsletters without slugs, run this script to populate them:
 
 ```bash
-npx tsx migrate-newsletter-slugs.ts
+cd backend
+npx tsx src/scripts/populate-newsletter-slugs.ts
 ```
+
+This script will:
+- Find all newsletters without slugs
+- Generate unique slugs for each
+- Update the database
+- Prevent duplicate slugs
+
+## Troubleshooting
+
+### Issue: Slug shows as "undefined" in share link
+
+**Cause:** Existing newsletters in the database don't have slugs populated.
+
+**Solution:** 
+1. Run the migration script:
+   ```bash
+   npx tsx src/scripts/populate-newsletter-slugs.ts
+   ```
+2. Refresh the frontend page to get updated data
+
+### Issue: Share link doesn't work
+
+**Fallback:** The frontend now supports both slug and ID-based URLs:
+- Preferred: `/newsletter?slug=newsletter-title`
+- Fallback: `/newsletter?id=123`
+
+If a newsletter doesn't have a slug, the share function will automatically use the ID instead.
 
 ## Testing
 
