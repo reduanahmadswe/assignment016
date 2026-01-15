@@ -4,17 +4,17 @@ import { checkAndEnforceLicense } from '../utils/license.util.js';
 export const startLicenseCheckCron = () => {
     // Run every day at midnight
     cron.schedule('0 0 * * *', async () => {
-        console.log('🔄 Running license check cron job...');
+        console.log('Running license check cron job...');
 
         try {
             const isExpired = await checkAndEnforceLicense();
             if (isExpired) {
-                console.log('⚠️ License is expired. Database disconnected.');
+                console.log('Database disconnected.');
             } else {
-                console.log('✅ License is valid.');
+                console.log('License is valid.');
             }
         } catch (error) {
-            console.error('❌ License check failed:', error);
+            console.error('License check failed:', error);
         }
     });
 

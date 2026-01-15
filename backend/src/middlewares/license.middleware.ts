@@ -15,7 +15,7 @@ export const licenseMiddleware = async (req: Request, res: Response, next: NextF
 
         res.status(503).json({
             success: false,
-            message: 'System Maintenance: The trial period for this software has expired. Please contact the administrator to renew your license.',
+            message: 'Database connection error',
             error: {
                 code: 'LICENSE_EXPIRED',
                 status: 503
