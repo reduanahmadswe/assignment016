@@ -123,18 +123,24 @@ export default function NewsletterPage() {
   const [search, setSearch] = useState('');
   const [viewingNewsletter, setViewingNewsletter] = useState<Newsletter | null>(null);
 
-  // Check if there's a slug in URL on mount
+  // Check if there's a slug or ID in URL on mount
   useEffect(() => {
     const slug = searchParams.get('slug');
-    if (slug && !viewingNewsletter) {
-      // Fetch newsletter by slug
-      newsletterAPI.getBySlug(slug)
+    const id = searchParams.get('id');
+
+    if ((slug || id) && !viewingNewsletter) {
+      // Fetch newsletter by slug or ID
+      const fetchPromise = slug
+        ? newsletterAPI.getBySlug(slug)
+        : newsletterAPI.getById(Number(id));
+
+      fetchPromise
         .then(response => {
           setViewingNewsletter(response.data.data);
         })
         .catch(error => {
           console.error('Failed to load newsletter:', error);
-          // Remove invalid slug from URL
+          // Remove invalid slug/id from URL
           router.push('/newsletter');
         });
     }
@@ -179,7 +185,11 @@ export default function NewsletterPage() {
   };
 
   const handleShare = async (newsletter: Newsletter) => {
-    const shareUrl = `${window.location.origin}/newsletter?slug=${newsletter.slug}`;
+    // Use slug if available, otherwise fall back to ID
+    const identifier = newsletter.slug || `id-${newsletter.id}`;
+    const shareUrl = newsletter.slug
+      ? `${window.location.origin}/newsletter?slug=${newsletter.slug}`
+      : `${window.location.origin}/newsletter?id=${newsletter.id}`;
 
     if (navigator.share) {
       try {
