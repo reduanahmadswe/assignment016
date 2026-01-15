@@ -26,6 +26,15 @@ export class NewsletterController {
     });
   });
 
+  // Public: Get newsletter by slug (for shareable links)
+  getNewsletterBySlug = asyncHandler(async (req: Request, res: Response) => {
+    const newsletter = await newsletterService.getNewsletterBySlug(req.params.slug);
+    res.json({
+      success: true,
+      data: newsletter,
+    });
+  });
+
   // Public: Increment view count
   incrementViews = asyncHandler(async (req: Request, res: Response) => {
     const result = await newsletterService.incrementViews(parseInt(req.params.id));
@@ -49,8 +58,8 @@ export class NewsletterController {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string;
-    const isPublished = req.query.is_published === 'true' ? true : 
-                        req.query.is_published === 'false' ? false : undefined;
+    const isPublished = req.query.is_published === 'true' ? true :
+      req.query.is_published === 'false' ? false : undefined;
 
     const result = await newsletterService.getAllNewsletters(page, limit, search, isPublished);
     res.json({

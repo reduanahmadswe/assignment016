@@ -7,6 +7,7 @@ const router = Router();
 
 // Public routes
 router.get('/', newsletterController.getPublishedNewsletters);
+router.get('/slug/:slug', newsletterController.getNewsletterBySlug); // Shareable link by slug
 router.get('/:id', newsletterController.getNewsletterById);
 router.post('/:id/view', newsletterController.incrementViews);
 router.post('/:id/download', newsletterController.incrementDownloads);

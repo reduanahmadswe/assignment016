@@ -2,6 +2,16 @@ import prisma from '../../config/db.js';
 import { AppError } from '../../middlewares/error.middleware.js';
 import { paginate, getPaginationMeta } from '../../utils/helpers.util.js';
 
+// Helper function to generate URL-friendly slug
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .trim();
+}
+
 interface CreateNewsletterInput {
   title: string;
   description?: string;
@@ -14,9 +24,22 @@ interface CreateNewsletterInput {
 
 export class NewsletterService {
   async createNewsletter(data: CreateNewsletterInput) {
+    // Generate unique slug from title
+    let slug = generateSlug(data.title);
+
+    // Check if slug already exists and make it unique
+    let slugExists = await prisma.newsletter.findUnique({ where: { slug } });
+    let counter = 1;
+    while (slugExists) {
+      slug = `${generateSlug(data.title)}-${counter}`;
+      slugExists = await prisma.newsletter.findUnique({ where: { slug } });
+      counter++;
+    }
+
     const newsletter = await prisma.newsletter.create({
       data: {
         title: data.title,
+        slug,
         description: data.description,
         thumbnail: data.thumbnail,
         pdfLink: data.pdf_link,
@@ -37,7 +60,32 @@ export class NewsletterService {
 
     const updateData: any = {};
 
-    if (data.title !== undefined) updateData.title = data.title;
+    // If title is updated, regenerate slug
+    if (data.title !== undefined) {
+      updateData.title = data.title;
+      let slug = generateSlug(data.title);
+
+      // Check if slug already exists (excluding current newsletter)
+      let slugExists = await prisma.newsletter.findFirst({
+        where: {
+          slug,
+          id: { not: id }
+        }
+      });
+      let counter = 1;
+      while (slugExists) {
+        slug = `${generateSlug(data.title)}-${counter}`;
+        slugExists = await prisma.newsletter.findFirst({
+          where: {
+            slug,
+            id: { not: id }
+          }
+        });
+        counter++;
+      }
+      updateData.slug = slug;
+    }
+
     if (data.description !== undefined) updateData.description = data.description;
     if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
     if (data.pdf_link !== undefined) updateData.pdfLink = data.pdf_link;
@@ -71,6 +119,24 @@ export class NewsletterService {
     if (!newsletter) {
       throw new AppError('Newsletter not found', 404);
     }
+
+    return newsletter;
+  }
+
+  async getNewsletterBySlug(slug: string) {
+    const newsletter = await prisma.newsletter.findUnique({
+      where: { slug },
+    });
+
+    if (!newsletter) {
+      throw new AppError('Newsletter not found', 404);
+    }
+
+    // Increment views when accessed by slug
+    await prisma.newsletter.update({
+      where: { id: newsletter.id },
+      data: { views: { increment: 1 } },
+    });
 
     return newsletter;
   }

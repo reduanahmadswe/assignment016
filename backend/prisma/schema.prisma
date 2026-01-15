@@ -347,6 +347,7 @@ model EventHost {
 model Newsletter {
   id          Int      @id @default(autoincrement())
   title       String
+  slug        String?  @unique // Unique URL-friendly identifier for sharing
   description String?  @db.Text
   thumbnail   String?  // Google Drive link for thumbnail
   pdfLink     String   @map("pdf_link") // Google Drive link for PDF

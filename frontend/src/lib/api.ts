@@ -17,12 +17,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     // Remove Content-Type header for FormData to let browser set it with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
-    
+
     return config;
   },
   (error) => {
@@ -105,7 +105,7 @@ export const authAPI = {
   resetPassword: (data: any) => api.post('/auth/reset-password', data),
   changePassword: (data: any) => api.post('/auth/change-password', data),
   sendPasswordChangeOTP: () => api.post('/auth/send-password-change-otp'),
-  verifyAndChangePassword: (data: { otp: string; currentPassword: string; newPassword: string }) => 
+  verifyAndChangePassword: (data: { otp: string; currentPassword: string; newPassword: string }) =>
     api.post('/auth/verify-and-change-password', data),
   logout: () => api.post('/auth/logout'),
   getMe: () => api.get('/auth/me'),
@@ -198,6 +198,7 @@ export const newsletterAPI = {
   // Public
   getAll: (params?: any) => api.get('/newsletters', { params }),
   getById: (id: number) => api.get(`/newsletters/${id}`),
+  getBySlug: (slug: string) => api.get(`/newsletters/slug/${slug}`),
   incrementViews: (id: number) => api.post(`/newsletters/${id}/view`),
   incrementDownloads: (id: number) => api.post(`/newsletters/${id}/download`),
   // Admin
@@ -251,7 +252,7 @@ export const adminAPI = {
   // Payments management
   getPaymentStats: (eventId?: number) => api.get('/admin/payments/stats', { params: { eventId } }),
   getPayments: (params?: any) => api.get('/admin/payments', { params }),
-  exportPayments: (params?: any) => api.get('/admin/payments/export', { 
+  exportPayments: (params?: any) => api.get('/admin/payments/export', {
     params,
     responseType: 'blob'
   }),

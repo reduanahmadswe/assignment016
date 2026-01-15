@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Search, FileText, Download, Eye, Calendar, Newspaper } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Search, FileText, Download, Eye, Calendar, Newspaper, Share2 } from 'lucide-react';
 import { newsletterAPI } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import { Loading, Pagination } from '@/components/ui';
@@ -10,6 +11,7 @@ import { Loading, Pagination } from '@/components/ui';
 interface Newsletter {
   id: number;
   title: string;
+  slug?: string;
   description?: string;
   thumbnail?: string;
   pdfLink: string;
@@ -115,9 +117,28 @@ const getGoogleDriveThumbnailUrl = (url: string) => {
 };
 
 export default function NewsletterPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [viewingNewsletter, setViewingNewsletter] = useState<Newsletter | null>(null);
+
+  // Check if there's a slug in URL on mount
+  useEffect(() => {
+    const slug = searchParams.get('slug');
+    if (slug && !viewingNewsletter) {
+      // Fetch newsletter by slug
+      newsletterAPI.getBySlug(slug)
+        .then(response => {
+          setViewingNewsletter(response.data.data);
+        })
+        .catch(error => {
+          console.error('Failed to load newsletter:', error);
+          // Remove invalid slug from URL
+          router.push('/newsletter');
+        });
+    }
+  }, [searchParams]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['newsletters', page, search],
@@ -138,11 +159,50 @@ export default function NewsletterPage() {
 
   const handleView = async (newsletter: Newsletter) => {
     setViewingNewsletter(newsletter);
+
+    // Update URL with slug for shareable link
+    if (newsletter.slug) {
+      router.push(`/newsletter?slug=${newsletter.slug}`, { scroll: false });
+    }
+
     try {
       await newsletterAPI.incrementViews(newsletter.id);
     } catch (error) {
       console.error('Failed to increment views:', error);
     }
+  };
+
+  const handleCloseModal = () => {
+    setViewingNewsletter(null);
+    // Remove slug from URL when closing
+    router.push('/newsletter', { scroll: false });
+  };
+
+  const handleShare = async (newsletter: Newsletter) => {
+    const shareUrl = `${window.location.origin}/newsletter?slug=${newsletter.slug}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: newsletter.title,
+          text: newsletter.description || newsletter.title,
+          url: shareUrl,
+        });
+      } catch (error) {
+        // User cancelled or error occurred
+        copyToClipboard(shareUrl);
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Link copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
   };
 
   const handleDownload = async (newsletter: Newsletter) => {
@@ -348,10 +408,10 @@ export default function NewsletterPage() {
           ) : data?.newsletters?.length > 0 ? (
             <>
               <div className={`grid gap-8 ${data.newsletters.length === 1
-                  ? 'grid-cols-1 max-w-md mx-auto'
-                  : data.newsletters.length === 2
-                    ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto'
-                    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                ? 'grid-cols-1 max-w-md mx-auto'
+                : data.newsletters.length === 2
+                  ? 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto'
+                  : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
                 }`}>
                 {data.newsletters.map((newsletter: Newsletter) => (
                   <article
@@ -481,7 +541,7 @@ export default function NewsletterPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setViewingNewsletter(null)}
+            onClick={handleCloseModal}
           />
           <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col w-full max-w-6xl" style={{ height: '90vh' }}>
             {/* Modal Header */}
@@ -493,6 +553,14 @@ export default function NewsletterPage() {
               </div>
               <div className="flex items-center gap-2 ml-4">
                 <button
+                  onClick={() => handleShare(viewingNewsletter)}
+                  className="flex items-center gap-2 py-2 px-4 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  title="Share this newsletter"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+                <button
                   onClick={() => handleDownload(viewingNewsletter)}
                   className="flex items-center gap-2 py-2 px-4 bg-[#ff7620] hover:bg-[#e56a1a] text-white text-sm font-medium rounded-lg transition-colors"
                 >
@@ -500,7 +568,7 @@ export default function NewsletterPage() {
                   Download
                 </button>
                 <button
-                  onClick={() => setViewingNewsletter(null)}
+                  onClick={handleCloseModal}
                   className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
