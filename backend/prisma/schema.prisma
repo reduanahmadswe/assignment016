@@ -114,6 +114,15 @@ model Event {
   eventContactPhone      String?   @map("event_contact_phone")
   guests                 String?   @map("guests") @db.Text
   participantInstructions String?  @map("participant_instructions") @db.Text
+  
+  // Certificate Signature Fields
+  signature1Name         String?   @map("signature1_name")
+  signature1Title        String?   @map("signature1_title")
+  signature1Image        String?   @map("signature1_image")
+  signature2Name         String?   @map("signature2_name")
+  signature2Title        String?   @map("signature2_title")
+  signature2Image        String?   @map("signature2_image")
+  
   createdBy              Int?      @map("created_by")
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")

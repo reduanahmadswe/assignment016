@@ -34,6 +34,13 @@ interface CreateEventInput {
     website?: string;
     cvLink?: string;
   }>;
+  // Certificate Signature Fields
+  signature1_name?: string;
+  signature1_title?: string;
+  signature1_image?: string;
+  signature2_name?: string;
+  signature2_title?: string;
+  signature2_image?: string;
 }
 
 interface EventFilters {
@@ -76,6 +83,13 @@ export class EventService {
           metaDescription: data.meta_description,
           isFeatured: data.is_featured || false,
           guests: data.guests && data.guests.length > 0 ? JSON.stringify(data.guests) : null,
+          // Certificate Signature Fields
+          signature1Name: data.signature1_name,
+          signature1Title: data.signature1_title,
+          signature1Image: data.signature1_image,
+          signature2Name: data.signature2_name,
+          signature2Title: data.signature2_title,
+          signature2Image: data.signature2_image,
           createdBy,
         },
       });
@@ -120,6 +134,14 @@ export class EventService {
     if (data.guests !== undefined) {
       updateData.guests = (data.guests && data.guests.length > 0) ? JSON.stringify(data.guests) : null;
     }
+    
+    // Certificate Signature Fields
+    if (data.signature1_name !== undefined) updateData.signature1Name = data.signature1_name;
+    if (data.signature1_title !== undefined) updateData.signature1Title = data.signature1_title;
+    if (data.signature1_image !== undefined) updateData.signature1Image = data.signature1_image;
+    if (data.signature2_name !== undefined) updateData.signature2Name = data.signature2_name;
+    if (data.signature2_title !== undefined) updateData.signature2Title = data.signature2_title;
+    if (data.signature2_image !== undefined) updateData.signature2Image = data.signature2_image;
 
     if (data.title && data.title !== event.title) {
       updateData.slug = generateSlug(data.title) + '-' + Date.now().toString(36);

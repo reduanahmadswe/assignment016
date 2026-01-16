@@ -28,6 +28,8 @@ export default function EditEventPage() {
 
   const [thumbnailUrl, setThumbnailUrl] = useState<string>('');
   const [guests, setGuests] = useState<Guest[]>([]);
+  const [signature1ImageUrl, setSignature1ImageUrl] = useState<string>('');
+  const [signature2ImageUrl, setSignature2ImageUrl] = useState<string>('');
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -48,6 +50,11 @@ export default function EditEventPage() {
     eventContactEmail: '',
     eventContactPhone: '',
     participantInstructions: '',
+    // Certificate Signature Fields
+    signature1Name: '',
+    signature1Title: '',
+    signature2Name: '',
+    signature2Title: '',
   });
 
   // Fetch event data
@@ -109,9 +116,16 @@ export default function EditEventPage() {
         eventContactEmail: event.eventContactEmail || '',
         eventContactPhone: event.eventContactPhone || '',
         participantInstructions: event.participantInstructions || '',
+        // Certificate Signature Fields
+        signature1Name: event.signature1Name || '',
+        signature1Title: event.signature1Title || '',
+        signature2Name: event.signature2Name || '',
+        signature2Title: event.signature2Title || '',
       });
 
       setThumbnailUrl(event.thumbnail || '');
+      setSignature1ImageUrl(event.signature1Image || '');
+      setSignature2ImageUrl(event.signature2Image || '');
 
       // Load existing guests
       if (event.guests && Array.isArray(event.guests) && event.guests.length > 0) {
@@ -158,6 +172,26 @@ export default function EditEventPage() {
 
     if (guests.length > 0) {
       submitData.guests = guests;
+    }
+
+    // Add signature data
+    if (signature1ImageUrl) {
+      submitData.signature1_image = signature1ImageUrl;
+    }
+    if (signature2ImageUrl) {
+      submitData.signature2_image = signature2ImageUrl;
+    }
+    if (formData.signature1Name) {
+      submitData.signature1_name = formData.signature1Name;
+    }
+    if (formData.signature1Title) {
+      submitData.signature1_title = formData.signature1Title;
+    }
+    if (formData.signature2Name) {
+      submitData.signature2_name = formData.signature2Name;
+    }
+    if (formData.signature2Title) {
+      submitData.signature2_title = formData.signature2Title;
     }
 
     console.log('📤 Submitting event update:');
@@ -663,6 +697,132 @@ export default function EditEventPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Certificate Signatures */}
+            {formData.isCertificateAvailable && (
+              <Card className="rounded-[1.25rem] border-gray-100 shadow-sm overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-amber-50 border-b border-gray-100 px-5 py-3">
+                  <CardTitle className="text-base font-bold flex items-center gap-2">
+                    <span>🏆</span> Certificate Signatures
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 p-5">
+                  {/* Signature 1 */}
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                      First Signatory
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                          Name
+                        </label>
+                        <Input
+                          name="signature1Name"
+                          value={formData.signature1Name}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Reduan Ahmad"
+                          className="w-full rounded-xl text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                          Title/Position
+                        </label>
+                        <Input
+                          name="signature1Title"
+                          value={formData.signature1Title}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Director"
+                          className="w-full rounded-xl text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Signature Image URL <span className="text-gray-400 font-normal">(PNG/JPG)</span>
+                      </label>
+                      <Input
+                        value={signature1ImageUrl}
+                        onChange={(e) => setSignature1ImageUrl(e.target.value)}
+                        placeholder="https://... (transparent PNG recommended)"
+                        className="w-full rounded-xl text-sm"
+                      />
+                      {signature1ImageUrl && (
+                        <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
+                          <img
+                            src={signature1ImageUrl}
+                            alt="Signature 1 preview"
+                            className="h-12 object-contain mx-auto"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Signature 2 */}
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                    <h4 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                      Second Signatory
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                          Name
+                        </label>
+                        <Input
+                          name="signature2Name"
+                          value={formData.signature2Name}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Mohammad Ali"
+                          className="w-full rounded-xl text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                          Title/Position
+                        </label>
+                        <Input
+                          name="signature2Title"
+                          value={formData.signature2Title}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Secretary"
+                          className="w-full rounded-xl text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">
+                        Signature Image URL <span className="text-gray-400 font-normal">(PNG/JPG)</span>
+                      </label>
+                      <Input
+                        value={signature2ImageUrl}
+                        onChange={(e) => setSignature2ImageUrl(e.target.value)}
+                        placeholder="https://... (transparent PNG recommended)"
+                        className="w-full rounded-xl text-sm"
+                      />
+                      {signature2ImageUrl && (
+                        <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
+                          <img
+                            src={signature2ImageUrl}
+                            alt="Signature 2 preview"
+                            className="h-12 object-contain mx-auto"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-500 bg-blue-50 p-2 rounded-lg">
+                    💡 <strong>Tip:</strong> Use transparent PNG images for best results on certificates.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}

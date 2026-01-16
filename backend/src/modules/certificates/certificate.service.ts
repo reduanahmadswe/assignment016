@@ -119,6 +119,13 @@ export class CertificateService {
             eventType: true,
             startDate: true,
             endDate: true,
+            // Certificate Signature Fields
+            signature1Name: true,
+            signature1Title: true,
+            signature1Image: true,
+            signature2Name: true,
+            signature2Title: true,
+            signature2Image: true,
           },
         },
       },
@@ -284,11 +291,32 @@ export class CertificateService {
     const footerY = height - 120;
     const signatureY = footerY;
 
-    // LEFT: Director Signature
+    // Get signature data from event or use defaults
+    const sig1Name: string = cert.event.signature1Name || 'Reduan Ahmad';
+    const sig1Title: string = cert.event.signature1Title || 'DIRECTOR';
+    const sig1Image: string | null = cert.event.signature1Image || null;
+    const sig2Name: string = cert.event.signature2Name || 'Orijeet Admin';
+    const sig2Title: string = cert.event.signature2Title || 'SECRETARY';
+    const sig2Image: string | null = cert.event.signature2Image || null;
+
+    // LEFT: First Signatory
+    // If signature image exists, show image above the name
+    if (sig1Image) {
+      try {
+        // Fetch image from URL
+        const response = await fetch(sig1Image);
+        const arrayBuffer = await response.arrayBuffer();
+        const imageBuffer = Buffer.from(arrayBuffer);
+        doc.image(imageBuffer, 125, signatureY - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
+      } catch (e) {
+        console.log('Failed to load signature 1 image:', e);
+      }
+    }
+    
     doc.font('GreatVibes')
       .fontSize(24)
       .fillColor('#1a1a1a')
-      .text('Reduan Ahmad', 100, signatureY, { align: 'center', width: 150 });
+      .text(sig1Name, 100, signatureY, { align: 'center', width: 150 });
 
     // Line
     doc.lineWidth(1)
@@ -301,13 +329,25 @@ export class CertificateService {
     doc.font('Helvetica-Bold')
       .fontSize(8)
       .fillColor('#888888')
-      .text('DIRECTOR', 100, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
+      .text(sig1Title.toUpperCase(), 100, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
 
-    // RIGHT: Secretary Signature
+    // RIGHT: Second Signatory
+    // If signature image exists, show image above the name
+    if (sig2Image) {
+      try {
+        const response = await fetch(sig2Image);
+        const arrayBuffer = await response.arrayBuffer();
+        const imageBuffer = Buffer.from(arrayBuffer);
+        doc.image(imageBuffer, width - 225, signatureY - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
+      } catch (e) {
+        console.log('Failed to load signature 2 image:', e);
+      }
+    }
+    
     doc.font('GreatVibes')
       .fontSize(24)
       .fillColor('#1a1a1a')
-      .text('Orijeet Admin', width - 250, signatureY, { align: 'center', width: 150 });
+      .text(sig2Name, width - 250, signatureY, { align: 'center', width: 150 });
 
     // Line
     doc.lineWidth(1)
@@ -320,7 +360,7 @@ export class CertificateService {
     doc.font('Helvetica-Bold')
       .fontSize(8)
       .fillColor('#888888')
-      .text('SECRETARY', width - 250, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
+      .text(sig2Title.toUpperCase(), width - 250, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
 
 
     // CENTER: QR Code
