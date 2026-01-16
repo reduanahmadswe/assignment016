@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
-    "build": "prisma generate && tsc && node fix-imports.mjs",
+    "build": "prisma generate && tsc",
     "postinstall": "prisma generate",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
