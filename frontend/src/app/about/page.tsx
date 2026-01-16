@@ -68,8 +68,8 @@ export default function AboutPage() {
     { label: 'Countries Reached', value: '15+', icon: Target },
   ];
 
-  // Team Members Data
-  const teamMembers = [
+  // Co-founders Data (Static Display)
+  const founders = [
     {
       name: 'Dr. Rauful Alam',
       role: 'Co-founder & Lead Scientist',
@@ -93,7 +93,11 @@ export default function AboutPage() {
       orcid: 'https://orcid.org/0000-0002-5158-4558',
       website: 'https://www.haqueazizul.com/',
       cv: '#'
-    },
+    }
+  ];
+
+  // Team Members Data (Carousel)
+  const teamMembers = [
     {
       name: 'Samia Malik',
       role: 'Host, Visual Designer, Emailing',
@@ -122,13 +126,25 @@ export default function AboutPage() {
       name: 'Marzia Maherin',
       role: 'Host, Emailing, Social media manager',
       description: 'CSE student at Southeast University with a strong passion for technology and innovation. Known for adaptability, problem-solving mindset, and delivering high-quality work.',
-      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768577172/0_ywwlqo.jpg',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768589214/Screenshot_2026-01-17_004628_qpysyi.png',
       email: 'marziamaherin350@gmail.com',
       linkedin: 'https://www.linkedin.com/in/marzia-maherin-453400365',
       googleScholar: '#',
       orcid: '#',
       website: '#',
       cv: 'https://drive.google.com/file/d/18u7lXq3CzBmoNdKp8aSCIoNqe6h9QOgV/view?usp=sharing'
+    },
+    {
+      name: 'Meheraj Hasan Aishorjo',
+      role: 'Engineering & Technical Solutions',
+      description: 'With strong leadership and communication skills, integrates technical expertise with creativity and analytical problem-solving. Dedicated to advancing professional growth, delivering innovative and sustainable engineering solutions.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768589162/0_ouwkz5.jpg',
+      email: 'me18hasan@gmail.com',
+      linkedin: 'http://linkedin.com/in/meheraj-hasan-aishorjo-8096793a6',
+      googleScholar: '#',
+      orcid: '#',
+      website: '#',
+      cv: 'https://drive.google.com/file/d/1aWgc7R3DvcYebIQsW_OcubQUoOyzGp4N/view?usp=sharing'
     }
   ];
 
@@ -418,12 +434,8 @@ export default function AboutPage() {
       </section>
 
 
-      {/* Meet Our Team Section - 3D Carousel */}
-      <section 
-        className="w-full relative overflow-hidden py-16 sm:py-24 bg-gray-50"
-        onMouseEnter={() => setIsTeamHovered(true)}
-        onMouseLeave={() => setIsTeamHovered(false)}
-      >
+      {/* Meet Our Team Section */}
+      <section className="w-full relative overflow-hidden py-16 sm:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
           <div className="text-center pb-12">
@@ -437,6 +449,95 @@ export default function AboutPage() {
               Researchers, educators, and innovators dedicated to empowering the next generation
             </p>
           </div>
+
+          {/* Co-founders Static Section */}
+          <div className="mb-16">
+            <h3 className="text-xl md:text-2xl font-bold text-center text-[#004aad] mb-10">
+              <span className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-r from-[#ff7620] to-[#ff8c42] text-white rounded-full text-sm font-semibold mr-3">
+                ★
+              </span>
+              Co-founders
+            </h3>
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {founders.map((founder, index) => (
+                <div
+                  key={index}
+                  className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+                >
+                  {/* Image */}
+                  <div className="relative h-[280px] md:h-[320px] overflow-hidden">
+                    <Image
+                      src={founder.image}
+                      alt={founder.name}
+                      fill
+                      className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#004aad]/30 via-transparent to-transparent"></div>
+                    
+                    {/* Name overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+                        {founder.name}
+                      </h3>
+                      <span className="inline-block px-4 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-[#ff7620] to-[#ff8c42] rounded-full">
+                        {founder.role}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="p-5 space-y-4">
+                    <p className="text-sm md:text-base text-gray-600 leading-relaxed text-center">
+                      {founder.description}
+                    </p>
+                    
+                    {/* Social Links */}
+                    <div className="flex justify-center gap-3 pt-3 border-t border-gray-100">
+                      {founder.email && founder.email !== '#' && (
+                        <a href={`mailto:${founder.email}`} className="p-2.5 rounded-full bg-gray-100 text-gray-500 hover:text-white hover:bg-[#EA4335] transition-all duration-300" title="Email">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                        </a>
+                      )}
+                      {founder.linkedin && founder.linkedin !== '#' && (
+                        <a href={founder.linkedin} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-gray-100 text-gray-500 hover:text-white hover:bg-[#0A66C2] transition-all duration-300" title="LinkedIn">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        </a>
+                      )}
+                      {founder.googleScholar && founder.googleScholar !== '#' && (
+                        <a href={founder.googleScholar} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-gray-100 text-gray-500 hover:text-white hover:bg-[#4285F4] transition-all duration-300" title="Google Scholar">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/></svg>
+                        </a>
+                      )}
+                      {founder.orcid && founder.orcid !== '#' && (
+                        <a href={founder.orcid} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-gray-100 text-gray-500 hover:text-white hover:bg-[#A6CE39] transition-all duration-300" title="ORCID">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.025-5.325 5.025h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.284-3.722-4.097-3.722h-2.222z"/></svg>
+                        </a>
+                      )}
+                      {founder.website && founder.website !== '#' && (
+                        <a href={founder.website} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-gray-100 text-gray-500 hover:text-white hover:bg-[#004aad] transition-all duration-300" title="Website">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        </a>
+                      )}
+                      {founder.cv && founder.cv !== '#' && (
+                        <a href={founder.cv} target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full bg-gray-100 text-gray-500 hover:text-white hover:bg-[#ff7620] transition-all duration-300" title="CV">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Team Members Carousel */}
+          <div
+            onMouseEnter={() => setIsTeamHovered(true)}
+            onMouseLeave={() => setIsTeamHovered(false)}
+          >
+            <h3 className="text-xl md:text-2xl font-bold text-center text-[#004aad] mb-8">
+              Team Members
+            </h3>
 
           {/* 3D Carousel - Show only 3 cards */}
           <div className="relative h-[480px] md:h-[520px]" style={{ perspective: '1200px' }}>
@@ -579,6 +680,7 @@ export default function AboutPage() {
             >
               <ChevronRight className="w-5 h-5" />
             </button>
+          </div>
           </div>
         </div>
       </section>
