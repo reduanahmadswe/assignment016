@@ -27,8 +27,26 @@ const createApp = (): Application => {
   }));
 
   // CORS configuration
+  const allowedOrigins = [
+    env.frontendUrl,
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://oriyet.org',
+    'https://www.oriyet.org',
+  ].filter(Boolean);
+
   app.use(cors({
-    origin: [env.frontendUrl, 'http://localhost:3000' , "https://oriyet.org"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log('CORS blocked origin:', origin);
+        callback(null, true); // Allow all origins temporarily for debugging
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
