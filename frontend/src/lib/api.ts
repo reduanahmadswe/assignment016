@@ -65,8 +65,23 @@ api.interceptors.response.use(
 
           const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-          Cookies.set('accessToken', accessToken, { expires: 7 });
-          Cookies.set('refreshToken', newRefreshToken, { expires: 30 });
+          // Check if we're in production (HTTPS)
+          const isProduction = typeof window !== 'undefined' && window.location.protocol === 'https:';
+          const cookieOptions = {
+            expires: 7,
+            sameSite: 'Lax' as const,
+            path: '/',
+            secure: isProduction,
+          };
+          const refreshCookieOptions = {
+            expires: 30,
+            sameSite: 'Lax' as const,
+            path: '/',
+            secure: isProduction,
+          };
+
+          Cookies.set('accessToken', accessToken, cookieOptions);
+          Cookies.set('refreshToken', newRefreshToken, refreshCookieOptions);
 
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);

@@ -55,8 +55,25 @@ export const loginUser = createAsyncThunk(
         { rejectWithValue }
     ) => {
         try {
-            Cookies.set('accessToken', accessToken, { expires: 7, sameSite: 'Lax', path: '/' });
-            Cookies.set('refreshToken', refreshToken, { expires: 30, sameSite: 'Lax', path: '/' });
+            // Check if we're in production (HTTPS)
+            const isProduction = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            
+            const cookieOptions = {
+                expires: 7,
+                sameSite: 'Lax' as const,
+                path: '/',
+                secure: isProduction, // Only set secure flag in production (HTTPS)
+            };
+            
+            const refreshCookieOptions = {
+                expires: 30,
+                sameSite: 'Lax' as const,
+                path: '/',
+                secure: isProduction,
+            };
+            
+            Cookies.set('accessToken', accessToken, cookieOptions);
+            Cookies.set('refreshToken', refreshToken, refreshCookieOptions);
             return user;
         } catch (error: any) {
             return rejectWithValue(error.message || 'Login failed');
