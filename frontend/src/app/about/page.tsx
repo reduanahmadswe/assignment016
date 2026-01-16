@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   Target,
@@ -17,7 +17,9 @@ import {
   Lightbulb,
   Shield,
   BookMarked,
-  LineChart
+  LineChart,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,12 +34,31 @@ const covers = [
 
 export default function AboutPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [teamSlide, setTeamSlide] = useState(0);
+  const [isTeamHovered, setIsTeamHovered] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % covers.length);
     }, 5000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Auto-scroll team carousel
+  useEffect(() => {
+    if (isTeamHovered) return;
+    const timer = setInterval(() => {
+      setTeamSlide((prev) => (prev + 1) % teamMembers.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [isTeamHovered]);
+
+  const nextTeamSlide = useCallback(() => {
+    setTeamSlide((prev) => (prev + 1) % teamMembers.length);
+  }, []);
+
+  const prevTeamSlide = useCallback(() => {
+    setTeamSlide((prev) => (prev - 1 + teamMembers.length) % teamMembers.length);
   }, []);
 
   const stats = [
@@ -409,160 +430,167 @@ export default function AboutPage() {
       </section>
 
 
-      {/* Meet Our Team Section */}
-      <section className="w-full relative overflow-hidden py-16 sm:py-24 bg-gray-50">
-        
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      {/* Meet Our Team Section - 3D Carousel */}
+      <section 
+        className="w-full relative overflow-hidden py-16 sm:py-24 bg-gray-50"
+        onMouseEnter={() => setIsTeamHovered(true)}
+        onMouseLeave={() => setIsTeamHovered(false)}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Section Header */}
-          <div className="text-center pb-16">
-            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#004aad]/10 to-[#ff7620]/10 text-[#004aad] text-sm font-semibold mb-4 border border-[#004aad]/20">
-              <Users className="w-4 h-4" />
-              Meet the minds behind ORIYET
+          <div className="text-center pb-12">
+            <span className="inline-block px-5 py-2 rounded-full bg-[#004aad]/10 text-[#004aad] text-sm font-semibold mb-4">
+              Our Team
             </span>
-            <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl text-gray-900 mb-4">
-              Our Leadership & Expert Team
-            </h1>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#004aad] mb-4">
+              Meet the Passionate Minds
+            </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Passionate researchers, educators, and innovators dedicated to empowering the next generation
+              Researchers, educators, and innovators dedicated to empowering the next generation
             </p>
-            {/* Decorative line */}
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <div className="w-12 h-1 bg-gradient-to-r from-transparent to-[#004aad] rounded-full"></div>
-              <div className="w-3 h-3 bg-[#ff7620] rounded-full animate-pulse"></div>
-              <div className="w-12 h-1 bg-gradient-to-l from-transparent to-[#004aad] rounded-full"></div>
+          </div>
+
+          {/* 3D Carousel - Show only 3 cards */}
+          <div className="relative h-[480px] md:h-[520px]" style={{ perspective: '1200px' }}>
+            <div className="absolute inset-0 flex items-center justify-center">
+              {teamMembers.map((member, index) => {
+                // Calculate the offset from current slide
+                let offset = index - teamSlide;
+                
+                // Handle wrap-around for infinite loop
+                if (offset > teamMembers.length / 2) offset -= teamMembers.length;
+                if (offset < -teamMembers.length / 2) offset += teamMembers.length;
+                
+                // Only show 3 cards: -1, 0, +1
+                const isVisible = Math.abs(offset) <= 1;
+                if (!isVisible) return null;
+
+                const isActive = offset === 0;
+                
+                // Position calculations for 3-card display
+                let translateX = offset * 320;
+                let translateZ = isActive ? 50 : -100;
+                let rotateY = offset * -15;
+                let scale = isActive ? 1 : 0.85;
+                let opacity = isActive ? 1 : 0.7;
+                let zIndex = isActive ? 30 : 20;
+
+                return (
+                  <div
+                    key={index}
+                    className="absolute transition-all duration-700 ease-out cursor-pointer"
+                    style={{
+                      transform: `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`,
+                      opacity,
+                      zIndex,
+                      transformStyle: 'preserve-3d',
+                    }}
+                    onClick={() => setTeamSlide(index)}
+                  >
+                    <div className={`w-[280px] md:w-[340px] bg-white rounded-2xl overflow-hidden shadow-xl ${isActive ? 'ring-2 ring-[#ff7620] shadow-2xl' : 'shadow-lg'} transition-shadow duration-300`}>
+                      {/* Image */}
+                      <div className="relative h-[260px] md:h-[300px] overflow-hidden">
+                        <Image
+                          src={member.image}
+                          alt={member.name}
+                          fill
+                          className="object-cover object-top"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                        
+                        {/* Name overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 p-4">
+                          <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                            {member.name}
+                          </h3>
+                          <span className="inline-block px-3 py-1 text-xs font-medium text-white bg-gradient-to-r from-[#ff7620] to-[#ff8c42] rounded-full">
+                            {member.role}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Content - Only show on active */}
+                      {isActive && (
+                        <div className="p-4 space-y-3 bg-white">
+                          <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                            {member.description}
+                          </p>
+                          
+                          {/* Social Links */}
+                          <div className="flex justify-center gap-2 pt-2 border-t border-gray-100">
+                            {member.email && member.email !== '#' && (
+                              <a href={`mailto:${member.email}`} className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:text-white hover:bg-[#EA4335] transition-all duration-300" title="Email">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                              </a>
+                            )}
+                            {member.linkedin && member.linkedin !== '#' && (
+                              <a href={member.linkedin} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:text-white hover:bg-[#0A66C2] transition-all duration-300" title="LinkedIn">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                              </a>
+                            )}
+                            {member.googleScholar && member.googleScholar !== '#' && (
+                              <a href={member.googleScholar} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:text-white hover:bg-[#4285F4] transition-all duration-300" title="Google Scholar">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/></svg>
+                              </a>
+                            )}
+                            {member.orcid && member.orcid !== '#' && (
+                              <a href={member.orcid} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:text-white hover:bg-[#A6CE39] transition-all duration-300" title="ORCID">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.025-5.325 5.025h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.284-3.722-4.097-3.722h-2.222z"/></svg>
+                              </a>
+                            )}
+                            {member.website && member.website !== '#' && (
+                              <a href={member.website} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:text-white hover:bg-[#004aad] transition-all duration-300" title="Website">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                              </a>
+                            )}
+                            {member.cv && member.cv !== '#' && (
+                              <a href={member.cv} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:text-white hover:bg-[#ff7620] transition-all duration-300" title="CV">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Team Members Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {teamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="w-full bg-white/80 backdrop-blur-sm rounded-[1.5rem] shadow-lg border border-white/50 overflow-hidden flex flex-col md:flex-row group hover:shadow-2xl hover:shadow-[#004aad]/10 hover:-translate-y-2 transition-all duration-500"
-              >
-                {/* Image Section */}
-                <div className="w-full md:w-2/5 h-72 md:h-auto md:min-h-[320px] relative overflow-hidden bg-gray-100">
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#004aad]/40 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    fill
-                    className="object-cover object-top group-hover:scale-110 transition-transform duration-700"
-                  />
-                </div>
-
-                {/* Content Section */}
-                <div className="w-full md:w-3/5 text-left p-6 space-y-3 flex flex-col justify-between relative">
-                  {/* Decorative accent */}
-                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#004aad] via-[#ff7620] to-transparent"></div>
-                  
-                  <div className="pl-3">
-                    <h3 className="text-xl text-gray-900 font-bold group-hover:text-[#004aad] transition-colors duration-300">
-                      {member.name}
-                    </h3>
-                    <span className="inline-block px-3 py-1 mt-1 mb-2 text-sm font-semibold text-white bg-gradient-to-r from-[#ff7620] to-[#ff8c42] rounded-full shadow-sm whitespace-nowrap">
-                      {member.role}
-                    </span>
-                    <p className="text-sm leading-relaxed text-gray-600 font-normal">
-                      {member.description}
-                    </p>
-                  </div>
-
-                  {/* Professional Links */}
-                  <div className="flex justify-start flex-wrap gap-2 pt-3 pl-3 border-t border-gray-100">
-                    {/* Email */}
-                    {member.email && member.email !== '#' && (
-                      <a
-                        href={`mailto:${member.email}`}
-                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#EA4335] hover:to-[#d33426] hover:shadow-lg hover:shadow-red-500/25 hover:-translate-y-1 transition-all duration-300"
-                        aria-label="Email"
-                        title="Email"
-                      >
-                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {/* LinkedIn */}
-                    {member.linkedin && member.linkedin !== '#' && (
-                      <a
-                        href={member.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#0A66C2] hover:to-[#0855a1] hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300"
-                        aria-label="LinkedIn"
-                        title="LinkedIn"
-                      >
-                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {/* Google Scholar */}
-                    {member.googleScholar && member.googleScholar !== '#' && (
-                      <a
-                        href={member.googleScholar}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#4285F4] hover:to-[#3367d6] hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300"
-                        aria-label="Google Scholar"
-                        title="Google Scholar"
-                      >
-                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {/* ORCID */}
-                    {member.orcid && member.orcid !== '#' && (
-                      <a
-                        href={member.orcid}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#A6CE39] hover:to-[#8ab82e] hover:shadow-lg hover:shadow-green-500/25 hover:-translate-y-1 transition-all duration-300"
-                        aria-label="ORCID"
-                        title="ORCID"
-                      >
-                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.025-5.325 5.025h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.284-3.722-4.097-3.722h-2.222z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {/* Personal Website */}
-                    {member.website && member.website !== '#' && (
-                      <a
-                        href={member.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#004aad] hover:to-[#003a8c] hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300"
-                        aria-label="Personal Website"
-                        title="Personal Website"
-                      >
-                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {/* CV/Resume */}
-                    {member.cv && member.cv !== '#' && (
-                      <a
-                        href={member.cv}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#ff7620] hover:to-[#e06516] hover:shadow-lg hover:shadow-orange-500/25 hover:-translate-y-1 transition-all duration-300"
-                        aria-label="CV/Resume"
-                        title="CV/Resume"
-                      >
-                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                        </svg>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <button
+              onClick={prevTeamSlide}
+              className="p-3 rounded-full bg-[#004aad] text-white hover:bg-[#003a8c] transition-all duration-300 shadow-lg"
+              aria-label="Previous team member"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            {/* Dots indicator */}
+            <div className="flex items-center gap-2">
+              {teamMembers.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setTeamSlide(index)}
+                  className={`transition-all duration-300 rounded-full ${
+                    index === teamSlide 
+                      ? 'w-8 h-3 bg-gradient-to-r from-[#ff7620] to-[#ff8c42]' 
+                      : 'w-3 h-3 bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`Go to team member ${index + 1}`}
+                />
+              ))}
+            </div>
+            
+            <button
+              onClick={nextTeamSlide}
+              className="p-3 rounded-full bg-[#004aad] text-white hover:bg-[#003a8c] transition-all duration-300 shadow-lg"
+              aria-label="Next team member"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </section>
