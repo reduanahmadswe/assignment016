@@ -1242,7 +1242,7 @@ export class AdminService {
 
   // Payment Management
   async getPaymentStats(eventId?: number) {
-    const where = eventId ? { eventId } : {};
+    const where = eventId ? { registration: { eventId } } : {};
 
     const [totalRevenue, totalTransactions, successfulTransactions, pendingTransactions] = await Promise.all([
       prisma.paymentTransaction.aggregate({
@@ -1275,7 +1275,7 @@ export class AdminService {
     const where: any = {};
 
     if (eventId) {
-      where.eventId = eventId;
+      where.registration = { eventId };
     }
 
     if (status) {
@@ -1298,11 +1298,13 @@ export class AdminService {
           user: {
             select: { id: true, name: true, email: true },
           },
-          event: {
-            select: { id: true, title: true, slug: true },
-          },
           registration: {
-            select: { registrationNumber: true },
+            select: {
+              registrationNumber: true,
+              event: {
+                select: { id: true, title: true, slug: true },
+              },
+            },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -1318,7 +1320,7 @@ export class AdminService {
         transactionId: p.transactionId,
         invoiceId: p.invoiceId,
         user: p.user,
-        event: p.event,
+        event: p.registration?.event,
         registrationNumber: p.registration?.registrationNumber,
         amount: p.amount,
         fee: p.fee || 0,
@@ -1347,7 +1349,7 @@ export class AdminService {
     const where: any = {};
 
     if (params.eventId) {
-      where.eventId = params.eventId;
+      where.registration = { eventId: params.eventId };
     }
 
     if (params.status) {
@@ -1368,11 +1370,13 @@ export class AdminService {
         user: {
           select: { name: true, email: true },
         },
-        event: {
-          select: { title: true },
-        },
         registration: {
-          select: { registrationNumber: true },
+          select: {
+            registrationNumber: true,
+            event: {
+              select: { title: true },
+            },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -1399,7 +1403,7 @@ export class AdminService {
       invoiceId: p.invoiceId,
       userName: p.user.name,
       userEmail: p.user.email,
-      eventTitle: p.event.title,
+      eventTitle: p.registration?.event?.title || 'N/A',
       registrationNumber: p.registration?.registrationNumber || 'N/A',
       amount: p.amount,
       status: p.status,
