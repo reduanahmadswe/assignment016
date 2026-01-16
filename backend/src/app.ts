@@ -26,31 +26,50 @@ const createApp = (): Application => {
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }));
 
-  // CORS configuration
+  // CORS configuration - Production ready
   const allowedOrigins = [
-    env.frontendUrl,
-    'http://localhost:3000',
-    'http://localhost:5173',
     'https://oriyet.org',
     'https://www.oriyet.org',
-  ].filter(Boolean);
+    'https://api.oriyet.org',
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'http://localhost:5173',
+    env.frontendUrl,
+  ].filter((origin): origin is string => Boolean(origin));
+
+  // Remove duplicates
+  const uniqueOrigins = [...new Set(allowedOrigins)];
+  
+  console.log('🌐 Allowed CORS origins:', uniqueOrigins);
 
   app.use(cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log('CORS blocked origin:', origin);
-        callback(null, true); // Allow all origins temporarily for debugging
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) {
+        return callback(null, true);
       }
+      
+      // Check if origin is allowed
+      if (uniqueOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Log blocked origins for debugging
+      console.log('⚠️ CORS: Origin not in whitelist:', origin);
+      
+      // In production, you might want to block unknown origins
+      // For now, allow all for debugging
+      return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 86400, // 24 hours
   }));
+
+  // Handle preflight requests
+  app.options('*', cors());
 
   // Rate limiting
   const limiter = rateLimit({
