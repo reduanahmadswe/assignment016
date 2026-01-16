@@ -47,6 +47,82 @@ export default function AboutPage() {
     { label: 'Countries Reached', value: '15+', icon: Target },
   ];
 
+  // Team Members Data
+  const teamMembers = [
+    {
+      name: 'Dr. Rauful Alam',
+      role: 'Co-founder & Lead Scientist',
+      description: 'Staff Scientist (Lead Medicinal Chemist) at University of Chicago, USA. Leading groundbreaking research in medicinal chemistry and drug discovery.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768449989/oriyet/avatars/user-32-1768449988181.jpg',
+      email: 'rauful.alam15@gmail.com',
+      linkedin: 'https://www.linkedin.com/in/rauful-alam-phd-12536365/',
+      googleScholar: 'https://scholar.google.com/citations?user=PrrE9dQAAAAJ&hl=en',
+      orcid: '#',
+      website: 'http://rauful-alam.blogspot.com/',
+      cv: '#'
+    },
+    {
+      name: 'Dr. Azizul Haque',
+      role: 'Co-founder & Professor',
+      description: 'Assistant Professor at Yeungnam University, Korea. Specializing in advanced research methodologies and academic excellence in higher education.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768552891/azizul_oeuzta.jpg',
+      email: 'azizul.bau10@gmail.com',
+      linkedin: 'https://www.linkedin.com/in/azizul-haque-phd-740037109/',
+      googleScholar: 'https://scholar.google.co.kr/citations?hl=en&user=xDbgVk4AAAAJ&view_op=list_works',
+      orcid: 'https://orcid.org/0000-0002-5158-4558',
+      website: 'https://www.haqueazizul.com/',
+      cv: '#'
+    },
+    {
+      name: 'Samia Malik',
+      role: 'Host, Visual Designer, Emailing',
+      description: 'Software Engineering student at Daffodil International University. Serves as host and visual designer at ORIYET, contributing to planning, coordination, and creative execution with innovative ideas.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768576364/0_yn6uyu.png',
+      email: 'samia.malik2003@gmail.com',
+      linkedin: 'https://www.linkedin.com/in/samia-malik',
+      googleScholar: '#',
+      orcid: '#',
+      website: '#',
+      cv: '#'
+    },
+    {
+      name: 'Kazi Sadia Akter',
+      role: 'Host, Emailing, Social media manager',
+      description: 'BSS student in Peace, Conflict & Human Rights at Bangladesh University of Professionals. Skilled in research, management, and event coordination with a focus on inclusive peacebuilding.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768576545/o_fuysx7.png',
+      email: 'kazisadiabushra@gmail.com',
+      linkedin: 'https://www.linkedin.com/in/kazi-sadia-akter/',
+      googleScholar: '#',
+      orcid: '#',
+      website: 'https://kazi-sadia-akter.lovable.app/',
+      cv: 'https://drive.google.com/file/d/1GmJjmIZflTUsp_sxuVHxJldiYZrdfNVA/view?usp=sharing'
+    },
+    {
+      name: 'Anonya Paul',
+      role: 'Development Specialist',
+      description: 'MBA student specializing in Sustainable Development and Management. Passionate about integrating education, sustainability, and data-driven approaches for inclusive community growth.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768576995/0_eaqopy.jpg',
+      email: 'anonya.sms2024@nalandauniv.edu.in',
+      linkedin: 'https://www.linkedin.com/in/anonya-paul',
+      googleScholar: '#',
+      orcid: '#',
+      website: '#',
+      cv: 'https://drive.google.com/file/d/1EUb-7X9MkzPBxBFW35FTBIMIK_Wg5DuU/view?usp=sharing'
+    },
+    {
+      name: 'Marzia Maherin',
+      role: 'Host, Emailing, Social media manager',
+      description: 'CSE student at Southeast University with a strong passion for technology and innovation. Known for adaptability, problem-solving mindset, and delivering high-quality work.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768577172/0_ywwlqo.jpg',
+      email: 'marziamaherin350@gmail.com',
+      linkedin: 'https://www.linkedin.com/in/marzia-maherin-453400365',
+      googleScholar: '#',
+      orcid: '#',
+      website: '#',
+      cv: 'https://drive.google.com/file/d/18u7lXq3CzBmoNdKp8aSCIoNqe6h9QOgV/view?usp=sharing'
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -265,7 +341,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      
+
 
       {/* Image Gallery Section */}
       <section className="py-12 md:py-20 lg:py-24 bg-gray-50">
@@ -304,7 +380,7 @@ export default function AboutPage() {
             <div className="order-1 md:order-2">
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Building Connections, Creating Impact</h3>
               <p className="text-gray-600 leading-relaxed mb-6">
-                From interactive workshops to inspiring seminars, ORIYET brings together students, researchers, and global experts. 
+                From interactive workshops to inspiring seminars, ORIYET brings together students, researchers, and global experts.
                 Our events foster collaboration, ignite curiosity, and pave the way for groundbreaking research and innovation.
               </p>
               <div className="grid sm:grid-cols-2 gap-6">
@@ -332,154 +408,161 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Learn from Experts Section */}
-      <section className="py-16 md:py-24 bg-gray-50">
-        <div className="container-custom">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-900 mb-4">
-              Meet Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00C853] to-[#00A843]">Team</span>
-            </h2>
+
+      {/* Meet Our Team Section */}
+      <section className="w-full relative overflow-hidden py-16 sm:py-24 bg-gray-50">
+        
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <div className="text-center pb-16">
+            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#004aad]/10 to-[#ff7620]/10 text-[#004aad] text-sm font-semibold mb-4 border border-[#004aad]/20">
+              <Users className="w-4 h-4" />
+              Meet the minds behind ORIYET
+            </span>
+            <h1 className="font-bold text-3xl md:text-4xl lg:text-5xl text-gray-900 mb-4">
+              Our Leadership & Expert Team
+            </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Passionate educators and technologists dedicated to transforming education.
+              Passionate researchers, educators, and innovators dedicated to empowering the next generation
             </p>
+            {/* Decorative line */}
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <div className="w-12 h-1 bg-gradient-to-r from-transparent to-[#004aad] rounded-full"></div>
+              <div className="w-3 h-3 bg-[#ff7620] rounded-full animate-pulse"></div>
+              <div className="w-12 h-1 bg-gradient-to-l from-transparent to-[#004aad] rounded-full"></div>
+            </div>
           </div>
 
-          {/* Team Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-8 items-start">
+          {/* Team Members Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {teamMembers.map((member, index) => (
+              <div
+                key={index}
+                className="w-full bg-white/80 backdrop-blur-sm rounded-[1.5rem] shadow-lg border border-white/50 overflow-hidden flex flex-col md:flex-row group hover:shadow-2xl hover:shadow-[#004aad]/10 hover:-translate-y-2 transition-all duration-500"
+              >
+                {/* Image Section */}
+                <div className="w-full md:w-2/5 h-72 md:h-auto md:min-h-[320px] relative overflow-hidden bg-gray-100">
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#004aad]/40 via-transparent to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover object-top group-hover:scale-110 transition-transform duration-700"
+                  />
+                </div>
 
-            {/* Member 1 - Staggered on Desktop only */}
-            <div className="relative group md:pt-16">
-              <div className="hidden md:flex absolute top-0 left-1/2 transform -translate-x-1/2 flex-col items-center z-10 transition-all duration-300 group-hover:-translate-y-2">
-                <div className="w-px h-12 bg-gray-300 border-l-2 border-dashed border-gray-400"></div>
-                <div className="w-3 h-3 rounded-full bg-red-500 shadow-md mt-[-2px]"></div>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group-hover:-translate-y-1 relative z-0 h-full">
-                <div className="p-6 text-center">
-                  <div className="w-28 h-28 mx-auto mb-5 rounded-full overflow-hidden shadow-md ring-4 ring-gray-50">
-                    <Image
-                      src="https://via.placeholder.com/150"
-                      alt="Dr. Rauful Alam"
-                      width={112}
-                      height={112}
-                      className="object-cover w-full h-full"
-                    />
+                {/* Content Section */}
+                <div className="w-full md:w-3/5 text-left p-6 space-y-3 flex flex-col justify-between relative">
+                  {/* Decorative accent */}
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#004aad] via-[#ff7620] to-transparent"></div>
+                  
+                  <div className="pl-3">
+                    <h3 className="text-xl text-gray-900 font-bold group-hover:text-[#004aad] transition-colors duration-300">
+                      {member.name}
+                    </h3>
+                    <span className="inline-block px-3 py-1 mt-1 mb-2 text-sm font-semibold text-white bg-gradient-to-r from-[#ff7620] to-[#ff8c42] rounded-full shadow-sm whitespace-nowrap">
+                      {member.role}
+                    </span>
+                    <p className="text-sm leading-relaxed text-gray-600 font-normal">
+                      {member.description}
+                    </p>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Dr. Rauful Alam</h3>
-                  <p className="text-xs font-bold text-[#ff7620] uppercase tracking-wider mb-3">Co-founder</p>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4 min-h-[4rem]">
-                    Staff Scientist (Lead Medicinal Chemist)<br />
-                    University of Chicago, USA
-                  </p>
-                  <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-100">
-                    <a href="#" className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all"><Globe2 className="w-4 h-4" /></a>
-                    <a href="#" className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-                    </a>
+
+                  {/* Professional Links */}
+                  <div className="flex justify-start flex-wrap gap-2 pt-3 pl-3 border-t border-gray-100">
+                    {/* Email */}
+                    {member.email && member.email !== '#' && (
+                      <a
+                        href={`mailto:${member.email}`}
+                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#EA4335] hover:to-[#d33426] hover:shadow-lg hover:shadow-red-500/25 hover:-translate-y-1 transition-all duration-300"
+                        aria-label="Email"
+                        title="Email"
+                      >
+                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {/* LinkedIn */}
+                    {member.linkedin && member.linkedin !== '#' && (
+                      <a
+                        href={member.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#0A66C2] hover:to-[#0855a1] hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300"
+                        aria-label="LinkedIn"
+                        title="LinkedIn"
+                      >
+                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {/* Google Scholar */}
+                    {member.googleScholar && member.googleScholar !== '#' && (
+                      <a
+                        href={member.googleScholar}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#4285F4] hover:to-[#3367d6] hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300"
+                        aria-label="Google Scholar"
+                        title="Google Scholar"
+                      >
+                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M5.242 13.769L0 9.5 12 0l12 9.5-5.242 4.269C17.548 11.249 14.978 9.5 12 9.5c-2.977 0-5.548 1.748-6.758 4.269zM12 10a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {/* ORCID */}
+                    {member.orcid && member.orcid !== '#' && (
+                      <a
+                        href={member.orcid}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#A6CE39] hover:to-[#8ab82e] hover:shadow-lg hover:shadow-green-500/25 hover:-translate-y-1 transition-all duration-300"
+                        aria-label="ORCID"
+                        title="ORCID"
+                      >
+                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.525.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.025-5.325 5.025h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.284-3.722-4.097-3.722h-2.222z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {/* Personal Website */}
+                    {member.website && member.website !== '#' && (
+                      <a
+                        href={member.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#004aad] hover:to-[#003a8c] hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-1 transition-all duration-300"
+                        aria-label="Personal Website"
+                        title="Personal Website"
+                      >
+                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                      </a>
+                    )}
+                    {/* CV/Resume */}
+                    {member.cv && member.cv !== '#' && (
+                      <a
+                        href={member.cv}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-gray-400 hover:text-white hover:from-[#ff7620] hover:to-[#e06516] hover:shadow-lg hover:shadow-orange-500/25 hover:-translate-y-1 transition-all duration-300"
+                        aria-label="CV/Resume"
+                        title="CV/Resume"
+                      >
+                        <svg className="w-5 h-5" aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Member 2 */}
-            <div className="relative group md:pt-32">
-              <div className="hidden md:flex absolute top-0 left-1/2 transform -translate-x-1/2 flex-col items-center z-10 transition-all duration-300 group-hover:-translate-y-2">
-                <div className="w-px h-28 bg-gray-300 border-l-2 border-dashed border-gray-400"></div>
-                <div className="w-3 h-3 rounded-full bg-blue-500 shadow-md mt-[-2px]"></div>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group-hover:-translate-y-1 relative z-0 h-full">
-                <div className="p-6 text-center">
-                  <div className="w-28 h-28 mx-auto mb-5 rounded-full overflow-hidden shadow-md ring-4 ring-gray-50">
-                    <Image
-                      src="https://via.placeholder.com/150"
-                      alt="Dr. Azizul Haque"
-                      width={112}
-                      height={112}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Dr. Azizul Haque</h3>
-                  <p className="text-xs font-bold text-[#ff7620] uppercase tracking-wider mb-3">Co-founder</p>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4 min-h-[4rem]">
-                    Assistant Professor<br />
-                    Yeungnam University, Korea
-                  </p>
-                  <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-100">
-                    <a href="#" className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Member 3 */}
-            <div className="relative group md:pt-16">
-              <div className="hidden md:flex absolute top-0 left-1/2 transform -translate-x-1/2 flex-col items-center z-10 transition-all duration-300 group-hover:-translate-y-2">
-                <div className="w-px h-12 bg-gray-300 border-l-2 border-dashed border-gray-400"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500 shadow-md mt-[-2px]"></div>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group-hover:-translate-y-1 relative z-0 h-full">
-                <div className="p-6 text-center">
-                  <div className="w-28 h-28 mx-auto mb-5 rounded-full overflow-hidden shadow-md ring-4 ring-gray-50">
-                    <Image
-                      src="https://via.placeholder.com/150"
-                      alt="Team Member"
-                      width={112}
-                      height={112}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Demo Name</h3>
-                  <p className="text-xs font-bold text-[#ff7620] uppercase tracking-wider mb-3">Advisor</p>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4 min-h-[4rem]">
-                    BDS, MDS - Periodontology<br />
-                    14 Years Experience
-                  </p>
-                  <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-100">
-                    <a href="#" className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Member 4 */}
-            <div className="relative group md:pt-24">
-              <div className="hidden md:flex absolute top-0 left-1/2 transform -translate-x-1/2 flex-col items-center z-10 transition-all duration-300 group-hover:-translate-y-2">
-                <div className="w-px h-20 bg-gray-300 border-l-2 border-dashed border-gray-400"></div>
-                <div className="w-3 h-3 rounded-full bg-orange-500 shadow-md mt-[-2px]"></div>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group-hover:-translate-y-1 relative z-0 h-full">
-                <div className="p-6 text-center">
-                  <div className="w-28 h-28 mx-auto mb-5 rounded-full overflow-hidden shadow-md ring-4 ring-gray-50">
-                    <Image
-                      src="https://via.placeholder.com/150"
-                      alt="Team Member"
-                      width={112}
-                      height={112}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">Demo Name</h3>
-                  <p className="text-xs font-bold text-[#ff7620] uppercase tracking-wider mb-3">Advisor</p>
-                  <p className="text-xs text-gray-600 leading-relaxed mb-4 min-h-[4rem]">
-                    BDS, MDS - Periodontology<br />
-                    16 Years Experience
-                  </p>
-                  <div className="flex items-center justify-center gap-3 pt-4 border-t border-gray-100">
-                    <a href="#" className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-[#0A66C2] hover:text-white transition-all">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            ))}
           </div>
         </div>
       </section>
