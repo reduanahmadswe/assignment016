@@ -119,18 +119,6 @@ export default function AboutPage() {
       cv: 'https://drive.google.com/file/d/1GmJjmIZflTUsp_sxuVHxJldiYZrdfNVA/view?usp=sharing'
     },
     {
-      name: 'Anonya Paul',
-      role: 'Development Specialist',
-      description: 'MBA student specializing in Sustainable Development and Management. Passionate about integrating education, sustainability, and data-driven approaches for inclusive community growth.',
-      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1768576995/0_eaqopy.jpg',
-      email: 'anonya.sms2024@nalandauniv.edu.in',
-      linkedin: 'https://www.linkedin.com/in/anonya-paul',
-      googleScholar: '#',
-      orcid: '#',
-      website: '#',
-      cv: 'https://drive.google.com/file/d/1EUb-7X9MkzPBxBFW35FTBIMIK_Wg5DuU/view?usp=sharing'
-    },
-    {
       name: 'Marzia Maherin',
       role: 'Host, Emailing, Social media manager',
       description: 'CSE student at Southeast University with a strong passion for technology and innovation. Known for adaptability, problem-solving mindset, and delivering high-quality work.',
