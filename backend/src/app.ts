@@ -28,7 +28,7 @@ const createApp = (): Application => {
 
   // CORS configuration
   app.use(cors({
-    origin: env.frontendUrl,
+    origin: [env.frontendUrl, 'http://localhost:3000' , "https://oriyet.org"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
