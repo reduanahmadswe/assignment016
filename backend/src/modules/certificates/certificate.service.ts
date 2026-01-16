@@ -291,76 +291,84 @@ export class CertificateService {
     const footerY = height - 120;
     const signatureY = footerY;
 
-    // Get signature data from event or use defaults
-    const sig1Name: string = cert.event.signature1Name || 'Reduan Ahmad';
-    const sig1Title: string = cert.event.signature1Title || 'DIRECTOR';
+    // Get signature data from event (no defaults - only show if configured)
+    const sig1Name: string | null = cert.event.signature1Name || null;
+    const sig1Title: string | null = cert.event.signature1Title || null;
     const sig1Image: string | null = cert.event.signature1Image || null;
-    const sig2Name: string = cert.event.signature2Name || 'Orijeet Admin';
-    const sig2Title: string = cert.event.signature2Title || 'SECRETARY';
+    const sig2Name: string | null = cert.event.signature2Name || null;
+    const sig2Title: string | null = cert.event.signature2Title || null;
     const sig2Image: string | null = cert.event.signature2Image || null;
 
-    // LEFT: First Signatory
-    // If signature image exists, show image above the name
-    if (sig1Image) {
-      try {
-        // Fetch image from URL
-        const response = await fetch(sig1Image);
-        const arrayBuffer = await response.arrayBuffer();
-        const imageBuffer = Buffer.from(arrayBuffer);
-        doc.image(imageBuffer, 125, signatureY - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
-      } catch (e) {
-        console.log('Failed to load signature 1 image:', e);
+    // LEFT: First Signatory (only show if configured)
+    if (sig1Name) {
+      // If signature image exists, show image above the name
+      if (sig1Image) {
+        try {
+          // Fetch image from URL
+          const response = await fetch(sig1Image);
+          const arrayBuffer = await response.arrayBuffer();
+          const imageBuffer = Buffer.from(arrayBuffer);
+          doc.image(imageBuffer, 125, signatureY - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
+        } catch (e) {
+          console.log('Failed to load signature 1 image:', e);
+        }
+      }
+      
+      doc.font('GreatVibes')
+        .fontSize(24)
+        .fillColor('#1a1a1a')
+        .text(sig1Name, 100, signatureY, { align: 'center', width: 150 });
+
+      // Line
+      doc.lineWidth(1)
+        .strokeColor('#d4af37')
+        .moveTo(100, signatureY + 25)
+        .lineTo(250, signatureY + 25)
+        .stroke();
+
+      // Title
+      if (sig1Title) {
+        doc.font('Helvetica-Bold')
+          .fontSize(8)
+          .fillColor('#888888')
+          .text(String(sig1Title).toUpperCase(), 100, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
       }
     }
-    
-    doc.font('GreatVibes')
-      .fontSize(24)
-      .fillColor('#1a1a1a')
-      .text(sig1Name, 100, signatureY, { align: 'center', width: 150 });
 
-    // Line
-    doc.lineWidth(1)
-      .strokeColor('#d4af37')
-      .moveTo(100, signatureY + 25)
-      .lineTo(250, signatureY + 25)
-      .stroke();
+    // RIGHT: Second Signatory (only show if configured)
+    if (sig2Name) {
+      // If signature image exists, show image above the name
+      if (sig2Image) {
+        try {
+          const response = await fetch(sig2Image);
+          const arrayBuffer = await response.arrayBuffer();
+          const imageBuffer = Buffer.from(arrayBuffer);
+          doc.image(imageBuffer, width - 225, signatureY - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
+        } catch (e) {
+          console.log('Failed to load signature 2 image:', e);
+        }
+      }
+      
+      doc.font('GreatVibes')
+        .fontSize(24)
+        .fillColor('#1a1a1a')
+        .text(sig2Name, width - 250, signatureY, { align: 'center', width: 150 });
 
-    // Title
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#888888')
-      .text(sig1Title.toUpperCase(), 100, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
+      // Line
+      doc.lineWidth(1)
+        .strokeColor('#d4af37')
+        .moveTo(width - 250, signatureY + 25)
+        .lineTo(width - 100, signatureY + 25)
+        .stroke();
 
-    // RIGHT: Second Signatory
-    // If signature image exists, show image above the name
-    if (sig2Image) {
-      try {
-        const response = await fetch(sig2Image);
-        const arrayBuffer = await response.arrayBuffer();
-        const imageBuffer = Buffer.from(arrayBuffer);
-        doc.image(imageBuffer, width - 225, signatureY - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
-      } catch (e) {
-        console.log('Failed to load signature 2 image:', e);
+      // Title
+      if (sig2Title) {
+        doc.font('Helvetica-Bold')
+          .fontSize(8)
+          .fillColor('#888888')
+          .text(String(sig2Title).toUpperCase(), width - 250, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
       }
     }
-    
-    doc.font('GreatVibes')
-      .fontSize(24)
-      .fillColor('#1a1a1a')
-      .text(sig2Name, width - 250, signatureY, { align: 'center', width: 150 });
-
-    // Line
-    doc.lineWidth(1)
-      .strokeColor('#d4af37')
-      .moveTo(width - 250, signatureY + 25)
-      .lineTo(width - 100, signatureY + 25)
-      .stroke();
-
-    // Title
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#888888')
-      .text(sig2Title.toUpperCase(), width - 250, signatureY + 30, { align: 'center', width: 150, characterSpacing: 1 });
 
 
     // CENTER: QR Code
