@@ -313,7 +313,7 @@ export class CertificateService {
           console.log('Failed to load signature 1 image:', e);
         }
       }
-      
+
       doc.font('GreatVibes')
         .fontSize(24)
         .fillColor('#1a1a1a')
@@ -348,7 +348,7 @@ export class CertificateService {
           console.log('Failed to load signature 2 image:', e);
         }
       }
-      
+
       doc.font('GreatVibes')
         .fontSize(24)
         .fillColor('#1a1a1a')
@@ -418,6 +418,13 @@ export class CertificateService {
             eventType: true,
             startDate: true,
             endDate: true,
+            // Certificate Signature Fields
+            signature1Name: true,
+            signature1Title: true,
+            signature1Image: true,
+            signature2Name: true,
+            signature2Title: true,
+            signature2Image: true,
           },
         },
       },
@@ -460,7 +467,20 @@ export class CertificateService {
         },
         include: {
           user: { select: { name: true } },
-          event: { select: { title: true, eventType: true, startDate: true, endDate: true } },
+          event: {
+            select: {
+              title: true,
+              eventType: true,
+              startDate: true,
+              endDate: true,
+              signature1Name: true,
+              signature1Title: true,
+              signature1Image: true,
+              signature2Name: true,
+              signature2Title: true,
+              signature2Image: true,
+            }
+          },
         },
         take: 5
       });
@@ -533,6 +553,14 @@ export class CertificateService {
         event_type: certificate.event.eventType,
         issued_at: certificate.issuedAt,
         event_date: certificate.event.startDate,
+        event: {
+          signature1Name: certificate.event.signature1Name,
+          signature1Title: certificate.event.signature1Title,
+          signature1Image: certificate.event.signature1Image,
+          signature2Name: certificate.event.signature2Name,
+          signature2Title: certificate.event.signature2Title,
+          signature2Image: certificate.event.signature2Image,
+        },
       },
     };
   }
@@ -569,6 +597,14 @@ export class CertificateService {
           select: {
             title: true,
             eventType: true,
+            endDate: true,
+            // Certificate Signature Fields
+            signature1Name: true,
+            signature1Title: true,
+            signature1Image: true,
+            signature2Name: true,
+            signature2Title: true,
+            signature2Image: true,
           },
         },
       },

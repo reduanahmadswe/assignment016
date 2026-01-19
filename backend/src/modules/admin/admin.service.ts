@@ -836,6 +836,14 @@ export class AdminService {
       eventContactEmail: data.eventContactEmail || null,
       eventContactPhone: data.eventContactPhone || null,
       participantInstructions: data.participantInstructions || null,
+
+      // Certificate Signature Fields
+      signature1Name: data.signature1_name || data.signature1Name || null,
+      signature1Title: data.signature1_title || data.signature1Title || null,
+      signature1Image: data.signature1_image || data.signature1Image || null,
+      signature2Name: data.signature2_name || data.signature2Name || null,
+      signature2Title: data.signature2_title || data.signature2Title || null,
+      signature2Image: data.signature2_image || data.signature2Image || null,
     };
 
     // Handle venue for offline/hybrid events
@@ -993,10 +1001,19 @@ export class AdminService {
       eventData.guests = guests && guests.length > 0 ? JSON.stringify(guests) : null;
     }
 
+    // Handle certificate signature fields
+    if (data.signature1_name !== undefined) eventData.signature1Name = data.signature1_name || null;
+    if (data.signature1_title !== undefined) eventData.signature1Title = data.signature1_title || null;
+    if (data.signature1_image !== undefined) eventData.signature1Image = data.signature1_image || null;
+    if (data.signature2_name !== undefined) eventData.signature2Name = data.signature2_name || null;
+    if (data.signature2_title !== undefined) eventData.signature2Title = data.signature2_title || null;
+    if (data.signature2_image !== undefined) eventData.signature2Image = data.signature2_image || null;
+
     const event = await prisma.event.update({
       where: { id },
       data: eventData,
     });
+
 
     return event;
   }

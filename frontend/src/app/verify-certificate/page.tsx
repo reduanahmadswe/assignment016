@@ -19,6 +19,14 @@ interface VerificationResult {
       event_type?: string;
       issued_at: string;
       event_date?: string;
+      event?: {
+        signature1Name?: string | null;
+        signature1Title?: string | null;
+        signature1Image?: string | null;
+        signature2Name?: string | null;
+        signature2Title?: string | null;
+        signature2Image?: string | null;
+      };
     }
   };
   message?: string;
@@ -240,7 +248,18 @@ function VerifyContent() {
                               left: 0
                             }}
                           >
-                            <ClassicCertificate data={certData} qrData={qrData} />
+                            <ClassicCertificate
+                              data={certData}
+                              qrData={qrData}
+                              signatures={{
+                                signature1Name: result.data.certificate.event?.signature1Name,
+                                signature1Title: result.data.certificate.event?.signature1Title,
+                                signature1Image: result.data.certificate.event?.signature1Image,
+                                signature2Name: result.data.certificate.event?.signature2Name,
+                                signature2Title: result.data.certificate.event?.signature2Title,
+                                signature2Image: result.data.certificate.event?.signature2Image,
+                              }}
+                            />
                           </div>
                         </div>
                       </div>

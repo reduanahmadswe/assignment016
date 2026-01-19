@@ -14,6 +14,14 @@ interface CertificateProps {
         organization?: string;
     };
     qrData: string;
+    signatures?: {
+        signature1Name?: string | null;
+        signature1Title?: string | null;
+        signature1Image?: string | null;
+        signature2Name?: string | null;
+        signature2Title?: string | null;
+        signature2Image?: string | null;
+    };
 }
 
 // Helper for Title Case
@@ -24,7 +32,7 @@ const toTitleCase = (str: string) => {
     );
 };
 
-export const ClassicCertificate: React.FC<CertificateProps> = ({ data, qrData }) => {
+export const ClassicCertificate: React.FC<CertificateProps> = ({ data, qrData, signatures }) => {
 
     // Formatting name and date
     const formattedName = toTitleCase(data.userName);
@@ -32,6 +40,11 @@ export const ClassicCertificate: React.FC<CertificateProps> = ({ data, qrData })
     const formattedDate = !isNaN(dateObj.getTime())
         ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
         : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Check if we have any signatures configured
+    const hasSignature1 = signatures?.signature1Name;
+    const hasSignature2 = signatures?.signature2Name;
+    const hasAnySignature = hasSignature1 || hasSignature2;
 
     return (
         <div className="w-full h-full relative flex flex-col items-center justify-center overflow-hidden font-sans">
@@ -58,65 +71,97 @@ export const ClassicCertificate: React.FC<CertificateProps> = ({ data, qrData })
             <div className="absolute top-[56%] left-0 w-full text-center z-10 px-16">
                 <div className="text-gray-900 text-lg font-medium leading-relaxed max-w-6xl mx-auto">
                     For successfully completing the Online Class on
-                    <span className="font-bold text-black mx-1">“{data.eventTitle}”</span>
+                    <span className="font-bold text-black mx-1">"{data.eventTitle}"</span>
                     on <span className="font-bold">{formattedDate}</span>
                 </div>
             </div>
 
             {/* 3. Footer Content: Signatures & QR Code */}
-            <div className="absolute bottom-[9%] left-0 w-full flex justify-between items-end px-20 z-10">
+            {hasAnySignature && (
+                <div className="absolute bottom-[9%] left-0 w-full flex justify-between items-end px-20 z-10">
 
-                {/* Left Signature - Dr. Rauful Alam */}
-                <div className="flex flex-col items-center text-center w-72">
-                    {/* Signature Text (Script) */}
-                    <div className="h-10 mb-1 w-full relative flex items-center justify-center">
-                        <span className="font-script text-4xl text-gray-800 transform -rotate-3" style={{ fontFamily: "'Great Vibes', cursive" }}>
-                            Rauful Alam
-                        </span>
+                    {/* Left Signature - First Signatory (only if configured) */}
+                    {hasSignature1 ? (
+                        <div className="flex flex-col items-center text-center w-72">
+                            {/* Signature Image (if provided) */}
+                            {signatures?.signature1Image && (
+                                <div className="h-10 mb-1 w-full relative flex items-center justify-center">
+                                    <img
+                                        src={signatures.signature1Image}
+                                        alt="Signature 1"
+                                        className="h-10 object-contain"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Signature Text (Script) - fallback if no image */}
+                            {!signatures?.signature1Image && (
+                                <div className="h-10 mb-1 w-full relative flex items-center justify-center">
+                                    <span className="font-script text-4xl text-gray-800 transform -rotate-3" style={{ fontFamily: "'Great Vibes', cursive" }}>
+                                        {signatures?.signature1Name}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Dynamic Line */}
+                            <div className="w-48 h-0.5 bg-[#fd7e14] mb-1 mx-auto opacity-80"></div>
+
+                            <h4 className="font-bold text-[#004085] text-lg">{signatures?.signature1Name}</h4>
+                            {signatures?.signature1Title && (
+                                <div className="text-xs text-gray-700 font-bold mt-0.5">{signatures.signature1Title}</div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="w-72"></div>
+                    )}
+
+                    {/* Center - QR Code */}
+                    <div className="flex flex-col items-center pb-2">
+                        <div className="bg-white p-1 border border-[#d4af37] shadow-sm rounded-sm">
+                            <QRCodeSVG value={qrData} size={70} level="M" fgColor="#004085" />
+                        </div>
+                        <div className="text-[9px] mt-1 font-bold text-[#004085] tracking-widest uppercase">Scan to Verify</div>
+                        <div className="text-[10px] font-bold text-[#004085] mt-1">{data.certificateId}</div>
                     </div>
 
-                    {/* Dynamic Line */}
-                    <div className="w-48 h-0.5 bg-[#fd7e14] mb-1 mx-auto opacity-80"></div>
+                    {/* Right Signature - Second Signatory (only if configured) */}
+                    {hasSignature2 ? (
+                        <div className="flex flex-col items-center text-center w-72">
+                            {/* Signature Image (if provided) */}
+                            {signatures?.signature2Image && (
+                                <div className="h-10 mb-1 w-full relative flex items-center justify-center">
+                                    <img
+                                        src={signatures.signature2Image}
+                                        alt="Signature 2"
+                                        className="h-10 object-contain"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                </div>
+                            )}
 
-                    <h4 className="font-bold text-[#004085] text-lg">Dr. Rauful Alam</h4>
-                    <div className="text-xs text-gray-700 font-bold mt-0.5">Co-founder of ORIYET</div>
-                    <div className="text-[10px] text-gray-600 leading-tight mt-0.5">
-                        Staff Scientist,<br />
-                        Center for Chemical Biology and Therapeutics,<br />
-                        University of Chicago, USA
-                    </div>
+                            {/* Signature Text (Script) - fallback if no image */}
+                            {!signatures?.signature2Image && (
+                                <div className="h-10 mb-1 w-full relative flex items-center justify-center">
+                                    <span className="font-script text-4xl text-gray-800 transform -rotate-6" style={{ fontFamily: "'Great Vibes', cursive" }}>
+                                        {signatures?.signature2Name}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Dynamic Line */}
+                            <div className="w-48 h-0.5 bg-[#fd7e14] mb-1 mx-auto opacity-80"></div>
+
+                            <h4 className="font-bold text-[#004085] text-lg">{signatures?.signature2Name}</h4>
+                            {signatures?.signature2Title && (
+                                <div className="text-xs text-gray-700 font-bold mt-0.5">{signatures.signature2Title}</div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="w-72"></div>
+                    )}
                 </div>
-
-                {/* Center - QR Code */}
-                <div className="flex flex-col items-center pb-2">
-                    <div className="bg-white p-1 border border-[#d4af37] shadow-sm rounded-sm">
-                        <QRCodeSVG value={qrData} size={70} level="M" fgColor="#004085" />
-                    </div>
-                    <div className="text-[9px] mt-1 font-bold text-[#004085] tracking-widest uppercase">Scan to Verify</div>
-                    <div className="text-[10px] font-bold text-[#004085] mt-1">{data.certificateId}</div>
-                </div>
-
-                {/* Right Signature - Gulam Sarwar Chuwdhury */}
-                <div className="flex flex-col items-center text-center w-72">
-                    {/* Signature Text (Script) */}
-                    <div className="h-10 mb-1 w-full relative flex items-center justify-center">
-                        <span className="font-script text-4xl text-gray-800 transform -rotate-6" style={{ fontFamily: "'Great Vibes', cursive" }}>
-                            Gulam Sarwar
-                        </span>
-                    </div>
-
-                    {/* Dynamic Line */}
-                    <div className="w-48 h-0.5 bg-[#fd7e14] mb-1 mx-auto opacity-80"></div>
-
-                    <h4 className="font-bold text-[#004085] text-lg">Gulam Sarwar Chuwdhury</h4>
-                    <div className="text-xs text-gray-700 font-bold mt-0.5">Founder & CEO, CMBL Bangladesh.</div>
-                    <div className="text-[10px] text-gray-600 leading-tight mt-0.5">
-                        Graduate (Ph.D.) Research Assistant,<br />
-                        Bioinformatics and Computational Biology,<br />
-                        lowa State University, Ames, lowa, USA
-                    </div>
-                </div>
-            </div>
+            )}
 
         </div>
     );

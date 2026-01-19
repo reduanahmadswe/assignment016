@@ -142,8 +142,18 @@ export default function CertificateViewPage() {
                 <div className="bg-white rounded-md shadow-2xl p-2 sm:p-4 md:p-8 overflow-hidden mx-auto max-w-5xl ring-1 ring-black/5">
                     <div className="relative w-full aspect-[1.414/1] overflow-hidden bg-white" ref={certificateRef}>
                         <div className="transform origin-top-left w-full h-full scale-[1] sm:scale-100">
-                            {/* Note: The ClassicCertificate component should be responsive internally or scaled via transform if fixed size */}
-                            <ClassicCertificate data={certData} qrData={qrData} />
+                            <ClassicCertificate
+                                data={certData}
+                                qrData={qrData}
+                                signatures={{
+                                    signature1Name: certificate.event?.signature1Name,
+                                    signature1Title: certificate.event?.signature1Title,
+                                    signature1Image: certificate.event?.signature1Image,
+                                    signature2Name: certificate.event?.signature2Name,
+                                    signature2Title: certificate.event?.signature2Title,
+                                    signature2Image: certificate.event?.signature2Image,
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
