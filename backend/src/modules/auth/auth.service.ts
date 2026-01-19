@@ -1,118 +1,39 @@
-import bcrypt from 'bcryptjs';
 import prisma from '../../config/db.js';
-import { PrismaClient } from '@prisma/client';
-import { generateTokens, verifyRefreshToken, JwtPayload } from '../../utils/jwt.util.js';
-import { sendOTPEmail, sendEmail } from '../../utils/email.util.js';
-import { generateOTP } from '../../utils/helpers.util.js';
+import { generateTokens } from '../../utils/jwt.util.js';
 import { AppError } from '../../middlewares/error.middleware.js';
-import { OAuth2Client } from 'google-auth-library';
-import { env } from '../../config/env.js';
 import { OTPUtil } from '../../utils/otp.util.js';
 import { TwoFactorUtil } from '../../utils/twoFactor.util.js';
-import { getExpirationTimeUTC } from '../../utils/timezone.util.js';
-
-// Type for Prisma transaction client
-type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>[0];
-let googleClient = new OAuth2Client(env.google.clientId);
-
-interface RegisterInput {
-  email: string;
-  password: string;
-  name: string;
-  phone?: string;
-}
-
-interface LoginInput {
-  email: string;
-  password: string;
-}
-
-interface VerifyLoginOTPInput {
-  email: string;
-  otp?: string;
-  token?: string;
-}
-
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-  is_verified: boolean;
-  is_active: boolean;
-}
+import { AuthValidator } from './auth.validator.js';
+import { AuthTransformer } from './auth.transformer.js';
+import { RegistrationService, OTPService, PasswordService } from './auth.helpers.js';
+import { GoogleAuthService } from './auth.google.js';
+import { TokenService } from './auth.token.js';
+import type { RegisterInput, LoginInput, VerifyLoginOTPInput } from './auth.types.js';
 
 export class AuthService {
   async register(data: RegisterInput) {
     const { email, password, name, phone } = data;
 
     try {
-      // Check if email already exists in users or pending registrations
-      const [existingUser, pendingReg] = await Promise.all([
-        prisma.user.findUnique({ where: { email } }),
-        prisma.pendingRegistration.findUnique({ where: { email } })
-      ]);
-
-      if (existingUser) {
-        throw new AppError('This email is already registered. Please login or use a different email.', 400, [
-          { field: 'email', message: 'This email is already registered. Please login or use a different email.' }
-        ]);
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 12);
-
-      // Clean phone number - remove spaces, dashes, parentheses
-      // Store in consistent format: +1234567890
-      const cleanedPhone = phone ? phone.replace(/[\s\-()]/g, '') : undefined;
+      // Validate email not exists
+      const pendingReg = await AuthValidator.validateEmailNotExists(email);
 
       // Delete old pending registration if exists
       if (pendingReg) {
         await prisma.pendingRegistration.delete({ where: { email } });
       }
 
-      // Generate and send OTP
-      const otp = generateOTP();
-      const expiresAt = getExpirationTimeUTC(2); // 2 minutes
-
-      // Store registration data temporarily (expires in 30 minutes)
-      const regExpiresAt = getExpirationTimeUTC(30);
-
-      await prisma.$transaction(async (tx) => {
-        // Create pending registration
-        await tx.pendingRegistration.create({
-          data: {
-            email,
-            password: hashedPassword,
-            name,
-            phone: cleanedPhone,
-            expiresAt: regExpiresAt,
-          },
-        });
-
-        // Create OTP
-        await tx.otpCode.create({
-          data: {
-            email,
-            code: otp,
-            type: 'verification',
-            expiresAt,
-          },
-        });
-      });
-
-      await sendOTPEmail(email, otp, 'verification');
+      // Create pending registration and send OTP
+      await RegistrationService.createPendingRegistration(email, password, name, phone);
 
       return {
         message: 'Registration initiated! Please check your email for verification code.',
       };
     } catch (error: any) {
-      // If it's already an AppError, re-throw it
       if (error instanceof AppError) {
         throw error;
       }
 
-      // Handle Prisma unique constraint violations
       if (error.code === 'P2002') {
         const target = error.meta?.target;
         if (target && target.includes('email')) {
@@ -128,128 +49,55 @@ export class AuthService {
         throw new AppError('This information is already registered. Please use different details.', 400);
       }
 
-      // Handle database connection errors
       if (error.message?.includes('does not exist') || error.message?.includes('database')) {
         throw new AppError('Unable to connect to the registration service. Please try again later.', 503);
       }
 
-      // Handle email sending errors
       if (error.message?.includes('email') || error.message?.includes('SMTP')) {
         throw new AppError('Unable to send verification email. Please check your email address and try again.', 500, [
           { field: 'email', message: 'Unable to send verification email. Please check your email address and try again.' }
         ]);
       }
 
-      // Handle any other unexpected errors
       console.error('Registration error:', error);
       throw new AppError('An error occurred during registration. Please try again.', 500);
     }
   }
 
   async verifyEmail(email: string, otp: string) {
-    // Find valid OTP
-    const otpRecord = await prisma.otpCode.findFirst({
-      where: {
-        email,
-        code: otp,
-        type: 'verification',
-        isUsed: false,
-        expiresAt: { gte: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Validate OTP
+    const otpRecord = await AuthValidator.validateOTP(email, otp, 'verification');
 
-    if (!otpRecord) {
-      throw new AppError('Invalid or expired OTP', 400);
-    }
-
-    // Find pending registration
-    const pendingReg = await prisma.pendingRegistration.findUnique({
-      where: { email },
-    });
-
-    if (!pendingReg) {
-      throw new AppError('Registration data not found. Please register again.', 404);
-    }
-
-    // Create user account now
-    const result = await prisma.$transaction(async (tx: TransactionClient) => {
-      // Mark OTP as used
-      await tx.otpCode.update({
-        where: { id: otpRecord.id },
-        data: { isUsed: true },
-      });
-
-      // Create actual user account
-      const user = await tx.user.create({
-        data: {
-          email: pendingReg.email,
-          password: pendingReg.password,
-          name: pendingReg.name,
-          phone: pendingReg.phone,
-          authProvider: 'local',
-          isVerified: true,
-        },
-        select: { id: true, email: true, name: true, role: true },
-      });
-
-      // Delete pending registration
-      await tx.pendingRegistration.delete({
-        where: { email },
-      });
-
-      return user;
-    });
+    // Complete registration
+    const result = await RegistrationService.completeRegistration(email, otpRecord.id);
 
     const tokens = generateTokens({
       userId: result.id,
       email: result.email,
-      role: result.role,
+      role: result.role.code,
     });
 
-    // Store refresh token
-    await this.storeRefreshToken(result.id, tokens.refreshToken);
+    await TokenService.storeRefreshToken(result.id, tokens.refreshToken);
 
     return {
       message: 'Email verified successfully! Your account has been created.',
-      user: {
-        id: result.id,
-        email: result.email,
-        name: result.name,
-        role: result.role,
-      },
+      user: AuthTransformer.transformUser(result),
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
   }
 
   async resendOTP(email: string) {
-    // Check if this is a pending registration (user hasn't verified email yet)
     const pendingReg = await prisma.pendingRegistration.findUnique({
       where: { email },
       select: { email: true },
     });
 
-    // If pending registration exists, send OTP for registration verification
     if (pendingReg) {
-      const otp = generateOTP();
-      const expiresAt = getExpirationTimeUTC(2); // 2 minutes for registration
-
-      await prisma.otpCode.create({
-        data: {
-          email,
-          code: otp,
-          type: 'verification',
-          expiresAt,
-        },
-      });
-
-      await sendOTPEmail(email, otp, 'verification');
-
+      await OTPService.sendVerificationOTP(email, true);
       return { message: 'OTP sent successfully' };
     }
 
-    // Otherwise, check if user exists (for already registered but unverified users)
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true, isVerified: true },
@@ -263,21 +111,7 @@ export class AuthService {
       throw new AppError('Email already verified', 400);
     }
 
-    // Generate new OTP for existing unverified user
-    const otp = generateOTP();
-    const expiresAt = getExpirationTimeUTC(10); // 10 minutes for existing users
-
-    await prisma.otpCode.create({
-      data: {
-        email,
-        code: otp,
-        type: 'verification',
-        expiresAt,
-      },
-    });
-
-    await sendOTPEmail(email, otp, 'verification');
-
+    await OTPService.sendVerificationOTP(email, false);
     return { message: 'OTP sent successfully' };
   }
 
@@ -285,71 +119,17 @@ export class AuthService {
     const { email, password } = data;
 
     try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          email: true,
-          password: true,
-          name: true,
-          phone: true,
-          avatar: true,
-          role: true,
-          isVerified: true,
-          isActive: true,
-          authProvider: true,
-          emailOtpEnabled: true,
-          twoFactorEnabled: true,
-        },
-      });
-
-      console.log('👤 User lookup result:', user ? `Found: ${user.email}` : 'NOT FOUND');
-
-      if (!user) {
-        throw new AppError('Invalid email or password', 401);
-      }
-
-      if (user.authProvider !== 'local') {
-        throw new AppError('Please use Google login for this account', 400);
-      }
-
-      if (!user.isActive) {
-        throw new AppError('Your account has been deactivated. Please contact support.', 403);
-      }
+      const user = await AuthValidator.validateUserCredentials(email, password);
 
       if (!user.isVerified) {
-        // Send new OTP
-        const otp = generateOTP();
-        const expiresAt = getExpirationTimeUTC(10);
-
-        await prisma.otpCode.create({
-          data: {
-            email,
-            code: otp,
-            type: 'verification',
-            expiresAt,
-          },
-        });
-
-        await sendOTPEmail(email, otp, 'verification');
-
+        await OTPService.sendVerificationOTP(email, false);
         throw new AppError('Please verify your email. A new OTP has been sent to your email.', 403);
       }
 
-      console.log('🔑 Comparing passwords...');
-      const isPasswordValid = await bcrypt.compare(password, user.password!);
-      console.log('   Comparison result:', isPasswordValid);
-
-      if (!isPasswordValid) {
-        console.log('❌ Password mismatch!');
-        throw new AppError('Invalid email or password', 401);
-      }
-
       // Check if 2FA/OTP is required (skip for admin)
-      const requires2FA = user.role !== 'admin' && (user.emailOtpEnabled || user.twoFactorEnabled);
+      const requires2FA = user.role.code !== 'admin' && (user.emailOtpEnabled || user.twoFactorEnabled);
 
       if (requires2FA) {
-        // Send email OTP if enabled
         if (user.emailOtpEnabled) {
           await OTPUtil.sendLoginOTP(email);
         }
@@ -361,7 +141,7 @@ export class AuthService {
             email: user.emailOtpEnabled,
             authenticator: user.twoFactorEnabled,
           },
-          tempUserId: user.id, // Temporary identifier for OTP verification
+          tempUserId: user.id,
         };
       }
 
@@ -369,35 +149,25 @@ export class AuthService {
       const tokens = generateTokens({
         userId: user.id,
         email: user.email,
-        role: user.role,
+        role: user.role.code,
       });
 
-      await this.storeRefreshToken(user.id, tokens.refreshToken);
+      await TokenService.storeRefreshToken(user.id, tokens.refreshToken);
 
       return {
         message: 'Login successful',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-          avatar: user.avatar,
-          role: user.role,
-        },
+        user: AuthTransformer.transformUser(user),
         ...tokens,
       };
     } catch (error: any) {
-      // If it's already an AppError, re-throw it
       if (error instanceof AppError) {
         throw error;
       }
 
-      // Handle database connection errors
       if (error.message?.includes('does not exist') || error.message?.includes('database')) {
         throw new AppError('Unable to connect to the authentication service. Please try again later.', 503);
       }
 
-      // Handle any other unexpected errors
       console.error('Login error:', error);
       throw new AppError('An error occurred during login. Please try again.', 500);
     }
@@ -406,7 +176,6 @@ export class AuthService {
   async verifyLoginOTP(data: VerifyLoginOTPInput) {
     const { email, otp, token } = data;
 
-    // Must provide either email OTP or authenticator token
     if (!otp && !token) {
       throw new AppError('Please provide OTP code', 400);
     }
@@ -419,7 +188,7 @@ export class AuthService {
         name: true,
         phone: true,
         avatar: true,
-        role: true,
+        role: { select: { code: true } },
         twoFactorEnabled: true,
         twoFactorSecret: true,
         emailOtpEnabled: true,
@@ -446,285 +215,55 @@ export class AuthService {
       throw new AppError('Invalid verification code', 401);
     }
 
-    // Generate tokens
     const tokens = generateTokens({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: user.role.code,
     });
 
-    await this.storeRefreshToken(user.id, tokens.refreshToken);
+    await TokenService.storeRefreshToken(user.id, tokens.refreshToken);
 
     return {
       message: 'Login successful',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phone: user.phone,
-        avatar: user.avatar,
-        role: user.role,
-      },
+      user: AuthTransformer.transformUser(user),
       ...tokens,
     };
   }
 
   async googleAuth(idToken: string) {
-    try {
-      // Reinitialize client with current env values to ensure fresh credentials
-      googleClient = new OAuth2Client(env.google.clientId);
+    const user = await GoogleAuthService.authenticateWithIdToken(idToken);
 
-      const ticket = await googleClient.verifyIdToken({
-        idToken,
-        audience: env.google.clientId,
-      });
+    const tokens = generateTokens({
+      userId: user.id,
+      email: user.email,
+      role: user.role.code,
+    });
 
-      const payload = ticket.getPayload();
-      if (!payload) {
-        throw new AppError('Google sign-in failed. Please try again.', 400);
-      }
+    await TokenService.storeRefreshToken(user.id, tokens.refreshToken);
 
-      const { email, name, picture, sub: googleId } = payload;
-
-      // Check if user exists
-      let user = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { email: email! },
-            { googleId },
-          ],
-        },
-      });
-
-      if (!user) {
-        // Create new user
-        user = await prisma.user.create({
-          data: {
-            email: email!,
-            name: name!,
-            avatar: picture,
-            googleId,
-            authProvider: 'google',
-            isVerified: true,
-            isActive: true,
-          },
-        });
-      } else {
-        // Update Google ID if not set
-        if (!user.googleId) {
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              googleId,
-              avatar: picture,
-            },
-          });
-        }
-      }
-
-      if (!user.isActive) {
-        throw new AppError('Your account has been deactivated', 403);
-      }
-
-      const tokens = generateTokens({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      });
-
-      await this.storeRefreshToken(user.id, tokens.refreshToken);
-
-      return {
-        message: 'Login successful',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-          avatar: user.avatar,
-          role: user.role,
-        },
-        ...tokens,
-      };
-    } catch (error: any) {
-      console.error('Google Auth Error Detail:', error);
-      if (error instanceof AppError) throw error;
-
-      // User-friendly error messages
-      if (error.message?.includes('Wrong recipient') || error.message?.includes('audience')) {
-        throw new AppError('Google sign-in configuration error. Please contact support.', 400);
-      }
-      if (error.message?.includes('Token used too late') || error.message?.includes('expired')) {
-        throw new AppError('Google sign-in session expired. Please try again.', 400);
-      }
-
-      throw new AppError('Unable to sign in with Google. Please try again or use email/password.', 400);
-    }
+    return AuthTransformer.transformUserWithTokens(user, tokens);
   }
 
   async googleAuthCallback(code: string, redirectUri: string) {
-    try {
-      googleClient = new OAuth2Client(
-        env.google.clientId,
-        env.google.clientSecret,
-        redirectUri
-      );
+    const user = await GoogleAuthService.authenticateWithCallback(code, redirectUri);
 
-      // Exchange authorization code for tokens
-      const { tokens } = await googleClient.getToken(code);
-      
-      if (!tokens.id_token) {
-        throw new AppError('Failed to get ID token from Google', 400);
-      }
+    const tokens = generateTokens({
+      userId: user.id,
+      email: user.email,
+      role: user.role.code,
+    });
 
-      // Verify the ID token
-      const ticket = await googleClient.verifyIdToken({
-        idToken: tokens.id_token,
-        audience: env.google.clientId,
-      });
+    await TokenService.storeRefreshToken(user.id, tokens.refreshToken);
 
-      const payload = ticket.getPayload();
-      if (!payload) {
-        throw new AppError('Google sign-in failed. Please try again.', 400);
-      }
-
-      const { email, name, picture, sub: googleId } = payload;
-
-      // Check if user exists
-      let user = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { email: email! },
-            { googleId },
-          ],
-        },
-      });
-
-      if (!user) {
-        // Create new user
-        user = await prisma.user.create({
-          data: {
-            email: email!,
-            name: name!,
-            avatar: picture,
-            googleId,
-            authProvider: 'google',
-            isVerified: true,
-            isActive: true,
-          },
-        });
-      } else {
-        // Update Google ID if not set
-        if (!user.googleId) {
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              googleId,
-              avatar: picture,
-            },
-          });
-        }
-      }
-
-      if (!user.isActive) {
-        throw new AppError('Your account has been deactivated', 403);
-      }
-
-      const userTokens = generateTokens({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      });
-
-      await this.storeRefreshToken(user.id, userTokens.refreshToken);
-
-      return {
-        message: 'Login successful',
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-          avatar: user.avatar,
-          role: user.role,
-        },
-        ...userTokens,
-      };
-    } catch (error: any) {
-      console.error('Google Callback Error:', error);
-      if (error instanceof AppError) throw error;
-
-      throw new AppError('Unable to complete Google sign-in. Please try again.', 400);
-    }
+    return AuthTransformer.transformUserWithTokens(user, tokens);
   }
 
   async refreshToken(refreshToken: string) {
-    try {
-      const decoded = verifyRefreshToken(refreshToken);
-
-      // Check if token exists in database
-      const tokenRecord = await prisma.refreshToken.findFirst({
-        where: {
-          userId: decoded.userId,
-          token: refreshToken,
-          expiresAt: { gt: new Date() },
-        },
-      });
-
-      if (!tokenRecord) {
-        throw new AppError('Invalid refresh token', 401);
-      }
-
-      // Get user
-      const user = await prisma.user.findFirst({
-        where: {
-          id: decoded.userId,
-          isActive: true,
-        },
-        select: { id: true, email: true, role: true },
-      });
-
-      if (!user) {
-        throw new AppError('User not found', 401);
-      }
-
-      // Generate new tokens
-      const newTokens = generateTokens({
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      });
-
-      // Update refresh token
-      await prisma.refreshToken.update({
-        where: { id: tokenRecord.id },
-        data: {
-          token: newTokens.refreshToken,
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
-      });
-
-      return newTokens;
-    } catch (error: any) {
-      if (error instanceof AppError) throw error;
-      throw new AppError('Invalid refresh token', 401);
-    }
+    return TokenService.refreshAccessToken(refreshToken);
   }
 
   async logout(userId: number, refreshToken?: string) {
-    if (refreshToken) {
-      await prisma.refreshToken.deleteMany({
-        where: {
-          userId,
-          token: refreshToken,
-        },
-      });
-    } else {
-      await prisma.refreshToken.deleteMany({
-        where: { userId },
-      });
-    }
-
+    await TokenService.revokeTokens(userId, refreshToken);
     return { message: 'Logged out successfully' };
   }
 
@@ -732,7 +271,7 @@ export class AuthService {
     const user = await prisma.user.findFirst({
       where: {
         email,
-        authProvider: 'local',
+        authProvider: { code: 'local' },
       },
       select: { id: true },
     });
@@ -742,85 +281,22 @@ export class AuthService {
       throw new AppError('User with this email does not exist.', 404);
     }
 
-    const otp = generateOTP();
-    const expiresAt = getExpirationTimeUTC(10);
-
-    await prisma.otpCode.create({
-      data: {
-        email,
-        code: otp,
-        type: 'password_reset',
-        expiresAt,
-      },
-    });
-
-    await sendOTPEmail(email, otp, 'password_reset');
+    await OTPService.sendPasswordResetOTP(email);
 
     return { message: 'If the email exists, an OTP has been sent' };
   }
 
   async resetPassword(email: string, otp: string, newPassword: string) {
-    const otpRecord = await prisma.otpCode.findFirst({
-      where: {
-        email,
-        code: otp,
-        type: 'password_reset',
-        isUsed: false,
-        expiresAt: { gte: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!otpRecord) {
-      throw new AppError('Invalid or expired OTP', 400);
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    await prisma.$transaction(async (tx: TransactionClient) => {
-      await tx.otpCode.update({
-        where: { id: otpRecord.id },
-        data: { isUsed: true },
-      });
-
-      await tx.user.update({
-        where: { email },
-        data: { password: hashedPassword },
-      });
-
-      // Invalidate all refresh tokens
-      const user = await tx.user.findUnique({
-        where: { email },
-        select: { id: true },
-      });
-
-      if (user) {
-        await tx.refreshToken.deleteMany({
-          where: { userId: user.id },
-        });
-      }
-    });
+    const otpRecord = await AuthValidator.validateOTP(email, otp, 'password_reset');
+    await PasswordService.resetPassword(email, otpRecord.id, newPassword);
 
     return { message: 'Password reset successful' };
   }
 
   async changePassword(userId: number, currentPassword: string, newPassword: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { password: true },
-    });
-
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password!);
-    if (!isPasswordValid) {
-      throw new AppError('Current password is incorrect', 400);
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
+    await AuthValidator.validatePasswordMatch(userId, currentPassword);
+    
+    const hashedPassword = await PasswordService.hashPassword(newPassword);
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },
@@ -829,204 +305,20 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
-  /**
-   * Send OTP to user's email for password change verification
-   */
   async sendPasswordChangeOTP(userId: number) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true, name: true, authProvider: true },
-    });
-
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    // Check if user has local auth (password-based)
-    if (user.authProvider !== 'local') {
-      throw new AppError('Password change is not available for social login accounts', 400);
-    }
-
-    const otp = generateOTP();
-    const expiresAt = getExpirationTimeUTC(10); // 10 minutes
-
-    await prisma.otpCode.create({
-      data: {
-        email: user.email,
-        code: otp,
-        type: 'password_change',
-        expiresAt,
-      },
-    });
-
-    // Send OTP email
-    await sendEmail({
-      to: user.email,
-      subject: 'ORIYET - Password Change Verification',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .header h1 { color: white; margin: 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .otp-box { background: white; border: 2px dashed #667eea; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px; }
-            .otp-code { font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 5px; }
-            .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>ORIYET</h1>
-            </div>
-            <div class="content">
-              <h2>Password Change Request</h2>
-              <p>Hello ${user.name},</p>
-              <p>We received a request to change your password. Use the following OTP code to verify your identity:</p>
-              <div class="otp-box">
-                <span class="otp-code">${otp}</span>
-              </div>
-              <p>This code will expire in <strong>10 minutes</strong>.</p>
-              <div class="warning">
-                <strong>⚠️ Security Notice:</strong> If you didn't request this password change, please ignore this email and your password will remain unchanged.
-              </div>
-            </div>
-            <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} ORIYET. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-    });
+    const user = await AuthValidator.validateLocalAuthUser(userId);
+    await OTPService.sendPasswordChangeOTP(user.email, user.name);
 
     return { message: 'OTP sent to your email address' };
   }
 
-  /**
-   * Verify OTP and change password
-   */
   async verifyAndChangePassword(userId: number, otp: string, currentPassword: string, newPassword: string) {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { email: true, name: true, password: true, authProvider: true },
-    });
-
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    // Check if user has local auth
-    if (user.authProvider !== 'local') {
-      throw new AppError('Password change is not available for social login accounts', 400);
-    }
-
-    // Verify OTP
-    const otpRecord = await prisma.otpCode.findFirst({
-      where: {
-        email: user.email,
-        code: otp,
-        type: 'password_change',
-        isUsed: false,
-        expiresAt: { gte: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (!otpRecord) {
-      throw new AppError('Invalid or expired OTP', 400);
-    }
-
-    // Verify current password
-    const isPasswordValid = await bcrypt.compare(currentPassword, user.password!);
-    if (!isPasswordValid) {
-      throw new AppError('Current password is incorrect', 400);
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    await prisma.$transaction(async (tx: TransactionClient) => {
-      // Mark OTP as used
-      await tx.otpCode.update({
-        where: { id: otpRecord.id },
-        data: { isUsed: true },
-      });
-
-      // Update password
-      await tx.user.update({
-        where: { id: userId },
-        data: { password: hashedPassword },
-      });
-    });
-
-    // Send confirmation email
-    await sendEmail({
-      to: user.email,
-      subject: 'ORIYET - Password Changed Successfully',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-            .header h1 { color: white; margin: 0; }
-            .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .success-icon { text-align: center; margin: 20px 0; }
-            .success-icon span { font-size: 60px; }
-            .info-box { background: #e8f4fd; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>ORIYET</h1>
-            </div>
-            <div class="content">
-              <div class="success-icon">
-                <span>✅</span>
-              </div>
-              <h2 style="text-align: center;">Password Changed Successfully!</h2>
-              <p>Hello ${user.name},</p>
-              <p>Your password has been successfully changed.</p>
-              <div class="info-box">
-                <p><strong>📅 Changed at:</strong> ${new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
-              </div>
-              <div class="warning">
-                <strong>⚠️ Important:</strong> If you did not make this change, please contact our support team immediately and secure your account.
-              </div>
-              <p>Thank you for keeping your account secure!</p>
-            </div>
-            <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} ORIYET. All rights reserved.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-    });
+    const user = await AuthValidator.validateLocalAuthUser(userId);
+    const otpRecord = await AuthValidator.validateOTP(user.email, otp, 'password_change');
+    await AuthValidator.validatePasswordMatch(userId, currentPassword);
+    await PasswordService.changePassword(userId, otpRecord.id, newPassword, user.name, user.email);
 
     return { message: 'Password changed successfully' };
-  }
-
-  private async storeRefreshToken(userId: number, token: string) {
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-    await prisma.refreshToken.create({
-      data: {
-        userId,
-        token,
-        expiresAt,
-      },
-    });
   }
 }
 

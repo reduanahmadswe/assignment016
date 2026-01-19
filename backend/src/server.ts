@@ -3,12 +3,16 @@ import { env } from './config/env.js';
 import { connectDB } from './config/db.js';
 import { verifyEmailConfig } from './config/mail.config.js';
 import { initCronJobs } from './cron/index.js';
+import { seedLookups } from './utils/seed-lookups.util.js';
 // Nudged to restart
 
 const startServer = async () => {
   try {
     // Connect to database
     await connectDB();
+
+    // Seed lookup tables (skipDuplicates enabled)
+    await seedLookups();
 
     // Verify email configuration
     await verifyEmailConfig();

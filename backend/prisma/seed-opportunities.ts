@@ -10,8 +10,12 @@ async function main() {
     // Clear existing data to remove posts with markdown
     await prisma.opportunity.deleteMany();
 
-    const opportunityTypes = ['INTERNSHIP', 'FELLOWSHIP', 'JAAR', 'PROGRAM', 'JOB'];
-    const statuses = ['open', 'closed'];
+    // Get lookup IDs
+    const opportunityTypes = await prisma.opportunityType.findMany();
+    const opportunityStatuses = await prisma.opportunityStatus.findMany();
+
+    const openStatus = opportunityStatuses.find(s => s.code === 'open')!;
+    const closedStatus = opportunityStatuses.find(s => s.code === 'closed')!;
 
     const roles = [
         'Frontend Developer',
@@ -104,18 +108,18 @@ Apply now to be part of our journey!
         const banner = banners[Math.floor(Math.random() * banners.length)];
 
         // Ensure most are open
-        const status = Math.random() > 0.8 ? 'closed' : 'open';
+        const status = Math.random() > 0.8 ? closedStatus : openStatus;
 
         await prisma.opportunity.create({
             data: {
                 title: title,
                 slug: slug,
                 description: description,
-                type: type,
+                typeId: type.id,
                 location: location,
                 duration: ['3 months', '6 months', '1 year', 'Permanent'].sort(() => 0.5 - Math.random())[0],
                 deadline: faker.date.future({ years: 1 }), // Future date
-                status: status,
+                statusId: status.id,
                 banner: banner,
                 createdAt: faker.date.past({ years: 1 })
             }

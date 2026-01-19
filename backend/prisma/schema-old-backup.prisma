@@ -1,0 +1,395 @@
+// Prisma Schema for ORIYET Education and Event Platform
+// Using SQLite for development
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int      @id @default(autoincrement())
+  email              String   @unique
+  password           String?
+  name               String
+  phone              String?
+  avatar             String?
+  role               String   @default("user")
+  authProvider       String   @default("local") @map("auth_provider")
+  googleId           String?  @unique @map("google_id")
+  isVerified         Boolean  @default(false) @map("is_verified")
+  isActive           Boolean  @default(true) @map("is_active")
+  twoFactorEnabled   Boolean  @default(false) @map("two_factor_enabled")
+  twoFactorSecret    String?  @map("two_factor_secret")
+  emailOtpEnabled    Boolean  @default(true) @map("email_otp_enabled")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  refreshTokens       RefreshToken[]
+  eventsCreated       Event[]              @relation("EventCreator")
+  registrations       EventRegistration[]
+  paymentTransactions PaymentTransaction[]
+  certificates        Certificate[]
+  blogPosts           BlogPost[]
+  reviews             Review[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  token     String   @db.Text
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id        Int      @id @default(autoincrement())
+  email     String
+  code      String
+  type      String   @default("verification")
+  expiresAt DateTime @map("expires_at")
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otp_codes")
+}
+
+model PendingRegistration {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("pending_registrations")
+}
+
+model Event {
+  id                     Int       @id @default(autoincrement())
+  title                  String
+  slug                   String    @unique
+  description            String?   @db.Text
+  category               String?   @db.Text
+  content                String?   @db.LongText
+  thumbnail              String?
+  eventType              String    @map("event_type")
+  eventMode              String    @map("event_mode")
+  venueDetails           String?   @map("venue_details") @db.Text
+  onlineLink             String?   @map("online_link")
+  onlinePlatform         String?   @map("online_platform")
+  startDate              DateTime  @map("start_date")
+  endDate                DateTime  @map("end_date")
+  registrationDeadline   DateTime? @map("registration_deadline")
+  isFree                 Boolean   @default(true) @map("is_free")
+  price                  Float     @default(0)
+  currency               String    @default("BDT")
+  maxParticipants        Int?      @map("max_participants")
+  currentParticipants    Int       @default(0) @map("current_participants")
+  hasCertificate         Boolean   @default(false) @map("has_certificate")
+  registrationStatus     String    @default("open") @map("registration_status")
+  eventStatus            String    @default("upcoming") @map("event_status")
+  videoLink              String?   @map("video_link")
+  sessionSummary         String?   @map("session_summary")
+  sessionSummaryPdf      String?   @map("session_summary_pdf")
+  metaTitle              String?   @map("meta_title")
+  metaDescription        String?   @map("meta_description")
+  isFeatured             Boolean   @default(false) @map("is_featured")
+  isPublished            Boolean   @default(false) @map("is_published")
+  isCertificateAvailable Boolean   @default(false) @map("is_certificate_available")
+  meetingPlatform        String?   @map("meeting_platform")
+  meetingLink            String?   @map("meeting_link")
+  autoSendMeetingLink    Boolean   @default(true) @map("auto_send_meeting_link")
+  eventContactEmail      String?   @map("event_contact_email")
+  eventContactPhone      String?   @map("event_contact_phone")
+  guests                 String?   @map("guests") @db.Text
+  participantInstructions String?  @map("participant_instructions") @db.Text
+  
+  // Certificate Signature Fields
+  signature1Name         String?   @map("signature1_name")
+  signature1Title        String?   @map("signature1_title")
+  signature1Image        String?   @map("signature1_image")
+  signature2Name         String?   @map("signature2_name")
+  signature2Title        String?   @map("signature2_title")
+  signature2Image        String?   @map("signature2_image")
+  
+  createdBy              Int?      @map("created_by")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  creator       User?               @relation("EventCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  registrations EventRegistration[]
+  certificates  Certificate[]
+  eventHosts    EventHost[]
+  reviews       Review[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id                 Int       @id @default(autoincrement())
+  eventId            Int       @map("event_id")
+  userId             Int       @map("user_id")
+  registrationNumber String?   @unique @map("registration_number")
+  status             String    @default("pending") // pending | confirmed | cancelled | refunded
+  paymentStatus      String    @default("not_required") @map("payment_status") // not_required | pending | completed | failed | refunded
+  paymentAmount      Float     @default(0) @map("payment_amount")
+  notes              String?
+  attendanceMarkedAt DateTime? @map("attendance_marked_at")
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancelReason       String?   @map("cancel_reason")
+  confirmedAt        DateTime? @map("confirmed_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  event               Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentTransactions PaymentTransaction[]
+  certificates        Certificate[]
+
+  @@unique([eventId, userId])
+  @@index([status, paymentStatus])
+  @@index([userId, status])
+  @@map("event_registrations")
+}
+
+model PaymentTransaction {
+  id                   Int                @id @default(autoincrement())
+  registrationId       Int?               @map("registration_id") // ⭐ NULLABLE - set after payment success
+  userId               Int                @map("user_id")
+  transactionId        String?            @unique @map("transaction_id")
+  invoiceId            String?            @unique @map("invoice_id")
+  gatewayTransactionId String?            @map("gateway_transaction_id")
+  amount               Float
+  currency             String             @default("BDT")
+  paymentMethod        String?            @map("payment_method")
+  senderNumber         String?            @map("sender_number")
+  gateway              String             @default("uddoktapay")
+  gatewayResponse      String?            @map("gateway_response") @db.Text
+  status               String             @default("pending") // pending | completed | failed | cancelled | expired | refunded
+  paidAt               DateTime?          @map("paid_at")
+  refundedAt           DateTime?          @map("refunded_at")
+  refundReason         String?            @map("refund_reason")
+  refundedBy           Int?               @map("refunded_by")
+  expiresAt            DateTime?          @map("expires_at")
+  verificationAttempts Int                @default(0) @map("verification_attempts")
+  lastVerifiedAt       DateTime?          @map("last_verified_at")
+  ipAddress            String?            @map("ip_address")
+  userAgent            String?            @map("user_agent")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  registration EventRegistration? @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([invoiceId, status])
+  @@index([userId, status])
+  @@index([expiresAt, status])
+  @@map("payment_transactions")
+}
+
+model Certificate {
+  id                Int       @id @default(autoincrement())
+  certificateId     String    @unique @map("certificate_id")
+  registrationId    Int       @map("registration_id")
+  userId            Int       @map("user_id")
+  eventId           Int       @map("event_id")
+  certificateUrl    String?   @map("certificate_url")
+  qrCodeData        String?   @map("qr_code_data")
+  issuedAt          DateTime  @default(now()) @map("issued_at")
+  verificationCount Int       @default(0) @map("verification_count")
+  lastVerifiedAt    DateTime? @map("last_verified_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  registration             EventRegistration         @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event                    Event                     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  certificateVerifications CertificateVerification[]
+
+  @@map("certificates")
+}
+
+model CertificateVerification {
+  id            Int      @id @default(autoincrement())
+  certificateId Int      @map("certificate_id")
+  verifiedAt    DateTime @default(now()) @map("verified_at")
+  ipAddress     String?  @map("ip_address")
+  userAgent     String?  @map("user_agent")
+
+  certificate Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+
+  @@map("certificate_verifications")
+}
+
+model BlogPost {
+  id              Int       @id @default(autoincrement())
+  title           String
+  slug            String    @unique
+  excerpt         String?
+  content         String?   @db.LongText
+  thumbnail       String?
+  authorId        Int?      @map("author_id")
+  status          String    @default("draft")
+  metaTitle       String?   @map("meta_title")
+  metaDescription String?   @map("meta_description")
+  tags            String?
+  views           Int       @default(0)
+  publishedAt     DateTime? @map("published_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@map("blog_posts")
+}
+
+model Page {
+  id              Int      @id @default(autoincrement())
+  title           String
+  slug            String   @unique
+  content         String?
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+  isPublished     Boolean  @default(true) @map("is_published")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("pages")
+}
+
+model Opportunity {
+  id              Int      @id @default(autoincrement())
+  title           String
+  slug            String   @unique
+  description     String?  @db.Text
+  type            String   // INTERNSHIP, FELLOWSHIP, PROGRAM, etc.
+  location        String?
+  duration        String?
+  deadline        DateTime?
+  status          String   @default("open") // open, closed
+  banner          String?
+  applications    OpportunityApplication[]
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("opportunities")
+}
+
+model OpportunityApplication {
+  id            Int      @id @default(autoincrement())
+  opportunityId Int      @map("opportunity_id")
+  name          String
+  email         String
+  phone         String?
+  cvLink        String   @map("cv_link")
+  imageLink     String?  @map("image_link")
+  portfolioLink String?  @map("portfolio_link")
+  status        String   @default("pending") // pending, reviewed, accepted, rejected
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@map("opportunity_applications")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String   // JSON content
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
+model Host {
+  id           Int         @id @default(autoincrement())
+  name         String
+  email        String      @unique
+  bio          String?
+  profileImage String?     @map("profile_image")
+  cvLink       String?     @map("cv_link")
+  socialLinks  String?     @map("social_links")
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  eventHosts   EventHost[]
+
+  @@map("hosts")
+}
+
+model EventHost {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @map("event_id")
+  hostId    Int      @map("host_id")
+  role      String   @default("host") // host, speaker, moderator, panelist
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  host  Host  @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, hostId])
+  @@map("event_hosts")
+}
+
+model Newsletter {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String?  @unique // Unique URL-friendly identifier for sharing
+  description String?  @db.Text
+  thumbnail   String?  // Google Drive link for thumbnail
+  pdfLink     String   @map("pdf_link") // Google Drive link for PDF
+  startDate   DateTime? @map("start_date") // Newsletter coverage start date
+  endDate     DateTime? @map("end_date")   // Newsletter coverage end date
+  isPublished Boolean  @default(true) @map("is_published")
+  views       Int      @default(0)
+  downloads   Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("newsletters")
+}
+
+model Review {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  eventId         Int      @map("event_id")
+  rating          Int      // 1-5 stars
+  comment         String?  @db.Text
+  isApproved      Boolean  @default(false) @map("is_approved")
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  approvedAt      DateTime? @map("approved_at")
+  approvedBy      Int?     @map("approved_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([isApproved, isFeatured])
+  @@map("reviews")
+}

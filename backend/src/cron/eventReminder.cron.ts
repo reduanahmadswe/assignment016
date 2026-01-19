@@ -17,26 +17,25 @@ export const startEventReminderCron = () => {
       // Find events starting in ~24 hours or ~1 hour
       const upcomingEvents = await prisma.event.findMany({
         where: {
-          eventStatus: 'upcoming',
+          eventStatus: { code: 'upcoming' },
           isPublished: true,
           OR: [
             { startDate: { gte: plus23h, lt: plus25h } },
             { startDate: { gte: plus1h, lt: plus2h } },
           ],
         },
-        select: {
-          id: true,
-          title: true,
-          startDate: true,
-          onlineLink: true,
-          eventMode: true,
+        include: {
+          eventMode: { select: { code: true } },
         },
       });
 
       for (const event of upcomingEvents) {
         // Get registered users
         const registrations = await prisma.eventRegistration.findMany({
-          where: { eventId: event.id, status: 'confirmed' },
+          where: { 
+            eventId: event.id, 
+            status: { code: 'confirmed' } 
+          },
           select: { user: { select: { name: true, email: true } } },
         });
 
@@ -49,7 +48,7 @@ export const startEventReminderCron = () => {
               user.name,
               event.title,
               new Date(event.startDate).toLocaleString(),
-              event.eventMode !== 'offline' ? event.onlineLink ?? undefined : undefined
+              event.eventMode.code !== 'offline' ? event.onlineLink ?? undefined : undefined
             );
             console.log(`✉️ Reminder sent to ${user.email} for "${event.title}"`);
           } catch (error) {

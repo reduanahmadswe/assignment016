@@ -15,6 +15,11 @@
     "prisma:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:all": "tsx prisma/seed-all.ts",
+    "db:seed:blogs": "tsx prisma/seed-blogs.ts",
+    "db:seed:events": "tsx prisma/seed-events.ts",
+    "db:seed:newsletters": "tsx prisma/seed-newsletters.ts",
+    "db:seed:opportunities": "tsx prisma/seed-opportunities.ts",
     "test:connection": "tsx test-connection.ts"
   },
   "dependencies": {

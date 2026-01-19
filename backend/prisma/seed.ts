@@ -7,6 +7,15 @@ async function main() {
   try {
     console.log("Starting database seeding...");
 
+    // Get role and auth provider IDs
+    const adminRole = await prisma.userRole.findUnique({ where: { code: 'admin' } });
+    const userRole = await prisma.userRole.findUnique({ where: { code: 'user' } });
+    const localAuth = await prisma.authProvider.findUnique({ where: { code: 'local' } });
+
+    if (!adminRole || !userRole || !localAuth) {
+      throw new Error('Lookup tables not seeded! Run seed-lookups.ts first.');
+    }
+
     // Create default admin user
     const hashedPassword = await bcrypt.hash("Admin@123", 12);
 
@@ -20,10 +29,10 @@ async function main() {
           email: "admin@oriyet.com",
           password: hashedPassword,
           name: "Admin",
-          role: "admin",
+          roleId: adminRole.id,
           isVerified: true,
           isActive: true,
-          authProvider: "local",
+          authProviderId: localAuth.id,
         },
       });
       console.log("✅ Created admin user:", admin.email);
@@ -43,10 +52,10 @@ async function main() {
           email: "demo@example.com",
           password: demoPassword,
           name: "Demo User",
-          role: "user",
+          roleId: userRole.id,
           isVerified: true,
           isActive: true,
-          authProvider: "local",
+          authProviderId: localAuth.id,
         },
       });
       console.log("✅ Created demo user:", demo.email);
