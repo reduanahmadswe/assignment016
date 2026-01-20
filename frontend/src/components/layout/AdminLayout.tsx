@@ -44,7 +44,7 @@ const sidebarItems = [
     { icon: Calendar, label: 'Events', href: '/admin/events' },
     { icon: Users, label: 'Users', href: '/admin/users' },
     { icon: FileText, label: 'Registrations', href: '/admin/registrations' },
-    { icon: CreditCard, label: 'Payments', href: '/admin/payments' },
+    { icon: CreditCard, label: 'Payments', href: '/admin/payments', hidden: true }, // Hidden temporarily
     { icon: Briefcase, label: 'Opportunities', href: '/admin/opportunities' },
     { icon: UserPlus, label: 'Applications', href: '/admin/applications' },
     { icon: BookOpen, label: 'Blog', href: '/admin/blog' },
@@ -189,7 +189,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
                 {/* Navigation Items */}
                 <nav className="flex-1 py-6 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                    {sidebarItems.map((item) => {
+                    {sidebarItems.filter(item => !item.hidden).map((item) => {
                         const Icon = item.icon;
                         const isActive = item.href === '/admin'
                             ? pathname === '/admin'
