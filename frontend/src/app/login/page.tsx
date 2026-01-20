@@ -310,7 +310,7 @@ export default function LoginPage() {
             {!showOTPScreen ? (
               <>
                 {/* Test Credentials */}
-                <div className="mb-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                {/* <div className="mb-6 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
                   <p className="text-xs font-semibold text-gray-500 mb-3 text-center sm:text-left">Test Credentials (Click to fill):</p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
@@ -324,7 +324,7 @@ export default function LoginPage() {
                       👑 Admin
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div>

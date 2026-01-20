@@ -602,7 +602,7 @@ export default function EventDetailsPage() {
                     </div>
 
                     {/* Meeting Link for Online Events */}
-                    {event.event_mode !== 'online' && (event.meeting_link || registrationStatus?.online_link) && !isPast && (
+                    {event.event_mode === 'online' && (event.meeting_link || registrationStatus?.online_link) && !isPast && (
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div>
