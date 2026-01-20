@@ -624,26 +624,150 @@ export class AdminService {
     if (data.videoLink !== undefined) eventData.videoLink = data.videoLink;
     if (data.participantInstructions !== undefined) eventData.participantInstructions = data.participantInstructions;
 
-    // Handle guests
-    if (data.guests !== undefined) {
-      const guests = typeof data.guests === 'string' ? JSON.parse(data.guests) : data.guests;
-      eventData.guests = guests && guests.length > 0 ? JSON.stringify(guests) : null;
-    }
-
-    // Handle certificate signatures
-    if (data.signature1_name !== undefined) eventData.signature1Name = data.signature1_name || null;
-    if (data.signature1_title !== undefined) eventData.signature1Title = data.signature1_title || null;
-    if (data.signature1_image !== undefined) eventData.signature1Image = data.signature1_image || null;
-    if (data.signature2_name !== undefined) eventData.signature2Name = data.signature2_name || null;
-    if (data.signature2_title !== undefined) eventData.signature2Title = data.signature2_title || null;
-    if (data.signature2_image !== undefined) eventData.signature2Image = data.signature2_image || null;
+    // Note: guests and signatures are handled via separate relations (EventGuest, EventSignature)
+    // They should not be set directly on the Event model
 
     const event = await prisma.event.update({
       where: { id },
       data: eventData,
     });
 
-    return event;
+    // Handle guests update
+    if (data.guests !== undefined) {
+      const guests = typeof data.guests === 'string' ? JSON.parse(data.guests) : data.guests;
+      
+      // Delete existing guests
+      await prisma.eventGuest.deleteMany({
+        where: { eventId: id },
+      });
+
+      // Create new guests
+      if (guests && Array.isArray(guests) && guests.length > 0) {
+        const hostRoleId = await lookupService.getHostRoleId('speaker');
+
+        for (const guest of guests) {
+          await prisma.eventGuest.create({
+            data: {
+              eventId: id,
+              name: guest.name,
+              email: guest.email || null,
+              bio: guest.bio || null,
+              roleId: hostRoleId,
+              pictureLink: guest.pictureLink || null,
+              website: guest.website || null,
+              cvLink: guest.cvLink || null,
+            },
+          });
+        }
+      }
+    }
+
+    // Handle signature1 update
+    if (data.signature1_name !== undefined || data.signature1Name !== undefined) {
+      const sig1Name = data.signature1_name || data.signature1Name;
+      const sig1Title = data.signature1_title || data.signature1Title;
+      const sig1Image = data.signature1_image || data.signature1Image;
+
+      // Delete existing signature at position 1
+      const existingSig1 = await prisma.eventSignature.findFirst({
+        where: { eventId: id, position: 1 },
+      });
+
+      if (existingSig1) {
+        await prisma.eventSignature.delete({
+          where: { id: existingSig1.id },
+        });
+      }
+
+      // Create new signature if data provided
+      if (sig1Name && sig1Title) {
+        const signature1 = await prisma.certificateSignature.upsert({
+          where: { id: 0 },
+          create: {
+            name: sig1Name,
+            title: sig1Title,
+            image: sig1Image || null,
+          },
+          update: {},
+        });
+
+        await prisma.eventSignature.create({
+          data: {
+            eventId: id,
+            signatureId: signature1.id,
+            position: 1,
+          },
+        });
+      }
+    }
+
+    // Handle signature2 update
+    if (data.signature2_name !== undefined || data.signature2Name !== undefined) {
+      const sig2Name = data.signature2_name || data.signature2Name;
+      const sig2Title = data.signature2_title || data.signature2Title;
+      const sig2Image = data.signature2_image || data.signature2Image;
+
+      // Delete existing signature at position 2
+      const existingSig2 = await prisma.eventSignature.findFirst({
+        where: { eventId: id, position: 2 },
+      });
+
+      if (existingSig2) {
+        await prisma.eventSignature.delete({
+          where: { id: existingSig2.id },
+        });
+      }
+
+      // Create new signature if data provided
+      if (sig2Name && sig2Title) {
+        const signature2 = await prisma.certificateSignature.upsert({
+          where: { id: 0 },
+          create: {
+            name: sig2Name,
+            title: sig2Title,
+            image: sig2Image || null,
+          },
+          update: {},
+        });
+
+        await prisma.eventSignature.create({
+          data: {
+            eventId: id,
+            signatureId: signature2.id,
+            position: 2,
+          },
+        });
+      }
+    }
+
+    // Fetch updated event with all relations
+    const updatedEvent = await prisma.event.findUnique({
+      where: { id },
+      include: {
+        eventType: { select: { code: true, label: true } },
+        eventMode: { select: { code: true, label: true } },
+        eventStatus: { select: { code: true, label: true } },
+        registrationStatus: { select: { code: true, label: true } },
+        onlinePlatform: { select: { code: true, label: true } },
+        eventSignatures: {
+          include: {
+            signature: true,
+          },
+        },
+        eventGuests: {
+          include: {
+            role: { select: { code: true, label: true } },
+          },
+        },
+        _count: {
+          select: {
+            registrations: true,
+          },
+        },
+      },
+    });
+
+    return AdminTransformer.transformEventById(updatedEvent);
   }
 
   async deleteEvent(id: number) {
