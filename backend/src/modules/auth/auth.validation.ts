@@ -15,7 +15,6 @@ export const registerValidation = [
     .withMessage('Email address is required')
     .isEmail()
     .withMessage('Please enter a valid email address (e.g., name@example.com)')
-    .normalizeEmail()
     .custom((value) => {
       // Additional email format validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -77,8 +76,7 @@ export const registerValidation = [
 export const loginValidation = [
   body('email')
     .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .withMessage('Please provide a valid email'),
   body('password')
     .notEmpty()
     .withMessage('Password is required'),
@@ -87,8 +85,7 @@ export const loginValidation = [
 export const verifyEmailValidation = [
   body('email')
     .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .withMessage('Please provide a valid email'),
   body('otp')
     .isLength({ min: 6, max: 6 })
     .withMessage('OTP must be 6 digits')
@@ -99,8 +96,7 @@ export const verifyEmailValidation = [
 export const resendOTPValidation = [
   body('email')
     .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .withMessage('Please provide a valid email'),
 ];
 
 export const googleAuthValidation = [
@@ -127,15 +123,13 @@ export const refreshTokenValidation = [
 export const forgotPasswordValidation = [
   body('email')
     .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .withMessage('Please provide a valid email'),
 ];
 
 export const resetPasswordValidation = [
   body('email')
     .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .withMessage('Please provide a valid email'),
   body('otp')
     .isLength({ min: 6, max: 6 })
     .withMessage('OTP must be 6 digits')

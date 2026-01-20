@@ -42,8 +42,7 @@ export const validate = (validations: ValidationChain[]) => {
 export const commonValidations = {
   email: body('email')
     .isEmail()
-    .withMessage('Please provide a valid email')
-    .normalizeEmail(),
+    .withMessage('Please provide a valid email'),
 
   password: body('password')
     .isLength({ min: 8 })
