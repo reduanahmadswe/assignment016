@@ -19,7 +19,7 @@ export class EventTransformer {
    * Transform event with registration count
    */
   transformEventWithCount(event: any) {
-    const { eventType, eventMode, eventStatus, registrationStatus, onlinePlatform, _count, ...eventData } = event;
+    const { eventType, eventMode, eventStatus, registrationStatus, onlinePlatform, eventGuests, _count, ...eventData } = event;
 
     return {
       ...eventData,
@@ -29,6 +29,16 @@ export class EventTransformer {
       registrationStatus: registrationStatus.code,
       onlinePlatform: onlinePlatform?.code,
       registered_count: _count?.registrations || 0,
+      guests: eventGuests?.map((g: any) => ({
+        name: g.name,
+        email: g.email,
+        bio: g.bio,
+        role: g.role.code,
+        roleLabel: g.role.label,
+        pictureLink: g.pictureLink,
+        website: g.website,
+        cvLink: g.cvLink,
+      })) || [],
     };
   }
 

@@ -545,9 +545,13 @@ export class AdminService {
         .replace(/(^-|-$)/g, '');
     }
     if (data.description) eventData.description = data.description;
-    if (data.eventType) eventData.eventTypeId = await lookupService.getEventTypeId(data.eventType);
+    if (data.eventType) {
+      const eventTypeId = await lookupService.getEventTypeId(data.eventType);
+      eventData.eventType = { connect: { id: eventTypeId } };
+    }
     if (data.eventMode) {
-      eventData.eventModeId = await lookupService.getEventModeId(data.eventMode);
+      const eventModeId = await lookupService.getEventModeId(data.eventMode);
+      eventData.eventMode = { connect: { id: eventModeId } };
 
       if (data.eventMode === 'online' && data.meetingPlatform === undefined) {
         throw new AppError('Meeting platform is required for online events', 400);
@@ -581,10 +585,13 @@ export class AdminService {
     if (data.onlineLink) {
       eventData.onlineLink = data.onlineLink;
       const platformId = await lookupService.getOnlinePlatformId(data.onlinePlatform || 'other');
-      eventData.onlinePlatformId = platformId;
+      eventData.onlinePlatform = { connect: { id: platformId } };
     }
 
-    if (data.status) eventData.eventStatusId = await lookupService.getEventStatusId(data.status);
+    if (data.status) {
+      const eventStatusId = await lookupService.getEventStatusId(data.status);
+      eventData.eventStatus = { connect: { id: eventStatusId } };
+    }
     if (data.startDate) eventData.startDate = new Date(data.startDate);
     if (data.endDate) eventData.endDate = new Date(data.endDate);
     if (data.registrationDeadline) eventData.registrationDeadline = new Date(data.registrationDeadline);
@@ -676,6 +683,16 @@ export class AdminService {
         eventStatus: { select: { code: true, label: true } },
         registrationStatus: { select: { code: true, label: true } },
         onlinePlatform: { select: { code: true, label: true } },
+        eventSignatures: {
+          include: {
+            signature: true,
+          },
+        },
+        eventGuests: {
+          include: {
+            role: { select: { code: true, label: true } },
+          },
+        },
         _count: {
           select: {
             registrations: true,

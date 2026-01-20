@@ -340,7 +340,7 @@ export default function EventDetailsPage() {
                         <div className={`relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-2 ${guest.role === 'speaker' ? 'ring-blue-200 group-hover:ring-blue-400' : 'ring-emerald-200 group-hover:ring-emerald-400'} transition-all duration-300`}>
                           {guest.pictureLink ? (
                             <Image
-                              src={guest.pictureLink}
+                              src={getImageUrl(guest.pictureLink)}
                               alt={guest.name || 'Speaker'}
                               fill
                               className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -801,9 +801,9 @@ export default function EventDetailsPage() {
           // Refetch registration status when modal closes
           refetchRegistration();
         }}
-        size="sm"
+        size="lg"
       >
-        <div className="text-center py-4">
+        <div className="text-center py-2">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
@@ -815,12 +815,12 @@ export default function EventDetailsPage() {
 
           {/* Participant Instructions */}
           {event?.participant_instructions && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left">
-              <h4 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left max-h-60 overflow-y-auto">
+              <h4 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2 sticky top-0 bg-blue-50 pb-2">
                 <FileText className="w-4 h-4" />
                 Important Instructions
               </h4>
-              <div className="text-sm text-blue-800 whitespace-pre-line font-medium">
+              <div className="text-sm text-blue-800 break-words whitespace-pre-wrap font-medium">
                 {event.participant_instructions}
               </div>
             </div>

@@ -145,6 +145,15 @@ export class CertificateService {
     // Log verification
     await this.logVerification(certificate.id, ipAddress, userAgent);
 
+    // Fetch event signatures
+    const eventSignatures = await prisma.eventSignature.findMany({
+      where: { eventId: certificate.event.id },
+      include: { signature: true },
+    });
+
+    const sig1 = eventSignatures.find(s => s.position === 1)?.signature;
+    const sig2 = eventSignatures.find(s => s.position === 2)?.signature;
+
     return {
       valid: true,
       certificate: {
@@ -155,12 +164,12 @@ export class CertificateService {
         issued_at: certificate.issuedAt,
         event_date: certificate.event.startDate,
         event: {
-          signature1Name: certificate.event.signature1Name,
-          signature1Title: certificate.event.signature1Title,
-          signature1Image: certificate.event.signature1Image,
-          signature2Name: certificate.event.signature2Name,
-          signature2Title: certificate.event.signature2Title,
-          signature2Image: certificate.event.signature2Image,
+          signature1Name: sig1?.name || null,
+          signature1Title: sig1?.title || null,
+          signature1Image: sig1?.image || null,
+          signature2Name: sig2?.name || null,
+          signature2Title: sig2?.title || null,
+          signature2Image: sig2?.image || null,
         },
       },
     };
@@ -173,16 +182,11 @@ export class CertificateService {
         user: { select: { name: true } },
         event: {
           select: {
+            id: true,
             title: true,
             eventType: { select: { code: true } },
             startDate: true,
             endDate: true,
-            signature1Name: true,
-            signature1Title: true,
-            signature1Image: true,
-            signature2Name: true,
-            signature2Title: true,
-            signature2Image: true,
           },
         },
       },
@@ -207,16 +211,11 @@ export class CertificateService {
         user: { select: { name: true } },
         event: {
           select: {
+            id: true,
             title: true,
             eventType: { select: { code: true } },
             startDate: true,
             endDate: true,
-            signature1Name: true,
-            signature1Title: true,
-            signature1Image: true,
-            signature2Name: true,
-            signature2Title: true,
-            signature2Image: true,
           }
         },
       },
@@ -307,15 +306,10 @@ export class CertificateService {
         user: { select: { name: true } },
         event: {
           select: {
+            id: true,
             title: true,
             eventType: { select: { code: true } },
             endDate: true,
-            signature1Name: true,
-            signature1Title: true,
-            signature1Image: true,
-            signature2Name: true,
-            signature2Title: true,
-            signature2Image: true,
           },
         },
       },

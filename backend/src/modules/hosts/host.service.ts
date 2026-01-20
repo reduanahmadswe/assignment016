@@ -20,7 +20,6 @@ export class HostService {
         bio: data.bio,
         profileImage: data.profile_image,
         cvLink: data.cv_link,
-        socialLinks: data.social_links ? JSON.stringify(data.social_links) : null,
       },
     });
 

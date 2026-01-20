@@ -97,7 +97,7 @@ export class AdminTransformer {
   }
 
   static transformEventById(event: any) {
-    return {
+    const transformed = {
       ...event,
       eventType: event.eventType.code,
       eventMode: event.eventMode.code,
@@ -105,7 +105,32 @@ export class AdminTransformer {
       registrationStatus: event.registrationStatus.code,
       onlinePlatform: event.onlinePlatform?.code || null,
       registrationCount: (event as any)._count.registrations,
+      
+      // Transform signatures to old format
+      signature1Name: event.eventSignatures?.find((s: any) => s.position === 1)?.signature.name || null,
+      signature1Title: event.eventSignatures?.find((s: any) => s.position === 1)?.signature.title || null,
+      signature1Image: event.eventSignatures?.find((s: any) => s.position === 1)?.signature.image || null,
+      signature2Name: event.eventSignatures?.find((s: any) => s.position === 2)?.signature.name || null,
+      signature2Title: event.eventSignatures?.find((s: any) => s.position === 2)?.signature.title || null,
+      signature2Image: event.eventSignatures?.find((s: any) => s.position === 2)?.signature.image || null,
+      
+      // Transform guests to old format
+      guests: event.eventGuests?.map((g: any) => ({
+        name: g.name,
+        email: g.email,
+        bio: g.bio,
+        role: g.role.code,
+        pictureLink: g.pictureLink,
+        website: g.website,
+        cvLink: g.cvLink,
+      })) || [],
     };
+
+    // Remove normalized fields
+    delete (transformed as any).eventSignatures;
+    delete (transformed as any).eventGuests;
+
+    return transformed;
   }
 
   static transformPayment(payment: any) {

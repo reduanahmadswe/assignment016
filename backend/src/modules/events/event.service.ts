@@ -46,14 +46,6 @@ export class EventService {
           metaTitle: data.meta_title,
           metaDescription: data.meta_description,
           isFeatured: data.is_featured || false,
-          guests: data.guests && data.guests.length > 0 ? JSON.stringify(data.guests) : null,
-          // Certificate Signature Fields
-          signature1Name: data.signature1_name,
-          signature1Title: data.signature1_title,
-          signature1Image: data.signature1_image,
-          signature2Name: data.signature2_name,
-          signature2Title: data.signature2_title,
-          signature2Image: data.signature2_image,
           createdBy,
         },
       });
@@ -188,6 +180,11 @@ export class EventService {
         eventStatus: true,
         registrationStatus: true,
         onlinePlatform: true,
+        eventGuests: {
+          include: {
+            role: { select: { code: true, label: true } },
+          },
+        },
         _count: {
           select: {
             registrations: {
@@ -221,6 +218,11 @@ export class EventService {
           eventStatus: true,
           registrationStatus: true,
           onlinePlatform: true,
+          eventGuests: {
+            include: {
+              role: { select: { code: true, label: true } },
+            },
+          },
           _count: {
             select: {
               registrations: {
