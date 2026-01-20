@@ -48,8 +48,8 @@ jobs:
 
             # Run Prisma migrations
             echo "[$(date +'%Y-%m-%d %H:%M:%S')] 🗄️ Running database migrations..."
-            #npx prisma migrate deploy
-            npx prisma migrate diff --from-schema-datasource --to-schema-datasource > migration.sql
+            npx prisma migrate deploy
+     
             
             if [ $? -eq 0 ]; then
               echo "✅ Database migrations completed successfully"
