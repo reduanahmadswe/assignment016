@@ -5,6 +5,10 @@ import { asyncHandler } from '../../middlewares/error.middleware.js';
 
 export class AuthController {
   register = asyncHandler(async (req: Request, res: Response) => {
+    // Normalize email
+    if (req.body.email) {
+      req.body.email = req.body.email.toLowerCase().trim();
+    }
     const result = await authService.register(req.body);
     res.status(201).json({
       success: true,
@@ -13,7 +17,8 @@ export class AuthController {
   });
 
   verifyEmail = asyncHandler(async (req: Request, res: Response) => {
-    const { email, otp } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    const { otp } = req.body;
     const result = await authService.verifyEmail(email, otp);
     res.json({
       success: true,
@@ -22,7 +27,7 @@ export class AuthController {
   });
 
   resendOTP = asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
     const result = await authService.resendOTP(email);
     res.json({
       success: true,
@@ -31,6 +36,10 @@ export class AuthController {
   });
 
   login = asyncHandler(async (req: Request, res: Response) => {
+    // Normalize email
+    if (req.body.email) {
+      req.body.email = req.body.email.toLowerCase().trim();
+    }
     console.log('🔐 Login attempt:', { email: req.body.email, hasPassword: !!req.body.password });
     const result = await authService.login(req.body);
     res.json({
@@ -40,6 +49,10 @@ export class AuthController {
   });
 
   verifyLoginOTP = asyncHandler(async (req: Request, res: Response) => {
+    // Normalize email
+    if (req.body.email) {
+      req.body.email = req.body.email.toLowerCase().trim();
+    }
     const result = await authService.verifyLoginOTP(req.body);
     res.json({
       success: true,
@@ -84,7 +97,7 @@ export class AuthController {
   });
 
   forgotPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
     const result = await authService.forgotPassword(email);
     res.json({
       success: true,
@@ -93,7 +106,8 @@ export class AuthController {
   });
 
   resetPassword = asyncHandler(async (req: Request, res: Response) => {
-    const { email, otp, newPassword } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    const { otp, newPassword } = req.body;
     const result = await authService.resetPassword(email, otp, newPassword);
     res.json({
       success: true,
