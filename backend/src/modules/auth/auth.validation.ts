@@ -11,6 +11,7 @@ export const registerValidation = [
     .withMessage('Name can only contain letters, spaces, dots, apostrophes and dashes'),
   body('email')
     .trim()
+    .toLowerCase()
     .notEmpty()
     .withMessage('Email address is required')
     .isEmail()
@@ -75,6 +76,8 @@ export const registerValidation = [
 
 export const loginValidation = [
   body('email')
+    .trim()
+    .toLowerCase()
     .isEmail()
     .withMessage('Please provide a valid email'),
   body('password')
@@ -84,6 +87,8 @@ export const loginValidation = [
 
 export const verifyEmailValidation = [
   body('email')
+    .trim()
+    .toLowerCase()
     .isEmail()
     .withMessage('Please provide a valid email'),
   body('otp')
@@ -95,6 +100,8 @@ export const verifyEmailValidation = [
 
 export const resendOTPValidation = [
   body('email')
+    .trim()
+    .toLowerCase()
     .isEmail()
     .withMessage('Please provide a valid email'),
 ];
@@ -122,12 +129,16 @@ export const refreshTokenValidation = [
 
 export const forgotPasswordValidation = [
   body('email')
+    .trim()
+    .toLowerCase()
     .isEmail()
     .withMessage('Please provide a valid email'),
 ];
 
 export const resetPasswordValidation = [
   body('email')
+    .trim()
+    .toLowerCase()
     .isEmail()
     .withMessage('Please provide a valid email'),
   body('otp')

@@ -41,6 +41,8 @@ export const validate = (validations: ValidationChain[]) => {
 // Common validation rules
 export const commonValidations = {
   email: body('email')
+    .trim()
+    .toLowerCase()
     .isEmail()
     .withMessage('Please provide a valid email'),
 
