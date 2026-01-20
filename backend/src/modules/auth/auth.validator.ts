@@ -22,6 +22,7 @@ export class AuthValidator {
 
   static async validateUserCredentials(email: string, password: string) {
     const normalizedEmail = email.toLowerCase().trim();
+    
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
