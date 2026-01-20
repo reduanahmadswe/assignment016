@@ -196,6 +196,7 @@ model User {
   twoFactorEnabled Boolean  @default(false) @map("two_factor_enabled")
   twoFactorSecret  String?  @map("two_factor_secret")
   emailOtpEnabled  Boolean  @default(true) @map("email_otp_enabled")
+  lastLoginAt      DateTime? @map("last_login_at") // Test field for VPS migration
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
