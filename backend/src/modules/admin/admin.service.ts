@@ -434,14 +434,12 @@ export class AdminService {
       const sig1Image = data.signature1_image || data.signature1Image;
 
       if (sig1Name && sig1Title) {
-        const signature1 = await prisma.certificateSignature.upsert({
-          where: { id: 0 },
-          create: {
+        const signature1 = await prisma.certificateSignature.create({
+          data: {
             name: sig1Name,
             title: sig1Title,
             image: sig1Image || null,
           },
-          update: {},
         });
 
         await prisma.eventSignature.create({
@@ -460,14 +458,12 @@ export class AdminService {
       const sig2Image = data.signature2_image || data.signature2Image;
 
       if (sig2Name && sig2Title) {
-        const signature2 = await prisma.certificateSignature.upsert({
-          where: { id: 0 },
-          create: {
+        const signature2 = await prisma.certificateSignature.create({
+          data: {
             name: sig2Name,
             title: sig2Title,
             image: sig2Image || null,
           },
-          update: {},
         });
 
         await prisma.eventSignature.create({
@@ -668,35 +664,47 @@ export class AdminService {
       const sig1Title = data.signature1_title || data.signature1Title;
       const sig1Image = data.signature1_image || data.signature1Image;
 
-      // Delete existing signature at position 1
+      // Find existing signature at position 1
       const existingSig1 = await prisma.eventSignature.findFirst({
         where: { eventId: id, position: 1 },
       });
 
-      if (existingSig1) {
+      if (sig1Name && sig1Title) {
+        if (existingSig1) {
+          // Update existing signature
+          await prisma.certificateSignature.update({
+            where: { id: existingSig1.signatureId },
+            data: {
+              name: sig1Name,
+              title: sig1Title,
+              image: sig1Image || null,
+            },
+          });
+        } else {
+          // Create new signature
+          const signature1 = await prisma.certificateSignature.create({
+            data: {
+              name: sig1Name,
+              title: sig1Title,
+              image: sig1Image || null,
+            },
+          });
+
+          await prisma.eventSignature.create({
+            data: {
+              eventId: id,
+              signatureId: signature1.id,
+              position: 1,
+            },
+          });
+        }
+      } else if (existingSig1) {
+        // Remove signature if data is empty
         await prisma.eventSignature.delete({
           where: { id: existingSig1.id },
         });
-      }
-
-      // Create new signature if data provided
-      if (sig1Name && sig1Title) {
-        const signature1 = await prisma.certificateSignature.upsert({
-          where: { id: 0 },
-          create: {
-            name: sig1Name,
-            title: sig1Title,
-            image: sig1Image || null,
-          },
-          update: {},
-        });
-
-        await prisma.eventSignature.create({
-          data: {
-            eventId: id,
-            signatureId: signature1.id,
-            position: 1,
-          },
+        await prisma.certificateSignature.delete({
+          where: { id: existingSig1.signatureId },
         });
       }
     }
@@ -707,35 +715,47 @@ export class AdminService {
       const sig2Title = data.signature2_title || data.signature2Title;
       const sig2Image = data.signature2_image || data.signature2Image;
 
-      // Delete existing signature at position 2
+      // Find existing signature at position 2
       const existingSig2 = await prisma.eventSignature.findFirst({
         where: { eventId: id, position: 2 },
       });
 
-      if (existingSig2) {
+      if (sig2Name && sig2Title) {
+        if (existingSig2) {
+          // Update existing signature
+          await prisma.certificateSignature.update({
+            where: { id: existingSig2.signatureId },
+            data: {
+              name: sig2Name,
+              title: sig2Title,
+              image: sig2Image || null,
+            },
+          });
+        } else {
+          // Create new signature
+          const signature2 = await prisma.certificateSignature.create({
+            data: {
+              name: sig2Name,
+              title: sig2Title,
+              image: sig2Image || null,
+            },
+          });
+
+          await prisma.eventSignature.create({
+            data: {
+              eventId: id,
+              signatureId: signature2.id,
+              position: 2,
+            },
+          });
+        }
+      } else if (existingSig2) {
+        // Remove signature if data is empty
         await prisma.eventSignature.delete({
           where: { id: existingSig2.id },
         });
-      }
-
-      // Create new signature if data provided
-      if (sig2Name && sig2Title) {
-        const signature2 = await prisma.certificateSignature.upsert({
-          where: { id: 0 },
-          create: {
-            name: sig2Name,
-            title: sig2Title,
-            image: sig2Image || null,
-          },
-          update: {},
-        });
-
-        await prisma.eventSignature.create({
-          data: {
-            eventId: id,
-            signatureId: signature2.id,
-            position: 2,
-          },
+        await prisma.certificateSignature.delete({
+          where: { id: existingSig2.signatureId },
         });
       }
     }

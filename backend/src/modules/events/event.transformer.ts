@@ -19,7 +19,18 @@ export class EventTransformer {
    * Transform event with registration count
    */
   transformEventWithCount(event: any) {
-    const { eventType, eventMode, eventStatus, registrationStatus, onlinePlatform, eventGuests, _count, ...eventData } = event;
+    const { eventType, eventMode, eventStatus, registrationStatus, onlinePlatform, eventGuests, eventSignatures, _count, ...eventData } = event;
+
+    // Transform signatures
+    const signatures = eventSignatures?.map((es: any) => ({
+      position: es.position,
+      name: es.signature.name,
+      title: es.signature.title,
+      image: es.signature.image,
+    })) || [];
+
+    const signature1 = signatures.find((s: any) => s.position === 1);
+    const signature2 = signatures.find((s: any) => s.position === 2);
 
     return {
       ...eventData,
@@ -39,6 +50,12 @@ export class EventTransformer {
         website: g.website,
         cvLink: g.cvLink,
       })) || [],
+      signature1_name: signature1?.name || '',
+      signature1_title: signature1?.title || '',
+      signature1_image: signature1?.image || '',
+      signature2_name: signature2?.name || '',
+      signature2_title: signature2?.title || '',
+      signature2_image: signature2?.image || '',
     };
   }
 

@@ -50,6 +50,47 @@ export class EventService {
         },
       });
 
+      // Handle Certificate Signatures
+      if (data.has_certificate) {
+        // Create first signature if provided
+        if (data.signature1_name && data.signature1_title) {
+          const signature1 = await tx.certificateSignature.create({
+            data: {
+              name: data.signature1_name,
+              title: data.signature1_title,
+              image: data.signature1_image || null,
+            },
+          });
+
+          await tx.eventSignature.create({
+            data: {
+              eventId: event.id,
+              signatureId: signature1.id,
+              position: 1,
+            },
+          });
+        }
+
+        // Create second signature if provided
+        if (data.signature2_name && data.signature2_title) {
+          const signature2 = await tx.certificateSignature.create({
+            data: {
+              name: data.signature2_name,
+              title: data.signature2_title,
+              image: data.signature2_image || null,
+            },
+          });
+
+          await tx.eventSignature.create({
+            data: {
+              eventId: event.id,
+              signatureId: signature2.id,
+              position: 2,
+            },
+          });
+        }
+      }
+
       return this.getEventById(event.id);
     });
   }
@@ -60,54 +101,149 @@ export class EventService {
       throw new AppError('Event not found', 404);
     }
 
-    const updateData: any = {};
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const updateData: any = {};
 
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.content !== undefined) updateData.content = data.content;
-    if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
-    if (data.event_type !== undefined) updateData.eventTypeId = await lookupService.getEventTypeId(data.event_type);
-    if (data.event_mode !== undefined) updateData.eventModeId = await lookupService.getEventModeId(data.event_mode);
-    if (data.online_link !== undefined) updateData.onlineLink = data.online_link;
-    if (data.online_platform !== undefined) updateData.onlinePlatformId = data.online_platform ? await lookupService.getOnlinePlatformId(data.online_platform) : null;
-    if (data.start_date !== undefined) updateData.startDate = new Date(data.start_date);
-    if (data.end_date !== undefined) updateData.endDate = new Date(data.end_date);
-    if (data.registration_deadline !== undefined) updateData.registrationDeadline = data.registration_deadline ? new Date(data.registration_deadline) : null;
-    if (data.is_free !== undefined) updateData.isFree = data.is_free;
-    if (data.price !== undefined) updateData.price = data.price;
-    if (data.max_participants !== undefined) updateData.maxParticipants = data.max_participants;
-    if (data.has_certificate !== undefined) updateData.hasCertificate = data.has_certificate;
-    if (data.registration_status !== undefined) updateData.registrationStatusId = await lookupService.getRegistrationStatusId(data.registration_status);
-    if (data.event_status !== undefined) updateData.eventStatusId = await lookupService.getEventStatusId(data.event_status);
-    if (data.video_link !== undefined) updateData.videoLink = data.video_link;
-    if (data.session_summary !== undefined) updateData.sessionSummary = data.session_summary;
-    if (data.session_summary_pdf !== undefined) updateData.sessionSummaryPdf = data.session_summary_pdf;
-    if (data.meta_title !== undefined) updateData.metaTitle = data.meta_title;
-    if (data.meta_description !== undefined) updateData.metaDescription = data.meta_description;
-    if (data.is_featured !== undefined) updateData.isFeatured = data.is_featured;
-    if (data.is_published !== undefined) updateData.isPublished = data.is_published;
-    if (data.venue_details !== undefined) updateData.venueDetails = data.venue_details ? JSON.stringify(data.venue_details) : null;
-    if (data.guests !== undefined) {
-      updateData.guests = (data.guests && data.guests.length > 0) ? JSON.stringify(data.guests) : null;
-    }
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.content !== undefined) updateData.content = data.content;
+      if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
+      if (data.event_type !== undefined) updateData.eventTypeId = await lookupService.getEventTypeId(data.event_type);
+      if (data.event_mode !== undefined) updateData.eventModeId = await lookupService.getEventModeId(data.event_mode);
+      if (data.online_link !== undefined) updateData.onlineLink = data.online_link;
+      if (data.online_platform !== undefined) updateData.onlinePlatformId = data.online_platform ? await lookupService.getOnlinePlatformId(data.online_platform) : null;
+      if (data.start_date !== undefined) updateData.startDate = new Date(data.start_date);
+      if (data.end_date !== undefined) updateData.endDate = new Date(data.end_date);
+      if (data.registration_deadline !== undefined) updateData.registrationDeadline = data.registration_deadline ? new Date(data.registration_deadline) : null;
+      if (data.is_free !== undefined) updateData.isFree = data.is_free;
+      if (data.price !== undefined) updateData.price = data.price;
+      if (data.max_participants !== undefined) updateData.maxParticipants = data.max_participants;
+      if (data.has_certificate !== undefined) updateData.hasCertificate = data.has_certificate;
+      if (data.registration_status !== undefined) updateData.registrationStatusId = await lookupService.getRegistrationStatusId(data.registration_status);
+      if (data.event_status !== undefined) updateData.eventStatusId = await lookupService.getEventStatusId(data.event_status);
+      if (data.video_link !== undefined) updateData.videoLink = data.video_link;
+      if (data.session_summary !== undefined) updateData.sessionSummary = data.session_summary;
+      if (data.session_summary_pdf !== undefined) updateData.sessionSummaryPdf = data.session_summary_pdf;
+      if (data.meta_title !== undefined) updateData.metaTitle = data.meta_title;
+      if (data.meta_description !== undefined) updateData.metaDescription = data.meta_description;
+      if (data.is_featured !== undefined) updateData.isFeatured = data.is_featured;
+      if (data.is_published !== undefined) updateData.isPublished = data.is_published;
+      if (data.venue_details !== undefined) updateData.venueDetails = data.venue_details ? JSON.stringify(data.venue_details) : null;
+      if (data.guests !== undefined) {
+        updateData.guests = (data.guests && data.guests.length > 0) ? JSON.stringify(data.guests) : null;
+      }
 
-    // Certificate Signature Fields
-    if (data.signature1_name !== undefined) updateData.signature1Name = data.signature1_name;
-    if (data.signature1_title !== undefined) updateData.signature1Title = data.signature1_title;
-    if (data.signature1_image !== undefined) updateData.signature1Image = data.signature1_image;
-    if (data.signature2_name !== undefined) updateData.signature2Name = data.signature2_name;
-    if (data.signature2_title !== undefined) updateData.signature2Title = data.signature2_title;
-    if (data.signature2_image !== undefined) updateData.signature2Image = data.signature2_image;
+      if (data.title && data.title !== event.title) {
+        updateData.slug = generateSlug(data.title) + '-' + Date.now().toString(36);
+      }
 
-    if (data.title && data.title !== event.title) {
-      updateData.slug = generateSlug(data.title) + '-' + Date.now().toString(36);
-    }
+      if (Object.keys(updateData).length > 0) {
+        await tx.event.update({ where: { id: eventId }, data: updateData });
+      }
 
-    if (Object.keys(updateData).length > 0) {
-      await prisma.event.update({ where: { id: eventId }, data: updateData });
-    }
+      // Handle Certificate Signatures update
+      // Check if any signature data is provided
+      const hasSignature1Data = data.signature1_name !== undefined || data.signature1_title !== undefined || data.signature1_image !== undefined;
+      const hasSignature2Data = data.signature2_name !== undefined || data.signature2_title !== undefined || data.signature2_image !== undefined;
 
-    return this.getEventById(eventId);
+      if (hasSignature1Data || hasSignature2Data) {
+        // Get existing event signatures
+        const existingSignatures = await tx.eventSignature.findMany({
+          where: { eventId },
+          include: { signature: true },
+        });
+
+        // Handle first signature (position 1)
+        if (hasSignature1Data) {
+          const sig1Name = data.signature1_name || '';
+          const sig1Title = data.signature1_title || '';
+          const sig1Image = data.signature1_image || null;
+
+          const existingSig1 = existingSignatures.find(es => es.position === 1);
+
+          if (sig1Name && sig1Title) {
+            if (existingSig1) {
+              // Update existing signature
+              await tx.certificateSignature.update({
+                where: { id: existingSig1.signatureId },
+                data: {
+                  name: sig1Name,
+                  title: sig1Title,
+                  image: sig1Image,
+                },
+              });
+            } else {
+              // Create new signature
+              const newSig1 = await tx.certificateSignature.create({
+                data: {
+                  name: sig1Name,
+                  title: sig1Title,
+                  image: sig1Image,
+                },
+              });
+
+              await tx.eventSignature.create({
+                data: {
+                  eventId,
+                  signatureId: newSig1.id,
+                  position: 1,
+                },
+              });
+            }
+          } else if (existingSig1) {
+            // Remove signature if name or title is empty
+            await tx.eventSignature.delete({ where: { id: existingSig1.id } });
+            await tx.certificateSignature.delete({ where: { id: existingSig1.signatureId } });
+          }
+        }
+
+        // Handle second signature (position 2)
+        if (hasSignature2Data) {
+          const sig2Name = data.signature2_name || '';
+          const sig2Title = data.signature2_title || '';
+          const sig2Image = data.signature2_image || null;
+
+          const existingSig2 = existingSignatures.find(es => es.position === 2);
+
+          if (sig2Name && sig2Title) {
+            if (existingSig2) {
+              // Update existing signature
+              await tx.certificateSignature.update({
+                where: { id: existingSig2.signatureId },
+                data: {
+                  name: sig2Name,
+                  title: sig2Title,
+                  image: sig2Image,
+                },
+              });
+            } else {
+              // Create new signature
+              const newSig2 = await tx.certificateSignature.create({
+                data: {
+                  name: sig2Name,
+                  title: sig2Title,
+                  image: sig2Image,
+                },
+              });
+
+              await tx.eventSignature.create({
+                data: {
+                  eventId,
+                  signatureId: newSig2.id,
+                  position: 2,
+                },
+              });
+            }
+          } else if (existingSig2) {
+            // Remove signature if name or title is empty
+            await tx.eventSignature.delete({ where: { id: existingSig2.id } });
+            await tx.certificateSignature.delete({ where: { id: existingSig2.signatureId } });
+          }
+        }
+      }
+
+      return this.getEventById(eventId);
+    });
   }
 
   async getEventById(eventId: number) {
@@ -119,6 +255,11 @@ export class EventService {
         eventStatus: true,
         registrationStatus: true,
         onlinePlatform: true,
+        eventSignatures: {
+          include: {
+            signature: true,
+          },
+        },
         _count: {
           select: {
             registrations: {
@@ -152,6 +293,11 @@ export class EventService {
           eventStatus: true,
           registrationStatus: true,
           onlinePlatform: true,
+          eventSignatures: {
+            include: {
+              signature: true,
+            },
+          },
           _count: {
             select: {
               registrations: {
@@ -183,6 +329,11 @@ export class EventService {
         eventGuests: {
           include: {
             role: { select: { code: true, label: true } },
+          },
+        },
+        eventSignatures: {
+          include: {
+            signature: true,
           },
         },
         _count: {
@@ -221,6 +372,11 @@ export class EventService {
           eventGuests: {
             include: {
               role: { select: { code: true, label: true } },
+            },
+          },
+          eventSignatures: {
+            include: {
+              signature: true,
             },
           },
           _count: {
