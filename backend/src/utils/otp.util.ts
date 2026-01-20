@@ -8,6 +8,7 @@ export class OTPUtil {
    * Generate and send OTP to user's email for login
    */
   static async sendLoginOTP(email: string): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
     // Generate 6-digit OTP
     const code = TwoFactorUtil.generateEmailOTP();
     
@@ -17,7 +18,7 @@ export class OTPUtil {
     // Store OTP in database
     await prisma.otpCode.create({
       data: {
-        email,
+        email: normalizedEmail,
         code,
         type: {
           connect: { code: 'login' }

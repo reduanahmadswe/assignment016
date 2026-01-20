@@ -12,6 +12,7 @@ type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>
 
 export class RegistrationService {
   static async createPendingRegistration(email: string, password: string, name: string, phone?: string) {
+    const normalizedEmail = email.toLowerCase().trim();
     const hashedPassword = await bcrypt.hash(password, 12);
     const cleanedPhone = phone ? phone.replace(/[\s\-()]/g, '') : undefined;
 
@@ -22,7 +23,7 @@ export class RegistrationService {
     await prisma.$transaction(async (tx) => {
       await tx.pendingRegistration.create({
         data: {
-          email,
+          email: normalizedEmail,
           password: hashedPassword,
           name,
           phone: cleanedPhone,
@@ -45,8 +46,9 @@ export class RegistrationService {
   }
 
   static async completeRegistration(email: string, otpId: number) {
+    const normalizedEmail = email.toLowerCase().trim();
     const pendingReg = await prisma.pendingRegistration.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!pendingReg) {
@@ -64,7 +66,7 @@ export class RegistrationService {
       
       const user = await tx.user.create({
         data: {
-          email: pendingReg.email,
+          email: normalizedEmail,
           password: pendingReg.password,
           name: pendingReg.name,
           phone: pendingReg.phone,
@@ -76,7 +78,7 @@ export class RegistrationService {
       });
 
       await tx.pendingRegistration.delete({
-        where: { email },
+        where: { email: normalizedEmail },
       });
 
       return user;
@@ -88,13 +90,14 @@ export class RegistrationService {
 
 export class OTPService {
   static async sendVerificationOTP(email: string, isPendingReg: boolean) {
+    const normalizedEmail = email.toLowerCase().trim();
     const otp = generateOTP();
     const expiresAt = isPendingReg ? getExpirationTimeUTC(2) : getExpirationTimeUTC(10);
     const verificationTypeId = await lookupService.getOtpTypeId('verification');
 
     await prisma.otpCode.create({
       data: {
-        email,
+        email: normalizedEmail,
         code: otp,
         typeId: verificationTypeId,
         expiresAt,
@@ -145,6 +148,7 @@ export class OTPService {
 
 export class PasswordService {
   static async resetPassword(email: string, otpId: number, newPassword: string) {
+    const normalizedEmail = email.toLowerCase().trim();
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     await prisma.$transaction(async (tx: TransactionClient) => {
@@ -154,12 +158,12 @@ export class PasswordService {
       });
 
       await tx.user.update({
-        where: { email },
+        where: { email: normalizedEmail },
         data: { password: hashedPassword },
       });
 
       const user = await tx.user.findUnique({
-        where: { email },
+        where: { email: normalizedEmail },
         select: { id: true },
       });
 

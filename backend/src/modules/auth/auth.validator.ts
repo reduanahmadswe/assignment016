@@ -5,9 +5,10 @@ import { lookupService } from '../../services/lookup.service.js';
 
 export class AuthValidator {
   static async validateEmailNotExists(email: string) {
+    const normalizedEmail = email.toLowerCase().trim();
     const [existingUser, pendingReg] = await Promise.all([
-      prisma.user.findUnique({ where: { email } }),
-      prisma.pendingRegistration.findUnique({ where: { email } })
+      prisma.user.findUnique({ where: { email: normalizedEmail } }),
+      prisma.pendingRegistration.findUnique({ where: { email: normalizedEmail } })
     ]);
 
     if (existingUser) {
@@ -20,8 +21,9 @@ export class AuthValidator {
   }
 
   static async validateUserCredentials(email: string, password: string) {
+    const normalizedEmail = email.toLowerCase().trim();
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
@@ -99,9 +101,10 @@ export class AuthValidator {
 
   static async validateOTP(email: string, otp: string, otpType: string) {
     const typeId = await lookupService.getOtpTypeId(otpType);
+    const normalizedEmail = email.toLowerCase().trim();
     const otpRecord = await prisma.otpCode.findFirst({
       where: {
-        email,
+        email: normalizedEmail,
         code: otp,
         typeId,
         isUsed: false,

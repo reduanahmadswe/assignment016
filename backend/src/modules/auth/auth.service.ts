@@ -13,18 +13,19 @@ import type { RegisterInput, LoginInput, VerifyLoginOTPInput } from './auth.type
 export class AuthService {
   async register(data: RegisterInput) {
     const { email, password, name, phone } = data;
+    const normalizedEmail = email.toLowerCase().trim();
 
     try {
       // Validate email not exists
-      const pendingReg = await AuthValidator.validateEmailNotExists(email);
+      const pendingReg = await AuthValidator.validateEmailNotExists(normalizedEmail);
 
       // Delete old pending registration if exists
       if (pendingReg) {
-        await prisma.pendingRegistration.delete({ where: { email } });
+        await prisma.pendingRegistration.delete({ where: { email: normalizedEmail } });
       }
 
       // Create pending registration and send OTP
-      await RegistrationService.createPendingRegistration(email, password, name, phone);
+      await RegistrationService.createPendingRegistration(normalizedEmail, password, name, phone);
 
       return {
         message: 'Registration initiated! Please check your email for verification code.',
@@ -88,18 +89,19 @@ export class AuthService {
   }
 
   async resendOTP(email: string) {
+    const normalizedEmail = email.toLowerCase().trim();
     const pendingReg = await prisma.pendingRegistration.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: { email: true },
     });
 
     if (pendingReg) {
-      await OTPService.sendVerificationOTP(email, true);
+      await OTPService.sendVerificationOTP(normalizedEmail, true);
       return { message: 'OTP sent successfully' };
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: { id: true, isVerified: true },
     });
 
@@ -111,7 +113,7 @@ export class AuthService {
       throw new AppError('Email already verified', 400);
     }
 
-    await OTPService.sendVerificationOTP(email, false);
+    await OTPService.sendVerificationOTP(normalizedEmail, false);
     return { message: 'OTP sent successfully' };
   }
 
@@ -175,13 +177,14 @@ export class AuthService {
 
   async verifyLoginOTP(data: VerifyLoginOTPInput) {
     const { email, otp, token } = data;
+    const normalizedEmail = email.toLowerCase().trim();
 
     if (!otp && !token) {
       throw new AppError('Please provide OTP code', 400);
     }
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
