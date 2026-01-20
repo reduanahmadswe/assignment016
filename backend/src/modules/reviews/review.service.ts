@@ -1,49 +1,23 @@
 import prisma from '../../config/db.js';
-import { AppError } from '../../middlewares/error.middleware.js';
+import { ReviewValidator } from './review.validator.js';
+import { ReviewQueryService } from './review.query.js';
+import { ReviewStatsService } from './review.stats.js';
+import type { ReviewUpdateData, ReviewFilters } from './review.types.js';
 
 class ReviewService {
   // Create a new review
   async createReview(userId: number, eventId: number, rating: number, comment?: string) {
-    // Check if event exists
-    const event = await prisma.event.findUnique({
-      where: { id: eventId },
-    });
+    // Validate event exists
+    const event = await ReviewValidator.validateEventExists(eventId);
 
-    if (!event) {
-      throw new AppError('Event not found', 404);
-    }
+    // Validate event has ended
+    ReviewValidator.validateEventEnded(event);
 
-    // Check if event has ended
-    if (new Date() < event.endDate) {
-      throw new AppError('You can only review events that have ended', 400);
-    }
+    // Validate user registration
+    await ReviewValidator.validateUserRegistration(userId, eventId);
 
-    // Check if user was registered for the event
-    const registration = await prisma.eventRegistration.findFirst({
-      where: {
-        userId,
-        eventId,
-        status: 'confirmed',
-      },
-    });
-
-    if (!registration) {
-      throw new AppError('You must be a confirmed participant to review this event', 403);
-    }
-
-    // Check if user has already reviewed this event
-    const existingReview = await prisma.review.findUnique({
-      where: {
-        userId_eventId: {
-          userId,
-          eventId,
-        },
-      },
-    });
-
-    if (existingReview) {
-      throw new AppError('You have already reviewed this event', 400);
-    }
+    // Validate no existing review
+    await ReviewValidator.validateNoExistingReview(userId, eventId);
 
     // Create review
     const review = await prisma.review.create({
@@ -53,14 +27,7 @@ class ReviewService {
         rating,
         comment: comment || null,
       },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, avatar: true },
-        },
-        event: {
-          select: { id: true, title: true },
-        },
-      },
+      include: ReviewQueryService.REVIEW_INCLUDE,
     });
 
     return {
@@ -71,128 +38,34 @@ class ReviewService {
 
   // Get user's reviews
   async getMyReviews(userId: number) {
-    const reviews = await prisma.review.findMany({
-      where: { userId },
-      include: {
-        event: {
-          select: { id: true, title: true, slug: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
+    const reviews = await ReviewQueryService.getMyReviews(userId);
     return { reviews };
   }
 
   // Get approved reviews (public)
   async getApprovedReviews(featured?: boolean, limit?: number) {
-    const where: any = { isApproved: true };
-
-    if (featured) {
-      where.isFeatured = true;
-    }
-
-    const reviews = await prisma.review.findMany({
-      where,
-      include: {
-        user: {
-          select: { id: true, name: true, avatar: true },
-        },
-        event: {
-          select: { id: true, title: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
-
+    const reviews = await ReviewQueryService.getApprovedReviews(featured, limit);
     return { reviews };
   }
 
   // Get all reviews (admin)
-  async getAllReviews(filters: {
-    isApproved?: boolean;
-    eventId?: number;
-    page: number;
-    limit: number;
-  }) {
-    const { isApproved, eventId, page, limit } = filters;
-    const skip = (page - 1) * limit;
-
-    const where: any = {};
-
-    if (isApproved !== undefined) {
-      where.isApproved = isApproved;
-    }
-
-    if (eventId) {
-      where.eventId = eventId;
-    }
-
-    const [reviews, total] = await Promise.all([
-      prisma.review.findMany({
-        where,
-        include: {
-          user: {
-            select: { id: true, name: true, email: true, avatar: true },
-          },
-          event: {
-            select: { id: true, title: true, slug: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-      prisma.review.count({ where }),
-    ]);
-
-    return {
-      reviews,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+  async getAllReviews(filters: ReviewFilters) {
+    return ReviewQueryService.getAllReviews(filters);
   }
 
   // Update review
-  async updateReview(
-    reviewId: number,
-    userId: number,
-    data: { rating?: number; comment?: string }
-  ) {
-    // Check if review exists and belongs to user
-    const review = await prisma.review.findUnique({
-      where: { id: reviewId },
-    });
+  async updateReview(reviewId: number, userId: number, data: ReviewUpdateData) {
+    // Validate ownership
+    const review = await ReviewValidator.validateReviewOwnership(reviewId, userId);
 
-    if (!review) {
-      throw new AppError('Review not found', 404);
-    }
+    // Validate not approved
+    ReviewValidator.validateReviewNotApproved(review);
 
-    if (review.userId !== userId) {
-      throw new AppError('You can only update your own reviews', 403);
-    }
-
-    // If review is already approved, don't allow updates
-    if (review.isApproved) {
-      throw new AppError('You cannot update an approved review', 400);
-    }
-
+    // Update review
     const updatedReview = await prisma.review.update({
       where: { id: reviewId },
       data,
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, avatar: true },
-        },
-        event: {
-          select: { id: true, title: true },
-        },
-      },
+      include: ReviewQueryService.REVIEW_INCLUDE,
     });
 
     return {
@@ -203,19 +76,10 @@ class ReviewService {
 
   // Delete review
   async deleteReview(reviewId: number, userId: number) {
-    // Check if review exists and belongs to user
-    const review = await prisma.review.findUnique({
-      where: { id: reviewId },
-    });
+    // Validate ownership
+    await ReviewValidator.validateReviewOwnership(reviewId, userId);
 
-    if (!review) {
-      throw new AppError('Review not found', 404);
-    }
-
-    if (review.userId !== userId) {
-      throw new AppError('You can only delete your own reviews', 403);
-    }
-
+    // Delete review
     await prisma.review.delete({
       where: { id: reviewId },
     });
@@ -230,15 +94,10 @@ class ReviewService {
     isApproved: boolean,
     isFeatured?: boolean
   ) {
-    // Check if review exists
-    const review = await prisma.review.findUnique({
-      where: { id: reviewId },
-    });
+    // Validate review exists
+    await ReviewValidator.validateReviewExists(reviewId);
 
-    if (!review) {
-      throw new AppError('Review not found', 404);
-    }
-
+    // Prepare update data
     const updateData: any = {
       isApproved,
       approvedAt: isApproved ? new Date() : null,
@@ -249,17 +108,11 @@ class ReviewService {
       updateData.isFeatured = isFeatured;
     }
 
+    // Update review
     const updatedReview = await prisma.review.update({
       where: { id: reviewId },
       data: updateData,
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, avatar: true },
-        },
-        event: {
-          select: { id: true, title: true },
-        },
-      },
+      include: ReviewQueryService.REVIEW_INCLUDE,
     });
 
     return {
@@ -270,27 +123,8 @@ class ReviewService {
 
   // Get review statistics
   async getReviewStats() {
-    const [total, pending, approved, featured] = await Promise.all([
-      prisma.review.count(),
-      prisma.review.count({ where: { isApproved: false } }),
-      prisma.review.count({ where: { isApproved: true } }),
-      prisma.review.count({ where: { isApproved: true, isFeatured: true } }),
-    ]);
-
-    const avgRating = await prisma.review.aggregate({
-      where: { isApproved: true },
-      _avg: { rating: true },
-    });
-
-    return {
-      stats: {
-        total,
-        pending,
-        approved,
-        featured,
-        averageRating: avgRating._avg.rating ? Number(avgRating._avg.rating.toFixed(1)) : 0,
-      },
-    };
+    const stats = await ReviewStatsService.getReviewStats();
+    return { stats };
   }
 }
 

@@ -1,40 +1,13 @@
 import prisma from '../../config/db.js';
 import { AppError } from '../../middlewares/error.middleware.js';
 import { paginate, getPaginationMeta } from '../../utils/helpers.util.js';
-
-// Helper function to generate URL-friendly slug
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .trim();
-}
-
-interface CreateNewsletterInput {
-  title: string;
-  description?: string;
-  thumbnail?: string;
-  pdf_link: string;
-  start_date?: string;
-  end_date?: string;
-  is_published?: boolean;
-}
+import { CreateNewsletterInput, UpdateNewsletterInput } from './newsletter.types.js';
+import { newsletterSlugGenerator } from './newsletter.utils.js';
+import { newsletterQueryBuilder } from './newsletter.query-builder.js';
 
 export class NewsletterService {
   async createNewsletter(data: CreateNewsletterInput) {
-    // Generate unique slug from title
-    let slug = generateSlug(data.title);
-
-    // Check if slug already exists and make it unique
-    let slugExists = await prisma.newsletter.findUnique({ where: { slug } });
-    let counter = 1;
-    while (slugExists) {
-      slug = `${generateSlug(data.title)}-${counter}`;
-      slugExists = await prisma.newsletter.findUnique({ where: { slug } });
-      counter++;
-    }
+    const slug = await newsletterSlugGenerator.generateUniqueSlug(data.title);
 
     const newsletter = await prisma.newsletter.create({
       data: {
@@ -52,7 +25,7 @@ export class NewsletterService {
     return newsletter;
   }
 
-  async updateNewsletter(id: number, data: Partial<CreateNewsletterInput>) {
+  async updateNewsletter(id: number, data: UpdateNewsletterInput) {
     const newsletter = await prisma.newsletter.findUnique({ where: { id } });
     if (!newsletter) {
       throw new AppError('Newsletter not found', 404);
@@ -63,27 +36,7 @@ export class NewsletterService {
     // If title is updated, regenerate slug
     if (data.title !== undefined) {
       updateData.title = data.title;
-      let slug = generateSlug(data.title);
-
-      // Check if slug already exists (excluding current newsletter)
-      let slugExists = await prisma.newsletter.findFirst({
-        where: {
-          slug,
-          id: { not: id }
-        }
-      });
-      let counter = 1;
-      while (slugExists) {
-        slug = `${generateSlug(data.title)}-${counter}`;
-        slugExists = await prisma.newsletter.findFirst({
-          where: {
-            slug,
-            id: { not: id }
-          }
-        });
-        counter++;
-      }
-      updateData.slug = slug;
+      updateData.slug = await newsletterSlugGenerator.generateUniqueSlugForUpdate(data.title, id);
     }
 
     if (data.description !== undefined) updateData.description = data.description;
@@ -143,18 +96,7 @@ export class NewsletterService {
 
   async getAllNewsletters(page: number = 1, limit: number = 10, search?: string, isPublished?: boolean) {
     const { offset } = paginate(page, limit);
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-      ];
-    }
-
-    if (isPublished !== undefined) {
-      where.isPublished = isPublished;
-    }
+    const where = newsletterQueryBuilder.buildWhereClause(search, isPublished);
 
     const [newsletters, total] = await Promise.all([
       prisma.newsletter.findMany({
@@ -174,16 +116,7 @@ export class NewsletterService {
 
   async getPublishedNewsletters(page: number = 1, limit: number = 12, search?: string) {
     const { offset } = paginate(page, limit);
-    const where: any = {
-      isPublished: true,
-    };
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-      ];
-    }
+    const where = newsletterQueryBuilder.buildPublishedWhereClause(search);
 
     const [newsletters, total] = await Promise.all([
       prisma.newsletter.findMany({

@@ -20,7 +20,6 @@ export class HostService {
         bio: data.bio,
         profileImage: data.profile_image,
         cvLink: data.cv_link,
-        socialLinks: data.social_links ? JSON.stringify(data.social_links) : null,
       },
     });
 
@@ -107,11 +106,12 @@ export class HostService {
             title: true,
             slug: true,
             thumbnail: true,
-            eventType: true,
+            eventType: { select: { code: true, label: true } },
             startDate: true,
-            eventStatus: true,
+            eventStatus: { select: { code: true, label: true } },
           },
         },
+        role: { select: { code: true, label: true } },
       },
       orderBy: {
         event: { startDate: 'desc' },
@@ -120,7 +120,9 @@ export class HostService {
 
     return events.map((eh: any) => ({
       ...eh.event,
-      role: eh.role,
+      eventType: eh.event.eventType.code,
+      eventStatus: eh.event.eventStatus.code,
+      role: eh.role.code,
     }));
   }
 

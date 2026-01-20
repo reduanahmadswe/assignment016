@@ -1,21 +1,16 @@
 import prisma from '../../config/db.js';
 import { AppError } from '../../middlewares/error.middleware.js';
 import { generateSlug, paginate, getPaginationMeta } from '../../utils/helpers.util.js';
-
-interface CreateBlogInput {
-  title: string;
-  excerpt?: string;
-  content: string;
-  thumbnail?: string;
-  meta_title?: string;
-  meta_description?: string;
-  tags?: string[];
-  status?: 'draft' | 'published';
-}
+import { lookupService } from '../../services/lookup.service.js';
+import { CreateBlogInput, UpdateBlogInput, BlogFilters } from './blog.types.js';
+import { blogTransformer } from './blog.transformer.js';
+import { blogQueryBuilder } from './blog.query-builder.js';
 
 export class BlogService {
   async createPost(data: CreateBlogInput, authorId: number) {
     const slug = generateSlug(data.title) + '-' + Date.now().toString(36);
+
+    const statusId = await lookupService.getBlogStatusId(data.status || 'draft');
 
     const post = await prisma.blogPost.create({
       data: {
@@ -25,18 +20,22 @@ export class BlogService {
         content: data.content,
         thumbnail: data.thumbnail,
         authorId,
-        status: (data.status || 'draft') as any,
+        statusId,
         metaTitle: data.meta_title,
         metaDescription: data.meta_description,
-        tags: Array.isArray(data.tags) ? data.tags.join(',') : (data.tags || ''),
         publishedAt: data.status === 'published' ? new Date() : null,
       },
     });
 
+    // Handle tags if provided
+    if (data.tags && Array.isArray(data.tags) && data.tags.length > 0) {
+      await this.assignTags(post.id, data.tags);
+    }
+
     return this.getPostById(post.id);
   }
 
-  async updatePost(postId: number, data: Partial<CreateBlogInput>) {
+  async updatePost(postId: number, data: UpdateBlogInput) {
     const post = await prisma.blogPost.findUnique({ where: { id: postId } });
     if (!post) {
       throw new AppError('Blog post not found', 404);
@@ -48,20 +47,17 @@ export class BlogService {
     if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
     if (data.content !== undefined) updateData.content = data.content;
     if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
-    if (data.status !== undefined) updateData.status = data.status;
+    if (data.status !== undefined) updateData.statusId = await lookupService.getBlogStatusId(data.status);
     if (data.meta_title !== undefined) updateData.metaTitle = data.meta_title;
     if (data.meta_description !== undefined) updateData.metaDescription = data.meta_description;
-    if (data.tags !== undefined) {
-      // Convert array to comma-separated string for database storage
-      updateData.tags = Array.isArray(data.tags) ? data.tags.join(',') : data.tags;
-    }
 
     if (data.title && data.title !== post.title) {
       updateData.slug = generateSlug(data.title) + '-' + Date.now().toString(36);
     }
 
     // Handle publishing
-    if (data.status === 'published' && post.status !== 'published') {
+    const currentStatus = await prisma.blogStatus.findUnique({ where: { id: post.statusId } });
+    if (data.status === 'published' && currentStatus?.code !== 'published') {
       updateData.publishedAt = new Date();
     }
 
@@ -70,17 +66,26 @@ export class BlogService {
       data: updateData,
     });
 
+    // Handle tags if provided
+    if (data.tags !== undefined) {
+      await this.assignTags(postId, Array.isArray(data.tags) ? data.tags : []);
+    }
+
     return this.getPostById(updatedPost.id);
   }
 
   async updatePostStatus(postId: number, status: 'draft' | 'published') {
-    const post = await prisma.blogPost.findUnique({ where: { id: postId } });
+    const post = await prisma.blogPost.findUnique({ 
+      where: { id: postId },
+      include: { status: true }
+    });
     if (!post) {
       throw new AppError('Blog post not found', 404);
     }
 
-    const updateData: any = { status };
-    if (status === 'published' && post.status !== 'published') {
+    const statusId = await lookupService.getBlogStatusId(status);
+    const updateData: any = { statusId };
+    if (status === 'published' && post.status.code !== 'published') {
       updateData.publishedAt = new Date();
     }
     if (status === 'draft') {
@@ -102,6 +107,14 @@ export class BlogService {
         author: {
           select: { name: true, avatar: true },
         },
+        status: { select: { code: true } },
+        blogTags: {
+          select: {
+            tag: {
+              select: { name: true, slug: true },
+            },
+          },
+        },
       },
     });
 
@@ -109,21 +122,26 @@ export class BlogService {
       throw new AppError('Blog post not found', 404);
     }
 
-    return {
-      ...post,
-      author_name: post.author?.name,
-    };
+    return blogTransformer.transform(post);
   }
 
   async getPostBySlug(slug: string) {
     const post = await prisma.blogPost.findFirst({
       where: {
         slug,
-        status: 'published',
+        status: { code: 'published' },
       },
       include: {
         author: {
           select: { name: true, avatar: true },
+        },
+        status: { select: { code: true } },
+        blogTags: {
+          select: {
+            tag: {
+              select: { name: true, slug: true },
+            },
+          },
         },
       },
     });
@@ -138,27 +156,12 @@ export class BlogService {
       data: { views: { increment: 1 } },
     });
 
-    return {
-      ...post,
-      author_name: post.author?.name,
-    };
+    return blogTransformer.transform(post);
   }
 
   async getAllPosts(page: number = 1, limit: number = 10, status?: string, search?: string) {
     const { offset } = paginate(page, limit);
-    const where: any = {};
-
-    if (status) {
-      where.status = status;
-    }
-    // If no status is provided, show all posts (don't filter by status)
-
-    if (search) {
-      where.OR = [
-        { title: { contains: search } },
-        { excerpt: { contains: search } },
-      ];
-    }
+    const where = blogQueryBuilder.buildWhereClause({ status, search });
 
     const [posts, total] = await Promise.all([
       prisma.blogPost.findMany({
@@ -169,13 +172,19 @@ export class BlogService {
           slug: true,
           excerpt: true,
           thumbnail: true,
-          status: true,
+          status: { select: { code: true } },
           views: true,
-          tags: true,
           publishedAt: true,
           createdAt: true,
           author: {
             select: { name: true, avatar: true },
+          },
+          blogTags: {
+            select: {
+              tag: {
+                select: { name: true, slug: true },
+              },
+            },
           },
         },
         orderBy: [
@@ -191,14 +200,15 @@ export class BlogService {
     // Get stats
     const [totalPosts, publishedCount, draftCount] = await Promise.all([
       prisma.blogPost.count(),
-      prisma.blogPost.count({ where: { status: 'published' } }),
-      prisma.blogPost.count({ where: { status: 'draft' } }),
+      prisma.blogPost.count({ where: { status: { code: 'published' } } }),
+      prisma.blogPost.count({ where: { status: { code: 'draft' } } }),
     ]);
 
     const postsWithAuthor = posts.map((post: any) => ({
       ...post,
+      status: post.status.code,
       author_name: post.author?.name,
-      tags: post.tags ? post.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+      tags: post.blogTags.map((bt: any) => bt.tag.name),
     }));
 
     return {
@@ -214,7 +224,7 @@ export class BlogService {
 
   async getRecentPosts(limit: number = 5) {
     const posts = await prisma.blogPost.findMany({
-      where: { status: 'published' },
+      where: { status: { code: 'published' } },
       select: {
         id: true,
         title: true,
@@ -230,35 +240,62 @@ export class BlogService {
   }
 
   async getCategories() {
-    // Get unique tags from all published posts
-    const posts = await prisma.blogPost.findMany({
-      where: {
-        status: 'published',
-        tags: {
-          not: '',
+    // Get all tags with their post counts
+    const tags = await prisma.tag.findMany({
+      select: {
+        name: true,
+        slug: true,
+        _count: {
+          select: {
+            blogTags: {
+              where: {
+                blogPost: {
+                  status: { code: 'published' },
+                },
+              },
+            },
+          },
         },
       },
-      select: { tags: true },
     });
 
-    const tagCounts: { [key: string]: number } = {};
+    return tags
+      .filter((tag: any) => tag._count.blogTags > 0)
+      .map((tag: any) => ({
+        name: tag.name,
+        slug: tag.slug,
+        count: tag._count.blogTags,
+      }));
+  }
 
-    posts.forEach((post: any) => {
-      try {
-        const tags = Array.isArray(post.tags) ? post.tags : [];
-        tags.forEach((tag: string) => {
-          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+  private async assignTags(blogPostId: number, tagNames: string[]) {
+    // Remove existing tags
+    await prisma.blogTag.deleteMany({
+      where: { blogPostId },
+    });
+
+    if (tagNames.length === 0) return;
+
+    // Get or create tags
+    const tags = await Promise.all(
+      tagNames.map(async (name) => {
+        const slug = name.toLowerCase().replace(/\s+/g, '-');
+        return prisma.tag.upsert({
+          where: { slug },
+          create: { name, slug },
+          update: {},
+          select: { id: true },
         });
-      } catch (e) {
-        // Skip invalid data
-      }
-    });
+      })
+    );
 
-    return Object.entries(tagCounts).map(([name, count]) => ({
-      name,
-      slug: name.toLowerCase().replace(/\s+/g, '-'),
-      count,
-    }));
+    // Create blog-tag relationships
+    await prisma.blogTag.createMany({
+      data: tags.map((tag) => ({
+        blogPostId,
+        tagId: tag.id,
+      })),
+    });
   }
 
   async deletePost(postId: number) {

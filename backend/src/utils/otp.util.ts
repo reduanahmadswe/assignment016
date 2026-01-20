@@ -19,7 +19,9 @@ export class OTPUtil {
       data: {
         email,
         code,
-        type: 'login',
+        type: {
+          connect: { code: 'login' }
+        },
         expiresAt,
         isUsed: false,
       },
@@ -67,7 +69,9 @@ export class OTPUtil {
       where: {
         email,
         code,
-        type,
+        type: {
+          code: type
+        },
         isUsed: false,
         expiresAt: {
           gte: new Date(), // Allow equal time (already stored in DB with timezone)

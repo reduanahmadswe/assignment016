@@ -15,62 +15,17 @@ import prisma from '../../config/db.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../middlewares/error.middleware.js';
 import { generateTransactionId } from '../../utils/helpers.util.js';
+import { lookupService } from '../../services/lookup.service.js';
 import {
-  sendPaymentConfirmation,
-  sendPaymentFailure,
-  sendRegistrationConfirmation,
-  sendEventLink,
-  sendPaymentCancellation,
-  sendRefundNotification,
-} from '../../utils/email.util.js';
-
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-interface UddoktaPayCreateResponse {
-  status: boolean;
-  message: string;
-  payment_url?: string;
-}
-
-interface UddoktaPayVerifyResponse {
-  full_name: string;
-  email: string;
-  amount: string;
-  fee: string;
-  charged_amount: string;
-  invoice_id: string;
-  metadata: {
-    user_id: string;
-    event_id: string;
-    transaction_id: string;
-    registration_id?: string; // Optional - only set after verification in webhook
-  };
-  payment_method: string;
-  sender_number: string;
-  transaction_id: string;
-  date: string;
-  status: 'COMPLETED' | 'PENDING' | 'ERROR';
-}
-
-interface InitiatePaymentInput {
-  event_id: number;
-  amount?: number;
-  ip_address?: string;
-  user_agent?: string;
-}
-
-interface VerifyPaymentResult {
-  success: boolean;
-  status: string;
-  message: string;
-  registration_number?: string | null;
-  event_title?: string;
-  already_processed?: boolean;
-  registration?: any;
-  transaction?: any;
-}
+  UddoktaPayCreateResponse,
+  UddoktaPayVerifyResponse,
+  InitiatePaymentInput,
+  VerifyPaymentResult,
+  PaymentFilters,
+  PaymentConfig,
+} from './payment.types.js';
+import { paymentValidator } from './payment.validator.js';
+import { paymentEmailService, sendRefundNotification } from './payment.email.js';
 
 // ============================================================================
 // PAYMENT SERVICE CLASS
@@ -83,7 +38,7 @@ export class PaymentService {
   /**
    * Helper to get dynamic payment configuration
    */
-  private async _getPaymentConfig() {
+  private async _getPaymentConfig(): Promise<PaymentConfig> {
     // --------------------------------------------------------------------------
     // DYNAMIC CONFIG FROM DB (DISABLED FOR NOW)
     // --------------------------------------------------------------------------
@@ -135,97 +90,13 @@ export class PaymentService {
     // -------------------------------------------------------------------------
     // 1.1 VALIDATE EVENT
     // -------------------------------------------------------------------------
-    const event = await prisma.event.findUnique({
-      where: { id: data.event_id },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        price: true,
-        currency: true,
-        maxParticipants: true,
-        currentParticipants: true,
-        registrationStatus: true,
-        eventStatus: true,
-        startDate: true,
-      },
-    });
-
-    if (!event) {
-      throw new AppError('Event not found', 404);
-    }
-
-    // Validate event price (must be paid event)
+    const event = await paymentValidator.validateEvent(data.event_id);
     const eventPrice = Number(event.price) || 0;
-    if (eventPrice <= 0) {
-      throw new AppError(
-        'This is a free event. Please use the free registration endpoint.',
-        400
-      );
-    }
-
-    // Validate event is open for registration
-    if (event.registrationStatus !== 'open') {
-      throw new AppError('Registration is closed for this event', 400);
-    }
-
-    if (event.eventStatus === 'completed' || event.eventStatus === 'cancelled') {
-      throw new AppError(`This event has been ${event.eventStatus}`, 400);
-    }
-
-    // Check capacity
-    if (event.maxParticipants && event.currentParticipants >= event.maxParticipants) {
-      throw new AppError('Event is full. Registration capacity reached.', 400);
-    }
 
     // -------------------------------------------------------------------------
     // 1.2 CHECK EXISTING REGISTRATIONS
     // -------------------------------------------------------------------------
-    const existingRegistration = await prisma.eventRegistration.findFirst({
-      where: {
-        eventId: data.event_id,
-        userId,
-        status: { in: ['confirmed', 'pending'] },
-      },
-      include: {
-        paymentTransactions: {
-          where: { status: 'pending' },
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-    });
-
-    // User already confirmed - reject
-    if (existingRegistration?.status === 'confirmed') {
-      throw new AppError('You are already registered for this event', 400);
-    }
-
-    // User has pending payment - prevent duplicate
-    if (existingRegistration?.paymentTransactions && existingRegistration.paymentTransactions.length > 0) {
-      const pendingPayment = existingRegistration.paymentTransactions[0];
-
-      // Auto-expire old pending payment to allow creating a new one immediately
-      await prisma.paymentTransaction.update({
-        where: { id: pendingPayment.id },
-        data: { status: 'expired' },
-      });
-    }
-
-    // ⭐ Check for cancelled registration and clean it up
-    const cancelledRegistration = await prisma.eventRegistration.findFirst({
-      where: {
-        eventId: data.event_id,
-        userId,
-        status: 'cancelled',
-      },
-    });
-
-    if (cancelledRegistration) {
-      // Delete old cancelled registration to allow fresh start
-      await prisma.eventRegistration.delete({
-        where: { id: cancelledRegistration.id },
-      });
-    }
+    await paymentValidator.checkExistingRegistrations(data.event_id, userId);
 
     // -------------------------------------------------------------------------
     // 1.3 GET USER DETAILS
@@ -247,13 +118,14 @@ export class PaymentService {
     const amount = data.amount || eventPrice;
 
     // Amount validation - prevent price tampering
-    if (Math.abs(amount - eventPrice) > 0.01) {
-      throw new AppError('Invalid payment amount', 400);
-    }
+    paymentValidator.validateAmount(amount, eventPrice);
 
     const expiresAt = new Date(Date.now() + this.PAYMENT_TIMEOUT_MINUTES * 60 * 1000);
 
     // ⭐ NEW APPROACH: Create only payment transaction, NOT registration
+    const gatewayId = await lookupService.getPaymentGatewayId('uddoktapay');
+    const pendingStatusId = await lookupService.getPaymentStatusId('pending');
+
     const payment = await prisma.paymentTransaction.create({
       data: {
         registrationId: null, // Will be set after successful verification
@@ -261,8 +133,8 @@ export class PaymentService {
         transactionId,
         amount,
         currency: event.currency,
-        gateway: 'uddoktapay',
-        status: 'pending',
+        gatewayId,
+        statusId: pendingStatusId,
         expiresAt,
         ipAddress: data.ip_address,
         userAgent: data.user_agent,
@@ -464,17 +336,7 @@ export class PaymentService {
     // 2.3 VALIDATE METADATA
     // -------------------------------------------------------------------------
     const { metadata } = verifyData;
-
-    if (!metadata || !metadata.transaction_id || !metadata.event_id) {
-      console.error('[VERIFY] Invalid metadata:', metadata);
-      throw new AppError('Invalid payment metadata', 400);
-    }
-
-    // Security check - ensure payment belongs to user
-    if (userId && metadata.user_id !== userId.toString()) {
-      console.error('[VERIFY] User mismatch:', { expected: userId, received: metadata.user_id });
-      throw new AppError('Payment verification failed: User mismatch', 403);
-    }
+    paymentValidator.validateMetadata(metadata, userId);
 
     // -------------------------------------------------------------------------
     // 2.4 CREATE REGISTRATION & UPDATE PAYMENT (ATOMIC & IDEMPOTENT)
@@ -490,7 +352,8 @@ export class PaymentService {
       }
 
       // ⭐ RACE CONDITION PROTECTION: Check if this transaction was already used
-      if (transaction.status === 'completed' && transaction.registrationId) {
+      const completedStatusId = await lookupService.getPaymentStatusId('completed');
+      if (transaction.statusId === completedStatusId && transaction.registrationId) {
         const existingReg = await tx.eventRegistration.findUnique({
           where: { id: transaction.registrationId },
           include: {
@@ -544,11 +407,12 @@ export class PaymentService {
       }
 
       // ⭐ Check if user already registered (prevent duplicate enrollment)
+      const confirmedStatusId = await lookupService.getEventRegistrationStatusId('confirmed');
       const existingUserReg = await tx.eventRegistration.findFirst({
         where: {
           eventId: event.id,
           userId: transaction.userId,
-          status: 'confirmed',
+          statusId: confirmedStatusId,
         }
       });
 
@@ -559,10 +423,11 @@ export class PaymentService {
       // Check event capacity (race condition protection)
       if (event.maxParticipants && event.currentParticipants >= event.maxParticipants) {
         // Payment succeeded but event is full - mark for refund
+        const refundedStatusId = await lookupService.getPaymentStatusId('refunded');
         await tx.paymentTransaction.update({
           where: { id: transaction.id },
           data: {
-            status: 'refunded',
+            statusId: refundedStatusId,
             refundReason: 'Event capacity reached after payment',
             refundedAt: new Date(),
           },
@@ -577,13 +442,16 @@ export class PaymentService {
         .substring(2, 6)
         .toUpperCase()}`;
 
+      const confirmedRegStatusId = await lookupService.getEventRegistrationStatusId('confirmed');
+      const completedPaymentStatusId = await lookupService.getPaymentStatusId('completed');
+
       const registration = await tx.eventRegistration.create({
         data: {
           eventId: event.id,
           userId: transaction.userId,
           registrationNumber: regNumber,
-          status: 'confirmed',
-          paymentStatus: 'completed',
+          statusId: confirmedRegStatusId,
+          paymentStatusId: completedPaymentStatusId,
           paymentAmount: transaction.amount,
           confirmedAt: new Date(),
         },
@@ -594,7 +462,7 @@ export class PaymentService {
         where: { id: transaction.id },
         data: {
           registrationId: registration.id,
-          status: 'completed',
+          statusId: completedPaymentStatusId,
           invoiceId: verifyData.invoice_id,
           paymentMethod: verifyData.payment_method,
           senderNumber: verifyData.sender_number,
@@ -644,7 +512,7 @@ export class PaymentService {
     // -------------------------------------------------------------------------
     if (result.success && !result.already_processed && result.registration) {
       const { registration } = result;
-      this.sendPaymentSuccessEmails(registration, verifyData).catch((error) => {
+      paymentEmailService.sendSuccessEmails(registration, verifyData).catch((error) => {
         console.error('[VERIFY] Email error:', error);
       });
     }
@@ -689,7 +557,8 @@ export class PaymentService {
       }
 
       // Idempotency - already processed
-      if (transaction.status === 'completed' && transaction.registrationId) {
+      const completedStatusId = await lookupService.getPaymentStatusId('completed');
+      if (transaction.statusId === completedStatusId && transaction.registrationId) {
         console.log('[WEBHOOK] Already processed (idempotent):', transaction.transactionId);
         return { message: 'Already processed', processed: false };
       }
@@ -726,10 +595,11 @@ export class PaymentService {
 
       // Check capacity
       if (event.maxParticipants && event.currentParticipants >= event.maxParticipants) {
+        const refundedStatusId = await lookupService.getPaymentStatusId('refunded');
         await tx.paymentTransaction.update({
           where: { id: transaction.id },
           data: {
-            status: 'refunded',
+            statusId: refundedStatusId,
             refundReason: 'Event full after payment',
             refundedAt: new Date(),
           },
@@ -743,24 +613,28 @@ export class PaymentService {
         .substring(2, 6)
         .toUpperCase()}`;
 
+      const confirmedRegStatusId = await lookupService.getEventRegistrationStatusId('confirmed');
+      const completedPaymentStatusId = await lookupService.getPaymentStatusId('completed');
+
       const registration = await tx.eventRegistration.create({
         data: {
           eventId: event.id,
           userId: transaction.userId,
           registrationNumber: regNumber,
-          status: 'confirmed',
-          paymentStatus: 'completed',
+          statusId: confirmedRegStatusId,
+          paymentStatusId: completedPaymentStatusId,
           paymentAmount: transaction.amount,
           confirmedAt: new Date(),
         },
       });
 
       // Update payment with registration
+      const completedPaymentStatusId2 = await lookupService.getPaymentStatusId('completed');
       await tx.paymentTransaction.update({
         where: { id: transaction.id },
         data: {
           registrationId: registration.id,
-          status: 'completed',
+          statusId: completedPaymentStatusId2,
           invoiceId: invoice_id,
           paymentMethod: payment_method,
           senderNumber: sender_number,
@@ -801,7 +675,7 @@ export class PaymentService {
           },
         });
 
-        this.sendPaymentSuccessEmails(
+        paymentEmailService.sendSuccessEmails(
           { ...registration, event: fullEvent, user },
           payload
         ).catch((error) => {
@@ -828,8 +702,10 @@ export class PaymentService {
       throw new AppError('Transaction not found', 404);
     }
 
-    if (transaction.status !== 'pending') {
-      throw new AppError(`Cannot cancel payment with status: ${transaction.status}`, 400);
+    const pendingStatusId = await lookupService.getPaymentStatusId('pending');
+    if (transaction.statusId !== pendingStatusId) {
+      const status = await prisma.paymentStatus.findUnique({ where: { id: transaction.statusId } });
+      throw new AppError(`Cannot cancel payment with status: ${status?.code || 'unknown'}`, 400);
     }
 
     // ⭐ Delete transaction immediately (no record kept)
@@ -865,7 +741,8 @@ export class PaymentService {
       throw new AppError('Transaction not found', 404);
     }
 
-    if (transaction.status !== 'completed') {
+    const completedStatusId = await lookupService.getPaymentStatusId('completed');
+    if (transaction.statusId !== completedStatusId) {
       throw new AppError('Can only refund completed payments', 400);
     }
 
@@ -878,10 +755,11 @@ export class PaymentService {
 
     await prisma.$transaction(async (tx) => {
       // Update payment
+      const refundedStatusId = await lookupService.getPaymentStatusId('refunded');
       await tx.paymentTransaction.update({
         where: { id: transaction.id },
         data: {
-          status: 'refunded',
+          statusId: refundedStatusId,
           refundedAt: new Date(),
           refundReason: reason,
           refundedBy: adminId,
@@ -889,11 +767,13 @@ export class PaymentService {
       });
 
       // Unenroll user
+      const refundedRegStatusId = await lookupService.getEventRegistrationStatusId('refunded');
+      const refundedPaymentStatusId = await lookupService.getPaymentStatusId('refunded');
       await tx.eventRegistration.update({
         where: { id: registrationId },
         data: {
-          status: 'refunded',
-          paymentStatus: 'refunded',
+          statusId: refundedRegStatusId,
+          paymentStatusId: refundedPaymentStatusId,
           cancelledAt: new Date(),
           cancelReason: reason,
         },
@@ -954,7 +834,7 @@ export class PaymentService {
 
     const expiredTransactions = await prisma.paymentTransaction.findMany({
       where: {
-        status: 'pending',
+        status: { code: 'pending' },
         expiresAt: { lte: now },
       },
     });
@@ -964,7 +844,7 @@ export class PaymentService {
     // ⭐ Delete expired transactions (no record kept)
     const deleteResult = await prisma.paymentTransaction.deleteMany({
       where: {
-        status: 'pending',
+        status: { code: 'pending' },
         expiresAt: { lte: now },
       },
     });
@@ -1000,13 +880,7 @@ export class PaymentService {
    * ADMIN: GET ALL PAYMENTS
    * ========================================================================
    */
-  async getAllPayments(filters: {
-    status?: string;
-    userId?: number;
-    eventId?: number;
-    page?: number;
-    limit?: number;
-  }) {
+  async getAllPayments(filters: PaymentFilters) {
     const { status, userId, eventId, page = 1, limit = 50 } = filters;
 
     const where: any = {};
@@ -1043,43 +917,6 @@ export class PaymentService {
     };
   }
 
-  /**
-   * ========================================================================
-   * HELPER: SEND SUCCESS EMAILS
-   * ========================================================================
-   */
-  private async sendPaymentSuccessEmails(registration: any, verifyData: UddoktaPayVerifyResponse) {
-    try {
-      await sendPaymentConfirmation(
-        registration.user.email,
-        registration.user.name,
-        registration.event.title,
-        Number(verifyData.amount),
-        verifyData.transaction_id
-      );
-
-      await sendRegistrationConfirmation(
-        registration.user.email,
-        registration.user.name,
-        registration.event.title,
-        new Date(registration.event.startDate).toLocaleString(),
-        registration.registrationNumber || ''
-      );
-
-      if (registration.event.eventMode !== 'offline' && registration.event.onlineLink) {
-        await sendEventLink(
-          registration.user.email,
-          registration.user.name,
-          registration.event.title,
-          new Date(registration.event.startDate).toLocaleString(),
-          registration.event.onlineLink,
-          registration.event.onlinePlatform || 'Online'
-        );
-      }
-    } catch (error) {
-      console.error('[EMAIL] Error sending success emails:', error);
-    }
-  }
 }
 
 export const paymentService = new PaymentService();

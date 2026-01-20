@@ -150,28 +150,28 @@ export function Loading({ text = 'Loading...', fullScreen = false }: LoadingProp
         <div className="relative w-24 h-24 mx-auto">
           {/* Outer rotating ring */}
           <div className="absolute inset-0 animate-spin-slow">
-            <div className="w-full h-full rounded-full border-4 border-transparent border-t-primary-500 border-r-primary-400" />
+            <div className="w-full h-full rounded-full border-4 border-transparent border-t-primary-500 border-r-primary-400"></div>
           </div>
           
           {/* Middle counter-rotating ring */}
           <div className="absolute inset-2 animate-spin-reverse">
-            <div className="w-full h-full rounded-full border-4 border-transparent border-b-indigo-500 border-l-indigo-400" />
+            <div className="w-full h-full rounded-full border-4 border-transparent border-b-indigo-500 border-l-indigo-400"></div>
           </div>
           
           {/* Inner pulsing ring */}
           <div className="absolute inset-4 animate-pulse">
-            <div className="w-full h-full rounded-full border-4 border-transparent border-t-purple-400 border-b-purple-300" />
+            <div className="w-full h-full rounded-full border-4 border-transparent border-t-purple-400 border-b-purple-300"></div>
           </div>
           
           {/* Center glow */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-primary-400/30 to-purple-400/30 rounded-full blur-xl animate-pulse" />
+            <div className="w-12 h-12 bg-gradient-to-br from-primary-400/30 to-purple-400/30 rounded-full blur-xl animate-pulse"></div>
           </div>
           
           {/* Center dot */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-3 h-3 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full animate-ping" />
-            <div className="absolute w-3 h-3 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full" />
+            <div className="w-3 h-3 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full animate-ping"></div>
+            <div className="absolute w-3 h-3 bg-gradient-to-br from-primary-600 to-purple-600 rounded-full"></div>
           </div>
         </div>
 

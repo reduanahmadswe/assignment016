@@ -41,7 +41,7 @@ router.post('/test-login', async (req, res) => {
                 userName: user.name,
                 isVerified: user.isVerified,
                 isActive: user.isActive,
-                authProvider: user.authProvider,
+                authProviderId: user.authProviderId,
                 passwordMatch: isPasswordValid,
             }
         });

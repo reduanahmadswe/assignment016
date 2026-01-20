@@ -287,30 +287,41 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Security Settings Link */}
+        {/* Security Settings Card */}
         <div className="mt-6">
           <Link
             href="/dashboard/security"
-            className="block bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+            className="block bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden group"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 rounded-lg group-hover:scale-110 transition-transform">
-                  <Shield className="w-6 h-6 text-blue-600" />
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="p-3.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl group-hover:scale-110 group-hover:from-blue-100 group-hover:to-indigo-100 transition-all duration-300">
+                    <Shield className="w-7 h-7 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      Security & Two-Factor Authentication
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Manage your security settings and enable 2FA
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                    Security & Two-Factor Authentication
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Manage your security settings and enable 2FA
-                  </p>
+                <div className="ml-4">
+                  <svg 
+                    className="w-6 h-6 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-300" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </div>
               </div>
-              <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
             </div>
+            {/* Bottom accent line */}
+            <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
           </Link>
         </div>
 
@@ -323,26 +334,32 @@ export default function ProfilePage() {
         )}
 
         <div className="mt-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <Lock className="w-6 h-6 text-orange-600" />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden group">
+            <div className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="p-3.5 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl group-hover:scale-110 group-hover:from-orange-100 group-hover:to-red-100 transition-all duration-300">
+                    <Lock className="w-7 h-7 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                      Change Password
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Update your password to keep your account secure
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">Change Password</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Update your password to keep your account secure
-                  </p>
-                </div>
+                <button
+                  onClick={() => setShowPasswordChange(true)}
+                  className="ml-4 px-6 py-2.5 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all duration-300 font-semibold text-sm shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  Change Password
+                </button>
               </div>
-              <button
-                onClick={() => setShowPasswordChange(true)}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium text-sm"
-              >
-                Change Password
-              </button>
             </div>
+            {/* Bottom accent line */}
+            <div className="h-1 bg-gradient-to-r from-orange-500 to-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
           </div>
         </div>
       </div>
