@@ -20,7 +20,8 @@
     "db:seed:events": "tsx prisma/seed-events.ts",
     "db:seed:newsletters": "tsx prisma/seed-newsletters.ts",
     "db:seed:opportunities": "tsx prisma/seed-opportunities.ts",
-    "test:connection": "tsx test-connection.ts"
+    "test:connection": "tsx test-connection.ts",
+    "test:email": "tsx test-email-integrity.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",

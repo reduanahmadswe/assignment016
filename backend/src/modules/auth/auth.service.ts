@@ -13,7 +13,10 @@ import type { RegisterInput, LoginInput, VerifyLoginOTPInput } from './auth.type
 export class AuthService {
   async register(data: RegisterInput) {
     const { email, password, name, phone } = data;
-    const normalizedEmail = email.toLowerCase().trim();
+    console.log('📧 [SERVICE] Register - Received email:', email);
+    const normalizedEmail = email.trim();
+    console.log('📧 [SERVICE] Register - Normalized email:', normalizedEmail);
+    console.log('📧 [SERVICE] Register - Email has dot?', normalizedEmail.includes('.'));
 
     try {
       // Validate email not exists
@@ -89,7 +92,7 @@ export class AuthService {
   }
 
   async resendOTP(email: string) {
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email.trim();
     const pendingReg = await prisma.pendingRegistration.findUnique({
       where: { email: normalizedEmail },
       select: { email: true },
@@ -177,7 +180,7 @@ export class AuthService {
 
   async verifyLoginOTP(data: VerifyLoginOTPInput) {
     const { email, otp, token } = data;
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email.trim();
 
     if (!otp && !token) {
       throw new AppError('Please provide OTP code', 400);
@@ -298,7 +301,7 @@ export class AuthService {
 
   async changePassword(userId: number, currentPassword: string, newPassword: string) {
     await AuthValidator.validatePasswordMatch(userId, currentPassword);
-    
+
     const hashedPassword = await PasswordService.hashPassword(newPassword);
     await prisma.user.update({
       where: { id: userId },

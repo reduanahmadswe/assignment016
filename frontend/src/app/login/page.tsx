@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Calendar, Shield, Mail, Smartphone } from 'lucide-react';
+import Cookies from 'js-cookie';
 import { authAPI } from '@/lib/api';
 import { useAppDispatch } from '@/store/hooks';
 import { loginUser } from '@/store/slices/auth.slice';
@@ -75,6 +76,22 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setError('');
+
+    // 🔍 DEBUG: Log exact email and password being sent
+    console.log('=================================================');
+    console.log('📧 LOGIN REQUEST - FRONTEND');
+    console.log('=================================================');
+    console.log('Email entered by user:', data.email);
+    console.log('Email length:', data.email.length);
+    console.log('Email has dots?', data.email.includes('.'));
+    console.log('Password entered:', data.password);
+    console.log('Password length:', data.password.length);
+    console.log('Full data object:', JSON.stringify(data, null, 2));
+    console.log('=================================================');
+
+    // Clear any existing tokens before login attempt
+    Cookies.remove('accessToken');
+    Cookies.remove('refreshToken');
 
     try {
       const response = await authAPI.login(data);

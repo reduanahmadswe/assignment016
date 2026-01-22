@@ -5,7 +5,7 @@ import { lookupService } from '../../services/lookup.service.js';
 
 export class AuthValidator {
   static async validateEmailNotExists(email: string) {
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email.trim();
     const [existingUser, pendingReg] = await Promise.all([
       prisma.user.findUnique({ where: { email: normalizedEmail } }),
       prisma.pendingRegistration.findUnique({ where: { email: normalizedEmail } })
@@ -21,8 +21,8 @@ export class AuthValidator {
   }
 
   static async validateUserCredentials(email: string, password: string) {
-    const normalizedEmail = email.toLowerCase().trim();
-    
+    const normalizedEmail = email.trim();
+
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
@@ -102,7 +102,7 @@ export class AuthValidator {
 
   static async validateOTP(email: string, otp: string, otpType: string) {
     const typeId = await lookupService.getOtpTypeId(otpType);
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email.trim();
     const otpRecord = await prisma.otpCode.findFirst({
       where: {
         email: normalizedEmail,

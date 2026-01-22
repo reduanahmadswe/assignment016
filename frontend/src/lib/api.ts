@@ -53,7 +53,13 @@ api.interceptors.response.use(
     }
 
     // Handle 401 errors with token refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // BUT: Don't try to refresh token for login/register endpoints
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/register') ||
+                          originalRequest.url?.includes('/auth/google') ||
+                          originalRequest.url?.includes('/auth/refresh-token');
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -89,7 +95,10 @@ api.interceptors.response.use(
       } catch (refreshError) {
         Cookies.remove('accessToken');
         Cookies.remove('refreshToken');
-        window.location.href = '/login';
+        // Only redirect if not already on login page
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }

@@ -8,10 +8,10 @@ export class OTPUtil {
    * Generate and send OTP to user's email for login
    */
   static async sendLoginOTP(email: string): Promise<void> {
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email.trim();
     // Generate 6-digit OTP
     const code = TwoFactorUtil.generateEmailOTP();
-    
+
     // Set expiration to 10 minutes from now (UTC)
     const expiresAt = getExpirationTimeUTC(10);
 
