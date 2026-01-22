@@ -348,7 +348,7 @@ export default function LoginPage() {
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Email Address</label>
                 <input
                   type="email"
-                  placeholder="admin@oriyet.com"
+                  placeholder="yourmail@gmail.com"
                   className="w-full px-5 py-3.5 text-sm sm:text-base bg-white rounded-xl border border-gray-200 focus:outline-none focus:ring-4 focus:ring-[#3b82f6]/10 focus:border-[#3b82f6] transition-all shadow-sm"
                   {...register('email')}
                 />
