@@ -1,5 +1,44 @@
 import { body } from 'express-validator';
 
+// ⚠️ IMPORTANT: Do NOT use .normalizeEmail() as it removes dots from Gmail addresses
+// Gmail treats user.name@gmail.com and username@gmail.com as the same,
+// but we want to preserve the EXACT email the user entered.
+
+/**
+ * Custom sanitizer to preserve email exactly as entered
+ * Only lowercases the domain part, keeps local part (including dots) intact
+ */
+const preserveEmailSanitizer = (value: string) => {
+  if (!value || typeof value !== 'string') return value;
+  const atIndex = value.lastIndexOf('@');
+  if (atIndex === -1) return value;
+  const localPart = value.substring(0, atIndex);
+  const domain = value.substring(atIndex + 1);
+  // Keep local part EXACTLY as entered (preserve dots, case, etc.)
+  // Only lowercase the domain part
+  return `${localPart}@${domain.toLowerCase()}`;
+};
+
+/**
+ * Reusable email validation chain that preserves dots
+ */
+const emailValidation = () => body('email')
+  .trim()
+  .notEmpty()
+  .withMessage('Email address is required')
+  .isEmail({ ignore_max_length: false })
+  .withMessage('Please provide a valid email address')
+  .customSanitizer(preserveEmailSanitizer);
+
+/**
+ * Simple email validation (for login, etc.) - still preserves dots
+ */
+const simpleEmailValidation = () => body('email')
+  .trim()
+  .isEmail({ ignore_max_length: false })
+  .withMessage('Please provide a valid email')
+  .customSanitizer(preserveEmailSanitizer);
+
 export const registerValidation = [
   body('name')
     .trim()
@@ -9,13 +48,7 @@ export const registerValidation = [
     .withMessage('Name must be between 2 and 100 characters')
     .matches(/^[a-zA-Z\s.'-]+$/)
     .withMessage('Name can only contain letters, spaces, dots, apostrophes and dashes'),
-  body('email')
-    .trim()
-
-    .notEmpty()
-    .withMessage('Email address is required')
-    .isEmail()
-    .withMessage('Please enter a valid email address (e.g., name@example.com)')
+  emailValidation()
     .custom((value) => {
       // Additional email format validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -75,22 +108,14 @@ export const registerValidation = [
 ];
 
 export const loginValidation = [
-  body('email')
-    .trim()
-
-    .isEmail()
-    .withMessage('Please provide a valid email'),
+  simpleEmailValidation(),
   body('password')
     .notEmpty()
     .withMessage('Password is required'),
 ];
 
 export const verifyEmailValidation = [
-  body('email')
-    .trim()
-
-    .isEmail()
-    .withMessage('Please provide a valid email'),
+  simpleEmailValidation(),
   body('otp')
     .isLength({ min: 6, max: 6 })
     .withMessage('OTP must be 6 digits')
@@ -99,11 +124,7 @@ export const verifyEmailValidation = [
 ];
 
 export const resendOTPValidation = [
-  body('email')
-    .trim()
-
-    .isEmail()
-    .withMessage('Please provide a valid email'),
+  simpleEmailValidation(),
 ];
 
 export const googleAuthValidation = [
@@ -128,19 +149,11 @@ export const refreshTokenValidation = [
 ];
 
 export const forgotPasswordValidation = [
-  body('email')
-    .trim()
-
-    .isEmail()
-    .withMessage('Please provide a valid email'),
+  simpleEmailValidation(),
 ];
 
 export const resetPasswordValidation = [
-  body('email')
-    .trim()
-
-    .isEmail()
-    .withMessage('Please provide a valid email'),
+  simpleEmailValidation(),
   body('otp')
     .isLength({ min: 6, max: 6 })
     .withMessage('OTP must be 6 digits')

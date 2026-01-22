@@ -86,6 +86,24 @@ const createApp = (): Application => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+  // ⚠️ RAW BODY LOGGER - Log email BEFORE any middleware processing
+  // This helps debug production-only email dot issues
+  app.use((req, res, next) => {
+    if (req.body?.email && (req.path.includes('/auth/register') || req.path.includes('/auth/login'))) {
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔍 [RAW BODY LOGGER] Request intercepted');
+      console.log('📍 Path:', req.path);
+      console.log('📧 RAW email from request body:', req.body.email);
+      console.log('📧 Email type:', typeof req.body.email);
+      console.log('📧 Email length:', req.body.email?.length);
+      console.log('📧 Email char codes:', [...req.body.email].map(c => c.charCodeAt(0)).join(', '));
+      console.log('📧 Contains dot?', req.body.email?.includes('.'));
+      console.log('📧 Dot positions:', [...req.body.email].map((c, i) => c === '.' ? i : null).filter(i => i !== null));
+      console.log('═══════════════════════════════════════════════════════');
+    }
+    next();
+  });
+
   // Compression
   app.use(compression());
 

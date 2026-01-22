@@ -33,6 +33,17 @@ api.interceptors.request.use(
       delete config.headers['Content-Type'];
     }
 
+    // 🔍 DEBUG: Log email in auth requests to catch dot removal
+    if (config.url?.includes('/auth/') && config.data?.email) {
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🚀 [API INTERCEPTOR] Sending request to:', config.url);
+      console.log('📧 Email in request payload:', config.data.email);
+      console.log('📧 Email length:', config.data.email.length);
+      console.log('📧 Email has dots?', config.data.email.includes('.'));
+      console.log('📧 Full payload:', JSON.stringify(config.data));
+      console.log('═══════════════════════════════════════════════════════');
+    }
+
     return config;
   },
   (error) => {
