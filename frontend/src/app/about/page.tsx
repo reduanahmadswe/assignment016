@@ -145,6 +145,18 @@ export default function AboutPage() {
       orcid: '#',
       website: '#',
       cv: 'https://drive.google.com/file/d/1aWgc7R3DvcYebIQsW_OcubQUoOyzGp4N/view?usp=sharing'
+    },
+    {
+      name: 'Md. Shahanoor Alam',
+      role: 'Technical & Business Development',
+      description: 'A technical and business development professional in the livestock industry, with a strong passion for ensuring safe and healthy food production from livestock sources. Dedicated to research and development, continuously seeking new opportunities, and committed to solving challenges.',
+      image: 'https://res.cloudinary.com/dzuqjiyjm/image/upload/v1769107501/re_a8mu3w.jpg',
+      email: 'shahanoor.bau@gmail.com',
+      linkedin: 'https://www.linkedin.com/in/md-shahanoor-alam',
+      googleScholar: '#',
+      orcid: '#',
+      website: 'https://sites.google.com/view/shahanoor',
+      cv: 'https://drive.google.com/file/d/1PhQfohJri6_IeHU-1dwuJNLY9pCn5mdH/view?usp=sharing'
     }
   ];
 
