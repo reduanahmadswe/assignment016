@@ -292,7 +292,7 @@ export class AdminService {
     }
 
     if (filters.status) {
-      where.eventStatus = filters.status;
+      where.eventStatus = { code: filters.status };
     }
 
     const [events, total] = await Promise.all([
