@@ -21,6 +21,10 @@ import { licenseMiddleware } from './middlewares/license.middleware.js';
 const createApp = (): Application => {
   const app = express();
 
+  // ✅ Enable trust proxy for production (behind nginx/reverse proxy)
+  // This is CRITICAL for Hostinger VPS with nginx
+  app.set('trust proxy', 1);
+
   // Security middleware
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -52,28 +56,36 @@ const createApp = (): Application => {
         return callback(null, true);
       }
       
-      // Log blocked origins for debugging
-      // In production, you might want to block unknown origins
-      // For now, allow all for debugging
+      // Log blocked origins for debugging in production
+      if (env.nodeEnv === 'production') {
+        console.log('⚠️ CORS: Blocked origin:', origin);
+      }
+      
+      // Allow all for development/debugging
       return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range', 'Authorization'],
     maxAge: 86400, // 24 hours
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   }));
 
-  // Handle preflight requests
+  // Handle preflight requests explicitly
   app.options('*', cors());
 
-  // Rate limiting
+  // Rate limiting with proper nginx configuration
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10000, // Increased limit for testing
     message: { success: false, message: 'Too many requests, please try again later' },
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip failed requests (don't count errors)
+    skipFailedRequests: true,
+    skipSuccessfulRequests: false,
   });
   // app.use('/api/', limiter); // Optional: Disable completely if needed
   app.use('/api/', limiter);
