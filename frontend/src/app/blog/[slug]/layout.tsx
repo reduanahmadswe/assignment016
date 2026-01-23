@@ -30,18 +30,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const response = await fetch(
-      `${apiUrl}/blogs/slug/${slug}`,
-      { 
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+    // Use production API URL in production, localhost in dev
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.oriyet.org/api';
+    const fullUrl = `${apiUrl}/blogs/slug/${slug}`;
+    
+    console.log('🔍 Fetching metadata from:', fullUrl);
+    
+    const response = await fetch(fullUrl, { 
+      cache: 'no-store',
+      headers: {
+        'Content-Type': 'application/json',
       }
-    );
+    });
+
+    console.log('📡 Response status:', response.status);
 
     if (!response.ok) {
+      console.error('❌ Failed to fetch blog post:', response.status, response.statusText);
       return {
         title: 'Blog Not Found',
         description: 'The blog post you are looking for could not be found.',
@@ -55,26 +60,41 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'https://api.oriyet.org';
     const pageUrl = `${appUrl}/blog/${post.slug}`;
     
-    // Handle image URL
+    // Handle image URL - Priority: uploaded files > external URLs > Google Drive > default
     let imageUrl = `${appUrl}/images/og-default.jpg`;
     
     if (post.thumbnail) {
-      if (post.thumbnail.includes('drive.google.com') || post.thumbnail.includes('docs.google.com')) {
-        // Try Google CDN first, fallback to proxy
-        imageUrl = getGoogleDriveDirectUrl(post.thumbnail);
-        if (!imageUrl || imageUrl === post.thumbnail) {
-          imageUrl = `${appUrl}/api/og-image?url=${encodeURIComponent(post.thumbnail)}`;
-        }
-      } else if (post.thumbnail.startsWith('http://') || post.thumbnail.startsWith('https://')) {
-        imageUrl = post.thumbnail;
-      } else if (post.thumbnail.startsWith('/uploads/')) {
-        // Use backend URL for uploaded files
-        imageUrl = `${apiBaseUrl}${post.thumbnail}`;
-      } else {
-        imageUrl = `${appUrl}${post.thumbnail.startsWith('/') ? '' : '/'}${post.thumbnail}`;
+      const thumbnail = post.thumbnail.trim();
+      
+      // Priority 1: Local uploaded files
+      if (thumbnail.startsWith('/uploads/')) {
+        imageUrl = `${apiBaseUrl}${thumbnail}`;
+        console.log('📸 Using uploaded image:', imageUrl);
       }
+      // Priority 2: Full external URLs
+      else if (thumbnail.startsWith('http://') || thumbnail.startsWith('https://')) {
+        // Check if it's Google Drive
+        if (thumbnail.includes('drive.google.com') || thumbnail.includes('docs.google.com')) {
+          const directUrl = getGoogleDriveDirectUrl(thumbnail);
+          imageUrl = directUrl || `${appUrl}/api/og-image?url=${encodeURIComponent(thumbnail)}`;
+          console.log('📸 Using Google Drive image:', imageUrl);
+        } else {
+          imageUrl = thumbnail;
+          console.log('📸 Using external image:', imageUrl);
+        }
+      }
+      // Priority 3: Relative paths
+      else if (thumbnail.startsWith('/')) {
+        imageUrl = `${appUrl}${thumbnail}`;
+        console.log('📸 Using relative path image:', imageUrl);
+      }
+    } else {
+      console.log('📸 No thumbnail, using default:', imageUrl);
     }
     
+    console.log('🔍 Final OG Image URL:', imageUrl);
+    console.log('🔍 Post thumbnail from DB:', post.thumbnail);
+
     
     const description = post.excerpt || post.title;
 
@@ -92,7 +112,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             width: 1200,
             height: 630,
             alt: post.title,
-            type: 'image/jpeg',
           },
         ],
         locale: 'en_US',
