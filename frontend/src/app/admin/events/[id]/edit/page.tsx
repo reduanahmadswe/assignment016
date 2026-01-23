@@ -71,7 +71,6 @@ export default function EditEventPage() {
   useEffect(() => {
     if (eventData) {
       const event = eventData;
-      );
       setRealEventId(event.id);
 
       // Parse venue from venueDetails JSON

@@ -35,9 +35,8 @@ api.interceptors.request.use(
 
     // 🔍 DEBUG: Log email in auth requests to catch dot removal
     if (config.url?.includes('/auth/') && config.data?.email) {
-      );
-      );
-      }
+      // Debug logging removed
+    }
 
     return config;
   },

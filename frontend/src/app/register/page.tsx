@@ -194,11 +194,6 @@ export default function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
 
-    // 🔍 DEBUG: Log exact email being sent during registration
-    );
-    ).join(', '));
-    => c === '.' ? i : null).filter(i => i !== null));
-    );
     try {
       await authAPI.register({
         name: data.name,
