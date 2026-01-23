@@ -78,9 +78,9 @@ const createApp = (): Application => {
   // app.use('/api/', limiter); // Optional: Disable completely if needed
   app.use('/api/', limiter);
 
-  // Body parsing
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  // Body parsing - Increased limits for blog image uploads
+  app.use(express.json({ limit: '20mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
   // ⚠️ RAW BODY LOGGER - Log email BEFORE any middleware processing
   // This helps debug production-only email dot issues

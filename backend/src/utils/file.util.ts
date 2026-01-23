@@ -76,7 +76,7 @@ export const uploadImage = multer({
   storage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB for images
+    fileSize: 10 * 1024 * 1024, // 10MB for images (blog thumbnails)
   },
 });
 
