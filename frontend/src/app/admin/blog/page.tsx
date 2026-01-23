@@ -31,10 +31,13 @@ interface BlogPost {
   excerpt?: string;
   content: string;
   thumbnail?: string | null;
+  authorName?: string;
+  authorWebsite?: string;
   tags?: string[];
   status: 'draft' | 'published';
   author?: {
     name: string;
+    website?: string;
   } | null;
   views?: number;
   publishedAt?: string | null;
@@ -96,6 +99,8 @@ export default function AdminBlogPage() {
     excerpt: '',
     content: '',
     thumbnail: '',
+    author_name: '',
+    author_website: '',
     meta_title: '',
     meta_description: '',
     tags: '', // comma-separated
@@ -155,6 +160,8 @@ export default function AdminBlogPage() {
       excerpt: '',
       content: '',
       thumbnail: '',
+      author_name: '',
+      author_website: '',
       meta_title: '',
       meta_description: '',
       tags: '',
@@ -171,6 +178,8 @@ export default function AdminBlogPage() {
       excerpt: post.excerpt || '',
       content: post.content,
       thumbnail: post.thumbnail || '',
+      author_name: post.authorName || post.author?.name || '',
+      author_website: post.authorWebsite || post.author?.website || '',
       meta_title: '',
       meta_description: '',
       tags: (post.tags || []).join(', '),
@@ -188,6 +197,8 @@ export default function AdminBlogPage() {
       excerpt: '',
       content: '',
       thumbnail: '',
+      author_name: '',
+      author_website: '',
       meta_title: '',
       meta_description: '',
       tags: '',
@@ -212,6 +223,8 @@ export default function AdminBlogPage() {
       excerpt: formData.excerpt,
       content: formData.content,
       thumbnail: formData.thumbnail || undefined,
+      author_name: formData.author_name || undefined,
+      author_website: formData.author_website || undefined,
       meta_title: formData.meta_title || undefined,
       meta_description: formData.meta_description || undefined,
       tags: tagsArray,
@@ -476,7 +489,6 @@ export default function AdminBlogPage() {
         )}
       </div>
 
-      {/* Delete Modal */}
       {/* Delete Modal */}
       <Modal
         isOpen={isDeleteModalOpen}

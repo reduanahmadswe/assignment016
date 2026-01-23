@@ -57,6 +57,9 @@ export default function NewBlogPostPage() {
     excerpt: '',
     content: '',
     thumbnail: '',
+    author_name: '',
+    author_image: '',
+    author_website: '',
     meta_title: '',
     meta_description: '',
     tags: '', // comma-separated
@@ -88,6 +91,9 @@ export default function NewBlogPostPage() {
       excerpt: formData.excerpt,
       content: formData.content,
       thumbnail: formData.thumbnail || undefined,
+      author_name: formData.author_name || undefined,
+      author_image: formData.author_image || undefined,
+      author_website: formData.author_website || undefined,
       meta_title: formData.meta_title || undefined,
       meta_description: formData.meta_description || undefined,
       tags: tagsArray,
@@ -158,6 +164,61 @@ export default function NewBlogPostPage() {
                     className="bg-white min-h-[400px]"
                   />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
+              <CardTitle className="text-lg font-bold">Author Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 p-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Author Name
+                </label>
+                <Input
+                  type="text"
+                  value={formData.author_name}
+                  onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
+                  placeholder="Dr. John Doe"
+                  className="w-full rounded-xl"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Custom author name for this post
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Author Profile Image <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <Input
+                  type="url"
+                  value={formData.author_image}
+                  onChange={(e) => setFormData({ ...formData, author_image: e.target.value })}
+                  placeholder="https://example.com/profile.jpg"
+                  className="w-full rounded-xl"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Author's profile picture URL (Google Drive link supported)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Author Website <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <Input
+                  type="url"
+                  value={formData.author_website}
+                  onChange={(e) => setFormData({ ...formData, author_website: e.target.value })}
+                  placeholder="https://example.com"
+                  className="w-full rounded-xl"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Author name will link to this website
+                </p>
               </div>
             </CardContent>
           </Card>

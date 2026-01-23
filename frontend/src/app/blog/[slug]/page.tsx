@@ -144,7 +144,18 @@ export default function BlogPostPage() {
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Written by</div>
-                    <div className="font-bold text-gray-900 text-lg">{post.author?.name || 'ORIYET Team'}</div>
+                    {post.author?.website ? (
+                      <a
+                        href={post.author.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-gray-900 hover:text-[#004aad] transition-colors text-lg"
+                      >
+                        {post.author?.name || 'ORIYET Team'}
+                      </a>
+                    ) : (
+                      <div className="font-bold text-gray-900 text-lg">{post.author?.name || 'ORIYET Team'}</div>
+                    )}
                   </div>
                 </div>
 

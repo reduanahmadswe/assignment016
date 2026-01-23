@@ -498,10 +498,13 @@ model BlogPost {
   id              Int       @id @default(autoincrement())
   title           String
   slug            String    @unique
-  excerpt         String?
+  excerpt         String?   @db.Text
   content         String?   @db.LongText
   thumbnail       String?
   authorId        Int?      @map("author_id")
+  authorName      String?   @map("author_name")
+  authorImage     String?   @map("author_image")
+  authorWebsite   String?   @map("author_website")
   statusId        Int       @map("status_id")
   metaTitle       String?   @map("meta_title")
   metaDescription String?   @map("meta_description")

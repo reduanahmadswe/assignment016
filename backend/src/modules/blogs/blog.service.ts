@@ -20,6 +20,9 @@ export class BlogService {
         content: data.content,
         thumbnail: data.thumbnail,
         authorId,
+        authorName: data.author_name,
+        authorImage: data.author_image,
+        authorWebsite: data.author_website,
         statusId,
         metaTitle: data.meta_title,
         metaDescription: data.meta_description,
@@ -47,6 +50,9 @@ export class BlogService {
     if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
     if (data.content !== undefined) updateData.content = data.content;
     if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
+    if (data.author_name !== undefined) updateData.authorName = data.author_name;
+    if (data.author_image !== undefined) updateData.authorImage = data.author_image;
+    if (data.author_website !== undefined) updateData.authorWebsite = data.author_website;
     if (data.status !== undefined) updateData.statusId = await lookupService.getBlogStatusId(data.status);
     if (data.meta_title !== undefined) updateData.metaTitle = data.meta_title;
     if (data.meta_description !== undefined) updateData.metaDescription = data.meta_description;
@@ -172,6 +178,9 @@ export class BlogService {
           slug: true,
           excerpt: true,
           thumbnail: true,
+          authorName: true,
+          authorImage: true,
+          authorWebsite: true,
           status: { select: { code: true } },
           views: true,
           publishedAt: true,
@@ -204,15 +213,11 @@ export class BlogService {
       prisma.blogPost.count({ where: { status: { code: 'draft' } } }),
     ]);
 
-    const postsWithAuthor = posts.map((post: any) => ({
-      ...post,
-      status: post.status.code,
-      author_name: post.author?.name,
-      tags: post.blogTags.map((bt: any) => bt.tag.name),
-    }));
+    // Transform posts to use custom author fields with priority
+    const transformedPosts = blogTransformer.transformList(posts);
 
     return {
-      posts: postsWithAuthor,
+      posts: transformedPosts,
       pagination: getPaginationMeta(total, page, limit),
       stats: {
         total: totalPosts,

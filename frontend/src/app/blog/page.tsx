@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Calendar, User, MoreHorizontal, ThumbsUp, MessageCircle, Share2, Globe, Clock, Eye } from 'lucide-react';
+import { Search, Calendar, User, MoreHorizontal, ThumbsUp, MessageCircle, Share2, Globe, Eye } from 'lucide-react';
 import { blogAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import { Loading, Skeleton, Pagination, Badge } from '@/components/ui';
@@ -23,6 +23,7 @@ export default function BlogPage() {
         search,
         category,
       });
+      console.log('Blog API Response:', response.data);
       return response.data;
     },
   });
@@ -38,14 +39,6 @@ export default function BlogPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-  };
-
-  // Calculate reading time based on word count (average 200 words per minute)
-  const calculateReadingTime = (content: string) => {
-    const wordsPerMinute = 200;
-    const wordCount = content.trim().split(/\s+/).length;
-    const minutes = Math.ceil(wordCount / wordsPerMinute);
-    return minutes;
   };
 
   return (
@@ -118,7 +111,14 @@ export default function BlogPage() {
           ) : data?.posts?.length > 0 ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {data.posts.map((post: any) => (
+                {data.posts.map((post: any) => {
+                  console.log('📝 Blog post data:', {
+                    id: post.id,
+                    title: post.title,
+                    author: post.author
+                  });
+                  
+                  return (
                   <Link key={post.id} href={`/blog/${post.slug}`} className="block h-full">
                     <article className="group bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-300 h-full border border-gray-100 flex flex-col hover:-translate-y-1">
                       {post.thumbnail ? (
@@ -138,13 +138,9 @@ export default function BlogPage() {
                       )}
 
                       <div className="p-5 flex flex-col flex-grow">
-                        <div className="flex items-center justify-between text-xs font-medium text-gray-500 mb-4">
+                        <div className="flex items-center justify-start text-xs font-medium text-gray-500 mb-4">
                           <span className="flex items-center text-[#ff7620] bg-[#ff7620]/10 px-2 py-1 rounded-md">
                             {post.category || 'Research'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {calculateReadingTime(post.content || post.excerpt || '')} min read
                           </span>
                         </div>
 
@@ -157,8 +153,8 @@ export default function BlogPage() {
                         </p>
 
                         <div className="pt-5 border-t border-gray-100 flex items-center justify-between mt-auto">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden relative border border-gray-200">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <div className="w-8 h-8 rounded-full bg-gray-100 overflow-hidden relative border border-gray-200 flex-shrink-0">
                               {post.author?.avatar ? (
                                 <Image src={getImageUrl(post.author.avatar)} alt={post.author.name} fill className="object-cover" />
                               ) : (
@@ -167,18 +163,32 @@ export default function BlogPage() {
                                 </div>
                               )}
                             </div>
-                            <span className="text-sm font-medium text-gray-900 line-clamp-1 max-w-[80px] sm:max-w-[100px]">
-                              {post.author?.name || 'ORIYET Team'}
-                            </span>
+                            {post.author?.website ? (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  window.open(post.author.website, '_blank', 'noopener,noreferrer');
+                                }}
+                                className="text-sm font-medium text-gray-900 hover:text-[#004aad] transition-colors truncate text-left"
+                              >
+                                {post.author?.name || 'ORIYET Team'}
+                              </button>
+                            ) : (
+                              <span className="text-sm font-medium text-gray-900 truncate">
+                                {post.author?.name || 'ORIYET Team'}
+                              </span>
+                            )}
                           </div>
-                          <span className="text-xs text-gray-400 font-medium whitespace-nowrap">
+                          <span className="text-xs text-gray-400 font-medium whitespace-nowrap ml-2 flex-shrink-0">
                             {formatDate(post.createdAt)}
                           </span>
                         </div>
                       </div>
                     </article>
                   </Link>
-                ))}
+                );
+                })}
               </div>
 
               {/* Pagination */}
