@@ -52,6 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const post = data.data;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oriyet.org';
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'https://api.oriyet.org';
     const pageUrl = `${appUrl}/blog/${post.slug}`;
     
     // Handle image URL
@@ -66,10 +67,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         }
       } else if (post.thumbnail.startsWith('http://') || post.thumbnail.startsWith('https://')) {
         imageUrl = post.thumbnail;
+      } else if (post.thumbnail.startsWith('/uploads/')) {
+        // Use backend URL for uploaded files
+        imageUrl = `${apiBaseUrl}${post.thumbnail}`;
       } else {
         imageUrl = `${appUrl}${post.thumbnail.startsWith('/') ? '' : '/'}${post.thumbnail}`;
       }
     }
+    
     
     const description = post.excerpt || post.title;
 
