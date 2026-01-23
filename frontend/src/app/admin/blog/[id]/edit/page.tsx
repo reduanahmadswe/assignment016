@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { Button, Input, Loading, Card, CardHeader, CardTitle, CardContent } from '@/components/ui';
 import LexicalEditor from '@/components/ui/LexicalEditor';
@@ -221,8 +222,32 @@ export default function EditBlogPostPage() {
           </Card>
 
           <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
-            <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4 flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-bold">Author Information</CardTitle>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const res = await api.get('/auth/me');
+                    const user = res.data?.user || res.data;
+                    setFormData({
+                      ...formData,
+                      author_name: user.name || '',
+                      author_image: user.avatar || '',
+                      author_website: '',
+                    });
+                    toast.success('Profile loaded successfully!');
+                  } catch (error) {
+                    console.error('Failed to fetch user profile:', error);
+                    toast.error('Failed to load profile');
+                  }
+                }}
+                className="text-xs rounded-lg"
+              >
+                Use My Profile
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4 p-6">
               <div>
@@ -233,7 +258,7 @@ export default function EditBlogPostPage() {
                   type="text"
                   value={formData.author_name}
                   onChange={(e) => setFormData({ ...formData, author_name: e.target.value })}
-                  placeholder="Dr. John Doe"
+                  placeholder="Reduan Ahmad"
                   className="w-full rounded-xl"
                 />
                 <p className="text-xs text-gray-500 mt-1.5">

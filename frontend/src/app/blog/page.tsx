@@ -23,7 +23,6 @@ export default function BlogPage() {
         search,
         category,
       });
-      console.log('Blog API Response:', response.data);
       return response.data;
     },
   });
@@ -111,14 +110,7 @@ export default function BlogPage() {
           ) : data?.posts?.length > 0 ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {data.posts.map((post: any) => {
-                  console.log('📝 Blog post data:', {
-                    id: post.id,
-                    title: post.title,
-                    author: post.author
-                  });
-                  
-                  return (
+                {data.posts.map((post: any) => (
                   <Link key={post.id} href={`/blog/${post.slug}`} className="block h-full">
                     <article className="group bg-white rounded-2xl overflow-hidden shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] hover:shadow-2xl hover:shadow-blue-900/5 transition-all duration-300 h-full border border-gray-100 flex flex-col hover:-translate-y-1">
                       {post.thumbnail ? (
@@ -187,8 +179,7 @@ export default function BlogPage() {
                       </div>
                     </article>
                   </Link>
-                );
-                })}
+                ))}
               </div>
 
               {/* Pagination */}
