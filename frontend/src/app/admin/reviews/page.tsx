@@ -72,7 +72,8 @@ export default function AdminReviewsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Reviews Management</h1>
@@ -304,6 +305,7 @@ export default function AdminReviewsPage() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

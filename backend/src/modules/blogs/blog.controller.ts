@@ -7,8 +7,21 @@ export class BlogController {
   getAllPosts = asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const status = req.query.status as string;
     const search = req.query.search as string;
+    
+    // Check if status parameter exists in query (even if empty string)
+    const hasStatusParam = 'status' in req.query;
+    let status = req.query.status as string;
+    
+    // If status parameter exists but is empty string, set to undefined (admin wants all)
+    if (hasStatusParam && status === '') {
+      status = undefined as any;
+    }
+    // If status parameter doesn't exist at all, default to published (public access)
+    else if (!hasStatusParam) {
+      status = 'published';
+    }
+    
     const result = await blogService.getAllPosts(page, limit, status, search);
     res.json({
       success: true,

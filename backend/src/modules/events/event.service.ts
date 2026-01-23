@@ -610,7 +610,7 @@ export class EventService {
     const closedStatusId = await lookupService.getRegistrationStatusId('closed');
 
     // Update to ongoing
-    await prisma.event.updateMany({
+    const ongoingResult = await prisma.event.updateMany({
       where: {
         startDate: { lte: now },
         endDate: { gte: now },
@@ -619,8 +619,12 @@ export class EventService {
       data: { eventStatusId: ongoingStatusId },
     });
 
+    if (ongoingResult.count > 0) {
+      console.log(`   📍 ${ongoingResult.count} event(s) moved to ONGOING status`);
+    }
+
     // Update to completed
-    await prisma.event.updateMany({
+    const completedResult = await prisma.event.updateMany({
       where: {
         endDate: { lt: now },
         eventStatusId: { in: [upcomingStatusId, ongoingStatusId] },
@@ -630,6 +634,15 @@ export class EventService {
         registrationStatusId: closedStatusId,
       },
     });
+
+    if (completedResult.count > 0) {
+      console.log(`   ✔️  ${completedResult.count} event(s) moved to COMPLETED status`);
+    }
+
+    return {
+      ongoingCount: ongoingResult.count,
+      completedCount: completedResult.count,
+    };
   }
 }
 

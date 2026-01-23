@@ -233,8 +233,8 @@ export default function AdminOpportunitiesPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-            {/* Main Container - Responsive padding and max-width */}
-            <div className="w-full max-w-[2000px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 sm:py-6 md:py-8 lg:py-10">
+            {/* Main Container */}
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
                 {/* Header Section - Responsive flex layout */}
                 {/* Header Section */}

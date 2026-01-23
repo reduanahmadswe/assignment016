@@ -3,11 +3,13 @@
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
+import Head from 'next/head';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, Calendar, User, Clock, Share2, Facebook, Twitter, Linkedin, Eye, Download } from 'lucide-react';
 import { blogAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
 import { Loading, Badge } from '@/components/ui';
+import { useEffect } from 'react';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -20,6 +22,68 @@ export default function BlogPostPage() {
     },
     enabled: !!slug,
   });
+
+  // Update meta tags when post data is available
+  useEffect(() => {
+    if (post && typeof window !== 'undefined') {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const pageUrl = `${appUrl}/blog/${post.slug}`;
+      const imageUrl = post.thumbnail ? getImageUrl(post.thumbnail) : `${appUrl}/images/og-default.jpg`;
+      const description = post.excerpt || post.title;
+
+      // Update document title
+      document.title = `${post.title} - ORIYET Blog`;
+
+      // Update or create meta tags
+      const updateMetaTag = (property: string, content: string, isProperty: boolean = true) => {
+        const attribute = isProperty ? 'property' : 'name';
+        let meta = document.querySelector(`meta[${attribute}="${property}"]`);
+        if (!meta) {
+          meta = document.createElement('meta');
+          meta.setAttribute(attribute, property);
+          document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', content);
+      };
+
+      // Basic Meta Tags
+      updateMetaTag('description', description, false);
+      
+      // Open Graph Tags
+      updateMetaTag('og:type', 'article');
+      updateMetaTag('og:url', pageUrl);
+      updateMetaTag('og:title', post.title);
+      updateMetaTag('og:description', description);
+      updateMetaTag('og:image', imageUrl);
+      updateMetaTag('og:image:width', '1200');
+      updateMetaTag('og:image:height', '630');
+      updateMetaTag('og:site_name', 'ORIYET');
+      
+      // Twitter Card Tags
+      updateMetaTag('twitter:card', 'summary_large_image', false);
+      updateMetaTag('twitter:url', pageUrl, false);
+      updateMetaTag('twitter:title', post.title, false);
+      updateMetaTag('twitter:description', description, false);
+      updateMetaTag('twitter:image', imageUrl, false);
+      
+      // Article specific tags
+      if (post.publishedAt) {
+        updateMetaTag('article:published_time', new Date(post.publishedAt).toISOString());
+      }
+      if (post.author?.name) {
+        updateMetaTag('article:author', post.author.name);
+      }
+      if (post.tags && post.tags.length > 0) {
+        const tags = typeof post.tags === 'string' ? post.tags.split(',') : post.tags;
+        tags.forEach((tag: string) => {
+          const meta = document.createElement('meta');
+          meta.setAttribute('property', 'article:tag');
+          meta.setAttribute('content', tag.trim());
+          document.head.appendChild(meta);
+        });
+      }
+    }
+  }, [post]);
 
   // PDF Download Function using browser's print
   const handleDownloadPDF = () => {
