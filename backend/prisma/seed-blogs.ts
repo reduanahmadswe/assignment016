@@ -151,8 +151,6 @@ function generateLongContent(title: string, embeddedImage: string) {
 }
 
 async function main() {
-    console.log('🌱 Starting blog seeding with realistic content...');
-
     // Clear existing blogs
     await prisma.blogPost.deleteMany();
 
@@ -198,8 +196,7 @@ async function main() {
         process.stdout.write('.');
     }
 
-    console.log(`\n🎉 Successfully seeded ${TOTAL_POSTS} long, realistic blog posts!`);
-}
+    }
 
 main()
     .catch((e) => {

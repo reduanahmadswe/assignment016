@@ -8,8 +8,6 @@ const __dirname = path.dirname(__filename);
 
 const migrate = async () => {
   try {
-    console.log('🚀 Starting database migration...');
-    
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
     
@@ -28,7 +26,6 @@ const migrate = async () => {
     }
     
     connection.release();
-    console.log('✅ Database migration completed successfully!');
     process.exit(0);
   } catch (error) {
     console.error('❌ Migration failed:', error);

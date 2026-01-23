@@ -103,7 +103,6 @@ export default function EventDetailsPage() {
     queryKey: ['event', slug],
     queryFn: async () => {
       const response = await eventAPI.getBySlug(slug as string);
-      console.log('Event Detail Response:', response.data);
       return response.data.data || response.data;
     },
     enabled: !!slug,
@@ -114,11 +113,8 @@ export default function EventDetailsPage() {
     queryKey: ['registration-status', eventData?.id],
     queryFn: async () => {
       const response = await eventAPI.checkRegistrationStatus(eventData.id);
-      console.log('Registration Status Full Response:', response);
-      console.log('Registration Status Data:', response.data);
       // Handle both response.data and response.data.data formats
       const data = response.data?.data || response.data;
-      console.log('Parsed Registration Data:', data);
       return data;
     },
     enabled: !!eventData?.id && isAuthenticated,
@@ -199,30 +195,24 @@ export default function EventDetailsPage() {
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      console.log('Event price:', eventPrice, 'Type:', typeof eventPrice);
       if (eventPrice > 0) {
         // Initiate payment
-        console.log('Initiating paid registration...');
         const response = await paymentAPI.initiate({
           event_id: event.id,
           amount: eventPrice,
         });
-        console.log('Payment API response:', response.data);
         return response.data;
       } else {
         // Free registration
-        console.log('Initiating free registration...');
         const response = await eventAPI.register(event.id);
         return response.data;
       }
     },
     onSuccess: (data) => {
-      console.log('Mutation success data:', data);
       // Check for payment_url in data or data.data
       const paymentUrl = data?.payment_url || data?.data?.payment_url;
       if (paymentUrl) {
         // Redirect to payment gateway
-        console.log('Redirecting to payment URL:', paymentUrl);
         window.location.href = paymentUrl;
       } else {
         // Free registration successful - refetch queries

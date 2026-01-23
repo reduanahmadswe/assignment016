@@ -220,9 +220,6 @@ export class AdminController {
   });
 
   updateAdminProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
-    console.log('Update profile request received');
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
     const avatarFile = req.file;
     const updatedProfile = await adminService.updateAdminProfile(req.user!.id, req.body, avatarFile);
     res.json({

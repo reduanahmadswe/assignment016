@@ -100,8 +100,7 @@ export class CertificatePDFGenerator {
       const logoPath = path.resolve(process.cwd(), '../frontend/public/images/oriyetlogo.png');
       doc.image(logoPath, centerX - 40, 50, { width: 80 });
     } catch (e) {
-      console.log('Logo not found, skipping');
-    }
+      }
 
     // Certificate title
     doc.font('Times-Bold')
@@ -205,8 +204,7 @@ export class CertificatePDFGenerator {
         const imageBuffer = Buffer.from(arrayBuffer);
         doc.image(imageBuffer, x + 25, y - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
       } catch (e) {
-        console.log('Failed to load signature image:', e);
-      }
+        }
     }
 
     // Signature name

@@ -13,10 +13,6 @@ async function main() {
       isActive: true 
     }
   });
-  console.log('✅ Demo user updated!');
-  console.log('Email:', user.email);
-  console.log('isVerified:', user.isVerified);
-  console.log('isActive:', user.isActive);
-}
+  }
 
 main().finally(() => prisma.$disconnect());

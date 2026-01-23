@@ -36,5 +36,4 @@ function fixImports(dir) {
 const distDir = path.join(__dirname, 'dist');
 if (fs.existsSync(distDir)) {
   fixImports(distDir);
-  console.log('✓ Fixed import paths in compiled files');
-}
+  }

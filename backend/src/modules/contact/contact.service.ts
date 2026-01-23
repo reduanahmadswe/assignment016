@@ -29,21 +29,17 @@ export class ContactService {
       },
     });
 
-    console.log('📧 Contact message saved to DB, ID:', contactMessage.id);
-
     // Send email to admin
     try {
       await this.sendAdminNotification({ name, email, subject, message });
-      console.log('✅ Admin notification email sent');
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Failed to send admin notification:', error);
     }
 
     // Send auto-reply to user
     try {
       await this.sendUserConfirmation({ name, email, subject });
-      console.log('✅ User confirmation email sent');
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Failed to send user confirmation:', error);
     }
 
@@ -58,21 +54,16 @@ export class ContactService {
     
     const adminEmail = process.env.CONTACT_EMAIL || 'team.oriyet@gmail.com';
 
-    console.log('📤 Sending admin notification to:', adminEmail);
-
     const result = await sendEmail({
       to: adminEmail,
       subject: `New Contact Form: ${subject}`,
       html: adminNotificationEmail({ name, email, subject, message }),
     });
 
-    console.log('Admin email result:', result);
-  }
+    }
 
   private async sendUserConfirmation(data: { name: string; email: string; subject: string }) {
     const { name, email, subject } = data;
-
-    console.log('📤 Sending user confirmation to:', email);
 
     const result = await sendEmail({
       to: email,
@@ -80,8 +71,7 @@ export class ContactService {
       html: userConfirmationEmail({ name, subject }),
     });
 
-    console.log('User confirmation email result:', result);
-  }
+    }
 
   async getAllMessages(page: number = 1, limit: number = 20, isRead?: boolean) {
     const skip = (page - 1) * limit;

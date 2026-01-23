@@ -17,8 +17,7 @@ export default function PaymentSuccessPage() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (invoiceId) {
-      console.log(`%c[PAYMENT VERIFY] Starting verification for Invoice ID: ${invoiceId}`, 'color: blue; font-weight: bold;');
-    }
+      }
   }, [invoiceId]);
 
   const { data, isLoading, error, isError, refetch } = useQuery({
@@ -26,11 +25,8 @@ export default function PaymentSuccessPage() {
     queryFn: async () => {
       if (!invoiceId) throw new Error('No invoice ID provided');
 
-      console.log(`[PAYMENT VERIFY] Requesting backend verification...`);
-
       try {
         const response = await paymentAPI.verify(invoiceId);
-        console.log(`%c[PAYMENT VERIFY] SUCCESS! Response:`, 'color: green; font-weight: bold;', response.data);
         return response.data;
       } catch (err: any) {
         console.error(`%c[PAYMENT VERIFY] FAILED! Error:`, 'color: red; font-weight: bold;', err.response?.data || err.message);
@@ -108,7 +104,6 @@ export default function PaymentSuccessPage() {
             {/* Always allow Retry */}
             <button
               onClick={() => {
-                console.log('[PAYMENT VERIFY] User clicked Retry Manual');
                 refetch();
               }}
               className="inline-flex items-center justify-center w-full px-6 py-4 bg-[#003366] text-white font-bold rounded-xl hover:bg-[#002244] transition-all"

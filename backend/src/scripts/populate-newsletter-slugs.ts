@@ -12,8 +12,6 @@ function generateSlug(title: string): string {
 
 async function populateNewsletterSlugs() {
     try {
-        console.log('🔍 Finding newsletters without slugs...');
-
         // Find all newsletters without slugs
         const newslettersWithoutSlugs = await prisma.newsletter.findMany({
             where: {
@@ -24,10 +22,7 @@ async function populateNewsletterSlugs() {
             }
         });
 
-        console.log(`📊 Found ${newslettersWithoutSlugs.length} newsletters without slugs`);
-
         if (newslettersWithoutSlugs.length === 0) {
-            console.log('✅ All newsletters already have slugs!');
             return;
         }
 
@@ -49,11 +44,9 @@ async function populateNewsletterSlugs() {
                 data: { slug }
             });
 
-            console.log(`✅ Updated newsletter #${newsletter.id}: "${newsletter.title}" -> slug: "${slug}"`);
-        }
+            }
 
-        console.log('\n🎉 Successfully populated all newsletter slugs!');
-    } catch (error) {
+        } catch (error) {
         console.error('❌ Error populating newsletter slugs:', error);
         throw error;
     } finally {

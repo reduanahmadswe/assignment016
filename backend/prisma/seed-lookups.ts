@@ -3,10 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Seeding lookup tables...\n');
-
     // User Roles
-    console.log('📝 Seeding User Roles...');
     await prisma.userRole.createMany({
         data: [
             { code: 'user', label: 'User' },
@@ -16,7 +13,6 @@ async function main() {
     });
 
     // Auth Providers
-    console.log('📝 Seeding Auth Providers...');
     await prisma.authProvider.createMany({
         data: [
             { code: 'local', label: 'Local' },
@@ -26,7 +22,6 @@ async function main() {
     });
 
     // Event Types
-    console.log('📝 Seeding Event Types...');
     await prisma.eventType.createMany({
         data: [
             { code: 'seminar', label: 'Seminar' },
@@ -40,7 +35,6 @@ async function main() {
     });
 
     // Event Modes
-    console.log('📝 Seeding Event Modes...');
     await prisma.eventMode.createMany({
         data: [
             { code: 'online', label: 'Online' },
@@ -51,7 +45,6 @@ async function main() {
     });
 
     // Event Statuses
-    console.log('📝 Seeding Event Statuses...');
     await prisma.eventStatus.createMany({
         data: [
             { code: 'upcoming', label: 'Upcoming' },
@@ -63,7 +56,6 @@ async function main() {
     });
 
     // Registration Statuses
-    console.log('📝 Seeding Registration Statuses...');
     await prisma.registrationStatus.createMany({
         data: [
             { code: 'open', label: 'Open' },
@@ -74,7 +66,6 @@ async function main() {
     });
 
     // Event Registration Statuses
-    console.log('📝 Seeding Event Registration Statuses...');
     await prisma.eventRegistrationStatus.createMany({
         data: [
             { code: 'pending', label: 'Pending' },
@@ -86,7 +77,6 @@ async function main() {
     });
 
     // Payment Statuses
-    console.log('📝 Seeding Payment Statuses...');
     await prisma.paymentStatus.createMany({
         data: [
             { code: 'not_required', label: 'Not Required' },
@@ -101,7 +91,6 @@ async function main() {
     });
 
     // Payment Gateways
-    console.log('📝 Seeding Payment Gateways...');
     await prisma.paymentGateway.createMany({
         data: [
             { code: 'uddoktapay', label: 'UddoktaPay' },
@@ -112,7 +101,6 @@ async function main() {
     });
 
     // Blog Statuses
-    console.log('📝 Seeding Blog Statuses...');
     await prisma.blogStatus.createMany({
         data: [
             { code: 'draft', label: 'Draft' },
@@ -123,7 +111,6 @@ async function main() {
     });
 
     // Opportunity Statuses
-    console.log('📝 Seeding Opportunity Statuses...');
     await prisma.opportunityStatus.createMany({
         data: [
             { code: 'open', label: 'Open' },
@@ -133,7 +120,6 @@ async function main() {
     });
 
     // Opportunity Types
-    console.log('📝 Seeding Opportunity Types...');
     await prisma.opportunityType.createMany({
         data: [
             { code: 'INTERNSHIP', label: 'Internship' },
@@ -145,7 +131,6 @@ async function main() {
     });
 
     // Application Statuses
-    console.log('📝 Seeding Application Statuses...');
     await prisma.applicationStatus.createMany({
         data: [
             { code: 'pending', label: 'Pending' },
@@ -157,7 +142,6 @@ async function main() {
     });
 
     // OTP Types
-    console.log('📝 Seeding OTP Types...');
     await prisma.otpType.createMany({
         data: [
             { code: 'verification', label: 'Email Verification' },
@@ -170,7 +154,6 @@ async function main() {
     });
 
     // Host Roles
-    console.log('📝 Seeding Host Roles...');
     await prisma.hostRole.createMany({
         data: [
             { code: 'host', label: 'Host' },
@@ -183,7 +166,6 @@ async function main() {
     });
 
     // Online Platforms
-    console.log('📝 Seeding Online Platforms...');
     await prisma.onlinePlatform.createMany({
         data: [
             { code: 'zoom', label: 'Zoom' },
@@ -194,8 +176,7 @@ async function main() {
         skipDuplicates: true,
     });
 
-    console.log('\n✅ All lookup tables seeded successfully!');
-}
+    }
 
 main()
     .catch((e) => {

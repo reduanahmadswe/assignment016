@@ -13,8 +13,6 @@ export const otpCleanupCron = cron.schedule(
   '*/10 * * * *', // Every 10 minutes
   async () => {
     try {
-      console.log('[CRON] Starting OTP cleanup...');
-      
       // Delete OTPs that expired more than 50 minutes ago
       const fiftyMinutesAgo = new Date(Date.now() - 50 * 60 * 1000);
       
@@ -35,8 +33,7 @@ export const otpCleanupCron = cron.schedule(
         }
       });
       
-      console.log(`[CRON] OTP cleanup completed: ${result.count} expired OTPs and ${pendingCleanup.count} expired pending registrations removed`);
-    } catch (error) {
+      } catch (error) {
       console.error('[CRON] OTP cleanup error:', error);
     }
   },
@@ -47,11 +44,9 @@ export const otpCleanupCron = cron.schedule(
 );
 
 export const startOtpCleanup = () => {
-  console.log('[CRON] OTP cleanup job started');
   otpCleanupCron.start();
 };
 
 export const stopOtpCleanup = () => {
-  console.log('[CRON] OTP cleanup job stopped');
   otpCleanupCron.stop();
 };

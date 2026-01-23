@@ -53,13 +53,10 @@ export default function AdminProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      console.log('Uploading avatar:', avatarFile);
       const response = await adminAPI.put('/profile', formData);
-      console.log('Update response:', response.data);
       return response.data;
     },
     onSuccess: (data) => {
-      console.log('Profile updated:', data);
       toast.success('Profile updated successfully!');
       // Refresh profile data
       queryClient.invalidateQueries({ queryKey: ['admin-profile'] });
@@ -105,13 +102,10 @@ export default function AdminProfilePage() {
     submitData.append('email', formData.email);
     submitData.append('phone', formData.phone);
 
-    console.log('Avatar file before append:', avatarFile);
     if (avatarFile) {
       submitData.append('avatar', avatarFile);
-      console.log('Avatar appended to FormData');
-    } else {
-      console.log('No avatar file selected');
-    }
+      } else {
+      }
 
     if (formData.newPassword) {
       submitData.append('currentPassword', formData.currentPassword);
@@ -119,10 +113,8 @@ export default function AdminProfilePage() {
     }
 
     // Log FormData contents
-    console.log('FormData contents:');
     for (let pair of submitData.entries()) {
-      console.log(pair[0] + ': ', pair[1]);
-    }
+      }
 
     updateMutation.mutate(submitData);
   };

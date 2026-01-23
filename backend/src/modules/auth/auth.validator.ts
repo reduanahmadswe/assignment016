@@ -23,13 +23,7 @@ export class AuthValidator {
   static async validateUserCredentials(email: string, password: string) {
     const normalizedEmail = email.trim();
 
-    console.log('🔐 [VALIDATOR] Login attempt');
-    console.log('📧 Email received:', email);
-    console.log('📧 Email normalized:', normalizedEmail);
-    console.log('📧 Email length:', normalizedEmail.length);
-    console.log('📧 Email has dots?', normalizedEmail.includes('.'));
-    console.log('🔑 Password length:', password.length);
-
+    );
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
@@ -49,39 +43,23 @@ export class AuthValidator {
     });
 
     if (!user) {
-      console.log('❌ [VALIDATOR] User not found with email:', normalizedEmail);
       throw new AppError('Invalid email or password', 401);
     }
 
-    console.log('✅ [VALIDATOR] User found!');
-    console.log('👤 User ID:', user.id);
-    console.log('👤 User name:', user.name);
-    console.log('📧 User email in DB:', user.email);
-    console.log('🔐 Auth provider:', user.authProvider.code);
-    console.log('✔️ Is verified:', user.isVerified);
-    console.log('✔️ Is active:', user.isActive);
-
     if (user.authProvider.code !== 'local') {
-      console.log('❌ [VALIDATOR] Not a local auth user');
       throw new AppError('Please use Google login for this account', 400);
     }
 
     if (!user.isActive) {
-      console.log('❌ [VALIDATOR] User account is deactivated');
       throw new AppError('Your account has been deactivated. Please contact support.', 403);
     }
 
-    console.log('🔑 [VALIDATOR] Checking password...');
     const isPasswordValid = await bcrypt.compare(password, user.password!);
     
     if (!isPasswordValid) {
-      console.log('❌ [VALIDATOR] Password is INCORRECT');
-      console.log('🔑 Password hash (first 30 chars):', user.password!.substring(0, 30) + '...');
+      :', user.password!.substring(0, 30) + '...');
       throw new AppError('Invalid email or password', 401);
     }
-
-    console.log('✅ [VALIDATOR] Password is CORRECT!');
-    console.log('✅ [VALIDATOR] Login validation successful');
 
     return user;
   }

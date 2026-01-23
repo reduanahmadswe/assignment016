@@ -40,8 +40,6 @@ const createApp = (): Application => {
   // Remove duplicates
   const uniqueOrigins = [...new Set(allowedOrigins)];
   
-  console.log('🌐 Allowed CORS origins:', uniqueOrigins);
-
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, curl, Postman)
@@ -55,8 +53,6 @@ const createApp = (): Application => {
       }
       
       // Log blocked origins for debugging
-      console.log('⚠️ CORS: Origin not in whitelist:', origin);
-      
       // In production, you might want to block unknown origins
       // For now, allow all for debugging
       return callback(null, true);
@@ -90,17 +86,10 @@ const createApp = (): Application => {
   // This helps debug production-only email dot issues
   app.use((req, res, next) => {
     if (req.body?.email && (req.path.includes('/auth/register') || req.path.includes('/auth/login'))) {
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('🔍 [RAW BODY LOGGER] Request intercepted');
-      console.log('📍 Path:', req.path);
-      console.log('📧 RAW email from request body:', req.body.email);
-      console.log('📧 Email type:', typeof req.body.email);
-      console.log('📧 Email length:', req.body.email?.length);
-      console.log('📧 Email char codes:', [...req.body.email].map(c => c.charCodeAt(0)).join(', '));
-      console.log('📧 Contains dot?', req.body.email?.includes('.'));
-      console.log('📧 Dot positions:', [...req.body.email].map((c, i) => c === '.' ? i : null).filter(i => i !== null));
-      console.log('═══════════════════════════════════════════════════════');
-    }
+      ).join(', '));
+      );
+      => c === '.' ? i : null).filter(i => i !== null));
+      }
     next();
   });
 

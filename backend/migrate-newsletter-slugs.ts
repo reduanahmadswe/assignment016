@@ -11,8 +11,6 @@ function generateSlug(title: string): string {
 }
 
 async function migrateNewsletterSlugs() {
-    console.log('🔄 Starting newsletter slug migration...');
-
     try {
         // Get all newsletters without slugs
         const newsletters = await prisma.newsletter.findMany({
@@ -20,8 +18,6 @@ async function migrateNewsletterSlugs() {
                 slug: null,
             },
         });
-
-        console.log(`📰 Found ${newsletters.length} newsletters without slugs`);
 
         for (const newsletter of newsletters) {
             let slug = generateSlug(newsletter.title);
@@ -52,11 +48,9 @@ async function migrateNewsletterSlugs() {
                 data: { slug },
             });
 
-            console.log(`✅ Updated newsletter "${newsletter.title}" with slug: ${slug}`);
-        }
+            }
 
-        console.log('✨ Migration completed successfully!');
-    } catch (error) {
+        } catch (error) {
         console.error('❌ Migration failed:', error);
         throw error;
     } finally {

@@ -78,17 +78,8 @@ export default function LoginPage() {
     setError('');
 
     // 🔍 DEBUG: Log exact email and password being sent
-    console.log('=================================================');
-    console.log('📧 LOGIN REQUEST - FRONTEND');
-    console.log('=================================================');
-    console.log('Email entered by user:', data.email);
-    console.log('Email length:', data.email.length);
-    console.log('Email has dots?', data.email.includes('.'));
-    console.log('Password entered:', data.password);
-    console.log('Password length:', data.password.length);
-    console.log('Full data object:', JSON.stringify(data, null, 2));
-    console.log('=================================================');
-
+    );
+    );
     // Clear any existing tokens before login attempt
     Cookies.remove('accessToken');
     Cookies.remove('refreshToken');
@@ -138,8 +129,6 @@ export default function LoginPage() {
       }
 
       const response = await authAPI.verifyLoginOTP(payload);
-      console.log('OTP Verification Response:', response.data);
-      
       const { user, accessToken, refreshToken } = response.data;
       
       await dispatch(loginUser({ accessToken, refreshToken, user }));

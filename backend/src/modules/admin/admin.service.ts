@@ -958,8 +958,7 @@ export class AdminService {
           try {
             await cloudinary.uploader.destroy(publicId);
           } catch (error) {
-            console.log('Error deleting old avatar:', error);
-          }
+            }
         }
 
         if (fs.existsSync(avatarFile.path)) {

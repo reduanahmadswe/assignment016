@@ -5,8 +5,6 @@ import { faker } from '@faker-js/faker';
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Seeding opportunities with realistic data...');
-
     // Clear existing data to remove posts with markdown
     await prisma.opportunity.deleteMany();
 
@@ -128,8 +126,7 @@ Apply now to be part of our journey!
         process.stdout.write('.'); // Progress indicator
     }
 
-    console.log('\n✅ Successfully seeded 50 realistic opportunities!');
-}
+    }
 
 main()
     .catch((e) => {

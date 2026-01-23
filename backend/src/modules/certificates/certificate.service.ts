@@ -50,8 +50,7 @@ export class CertificateService {
         verificationUrl
       );
     } catch (error) {
-      console.log('Email sending failed, but certificate was created');
-    }
+      }
 
     return {
       certificate_id: certificateId,
@@ -121,20 +120,16 @@ export class CertificateService {
   }
 
   async verifyCertificate(certificateId: string, ipAddress?: string, userAgent?: string): Promise<VerificationResult> {
-    console.log(`[VERIFY] Checking Certificate ID: '${certificateId}'`);
-    
     const cleanId = CertificateValidator.normalizeCertificateId(certificateId);
 
     // Try exact match first
     let certificate = await this.findCertificateExact(cleanId);
 
     if (certificate) {
-      console.log(`[VERIFY] Exact match found for '${cleanId}'`);
-    }
+      }
 
     // Fuzzy matching if exact match fails
     if (!certificate) {
-      console.log(`[VERIFY] Exact match failed. Starting Deep Search...`);
       certificate = await this.findCertificateFuzzy(cleanId);
     }
 
@@ -197,8 +192,6 @@ export class CertificateService {
     const variants = CertificateValidator.generateIdVariants(cleanId);
     const { uniquePart, fallbackPart } = CertificateValidator.extractUniqueParts(cleanId);
 
-    console.log(`[VERIFY] Deep Search | Variants: ${variants.length} | Unique Part: '${uniquePart}'`);
-
     const candidates = await prisma.certificate.findMany({
       where: {
         OR: [
@@ -222,18 +215,14 @@ export class CertificateService {
       take: 5
     });
 
-    console.log(`[VERIFY] Deep Search | Candidates found: ${candidates.length}`);
-
     const normalizedInput = CertificateValidator.normalizeForComparison(cleanId);
 
     for (const cand of candidates) {
       const normalizedCand = CertificateValidator.normalizeForComparison(cand.certificateId);
 
-      console.log(`   > Comparing: Input(${normalizedInput}) vs Cand(${normalizedCand}) [Orig: ${cand.certificateId}]`);
+      vs Cand(${normalizedCand}) [Orig: ${cand.certificateId}]`);
 
       if (normalizedInput === normalizedCand) {
-        console.log(`[VERIFY] MATCH FOUND via Normalization!`);
-
         // Self-healing
         if (cand.certificateId !== cleanId) {
           await this.selfHealCertificateId(cand.id, cand.certificateId, cleanId);
@@ -249,7 +238,6 @@ export class CertificateService {
   }
 
   private async selfHealCertificateId(id: number, oldId: string, newId: string) {
-    console.log(`[VERIFY] Self-Healing: Updating DB ID from '${oldId}' to '${newId}'`);
     try {
       await prisma.certificate.update({
         where: { id },

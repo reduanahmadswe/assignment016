@@ -195,17 +195,10 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     // 🔍 DEBUG: Log exact email being sent during registration
-    console.log('═══════════════════════════════════════════════════════');
-    console.log('📧 REGISTRATION REQUEST - FRONTEND');
-    console.log('═══════════════════════════════════════════════════════');
-    console.log('Email entered by user:', data.email);
-    console.log('Email length:', data.email.length);
-    console.log('Email has dots?', data.email.includes('.'));
-    console.log('Email char codes:', [...data.email].map(c => c.charCodeAt(0)).join(', '));
-    console.log('Dot positions:', [...data.email].map((c, i) => c === '.' ? i : null).filter(i => i !== null));
-    console.log('Full data:', JSON.stringify(data, null, 2));
-    console.log('═══════════════════════════════════════════════════════');
-
+    );
+    ).join(', '));
+    => c === '.' ? i : null).filter(i => i !== null));
+    );
     try {
       await authAPI.register({
         name: data.name,

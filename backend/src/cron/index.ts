@@ -5,8 +5,6 @@ import { startOtpCleanup } from './otpCleanup.cron.js';
 import { startLicenseCheckCron } from './license.cron.js';
 
 export const initCronJobs = () => {
-  console.log('🚀 Initializing cron jobs...');
-
   startEventReminderCron();
   startEventStatusCron();
   startPaymentCleanup();
@@ -14,5 +12,4 @@ export const initCronJobs = () => {
   startLicenseCheckCron();
 
 
-  console.log('✅ All cron jobs initialized');
-};
+  };

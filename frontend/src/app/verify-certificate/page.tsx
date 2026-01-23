@@ -79,9 +79,7 @@ function VerifyContent() {
     setResult(null);
 
     try {
-      console.log('Verifying ID:', id);
       const response = await certificateAPI.verify(id);
-      console.log('Verification response:', response);
       setResult(response.data);
     } catch (err: any) {
       if (err.response?.status === 404) {

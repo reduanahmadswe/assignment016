@@ -6,15 +6,11 @@ import { asyncHandler } from '../../middlewares/error.middleware.js';
 export class AuthController {
   register = asyncHandler(async (req: Request, res: Response) => {
     // Log original email for debugging
-    console.log('📧 [AUTH] Registration - Original email:', req.body.email);
-    
     // Normalize email (only trim whitespace)
     if (req.body.email) {
       const originalEmail = req.body.email;
       req.body.email = req.body.email.trim();
-      console.log('📧 [AUTH] Registration - After trim:', req.body.email);
-      console.log('📧 [AUTH] Registration - Email changed?', originalEmail !== req.body.email);
-    }
+      }
     const result = await authService.register(req.body);
     res.status(201).json({
       success: true,
@@ -46,7 +42,6 @@ export class AuthController {
     if (req.body.email) {
       req.body.email = req.body.email.trim();
     }
-    console.log('🔐 Login attempt:', { email: req.body.email, hasPassword: !!req.body.password });
     const result = await authService.login(req.body);
     res.json({
       success: true,

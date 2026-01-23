@@ -20,8 +20,7 @@ export default function PaymentCancelPage() {
         .cancel(transactionId)
         .then(() => {
           setCancelled(true);
-          console.log('[CANCEL] Payment cancelled successfully');
-        })
+          })
         .catch((error) => {
           console.error('[CANCEL] Failed to cancel payment:', error);
           setCancelled(true); // Still mark as done to show the page

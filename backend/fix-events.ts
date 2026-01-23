@@ -3,13 +3,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🔧 Fixing event dates and status...\n");
-
   // First, delete all existing events
-  console.log("🗑️  Deleting all existing events...");
   await prisma.event.deleteMany({});
-  console.log("  ✅ Deleted all existing events\n");
-
   // Create upcoming events (dates in future - 2026)
   const upcomingEvents = [
     {
@@ -256,23 +251,19 @@ async function main() {
   ];
 
   // Create upcoming events
-  console.log("📅 Creating 6 upcoming events (Jan-Feb 2026)...");
+  ...");
   for (const event of upcomingEvents) {
     await prisma.event.create({ data: event });
-    console.log(`  ✅ Created: ${event.title}`);
-  }
+    }
 
   // Create past events
-  console.log("\n📅 Creating 5 past events (Nov-Dec 2025)...");
+  ...");
   for (const event of pastEvents) {
     await prisma.event.create({ data: event });
-    console.log(`  ✅ Created: ${event.title}`);
-  }
+    }
 
-  console.log("\n🎉 All demo events created successfully!");
-  console.log("\n📊 Summary:");
-  console.log("  - 6 upcoming events (January-February 2026)");
-  console.log("  - 5 past events (November-December 2025)");
+  ");
+  ");
 }
 
 main()

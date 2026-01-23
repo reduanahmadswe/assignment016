@@ -37,7 +37,6 @@ export const transporter = createTransporter();
 export const verifyEmailConfig = async (): Promise<boolean> => {
   try {
     await transporter.verify();
-    console.log('✅ Email service configured successfully');
     return true;
   } catch (error) {
     console.error('❌ Email configuration error:', error);

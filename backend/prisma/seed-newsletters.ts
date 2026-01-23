@@ -36,8 +36,6 @@ const MONTHS = [
 const YEARS = [2024, 2025, 2026];
 
 async function main() {
-    console.log('🌱 Starting newsletter seeding...');
-
     // Clear existing newsletters
     await prisma.newsletter.deleteMany();
 
@@ -77,8 +75,7 @@ async function main() {
         process.stdout.write('.');
     }
 
-    console.log(`\n🎉 Successfully seeded ${TOTAL_NEWSLETTERS} newsletters!`);
-}
+    }
 
 main()
     .catch((e) => {

@@ -61,12 +61,8 @@ export default function EditEventPage() {
   const { data: eventData, isLoading } = useQuery({
     queryKey: ['admin-event', eventId],
     queryFn: async () => {
-      console.log('🔍 Fetching event:', eventId);
       const response = await adminAPI.getEventById(eventId);
-      console.log('📡 API Response:', response);
-      console.log('📦 Response data:', response.data);
       const data = response.data.data || response.data;
-      console.log('✅ Final event data:', data);
       return data;
     },
   });
@@ -75,12 +71,7 @@ export default function EditEventPage() {
   useEffect(() => {
     if (eventData) {
       const event = eventData;
-      console.log('📥 Loading event data:', event);
-      console.log('Event ID:', event.id);
-      console.log('Event guests:', event.guests);
-      console.log('Guests is array:', Array.isArray(event.guests));
-      console.log('Guests length:', event.guests?.length);
-
+      );
       setRealEventId(event.id);
 
       // Parse venue from venueDetails JSON
@@ -129,11 +120,9 @@ export default function EditEventPage() {
 
       // Load existing guests
       if (event.guests && Array.isArray(event.guests) && event.guests.length > 0) {
-        console.log('✅ Loading', event.guests.length, 'guests');
         setGuests(event.guests);
       } else {
-        console.log('⚠️ No guests found in event data');
-      }
+        }
     }
   }, [eventData]);
 
@@ -193,11 +182,6 @@ export default function EditEventPage() {
     if (formData.signature2Title) {
       submitData.signature2_title = formData.signature2Title;
     }
-
-    console.log('📤 Submitting event update:');
-    console.log('Guests count:', guests.length);
-    console.log('Guests data:', guests);
-    console.log('Submit data guests:', submitData.guests);
 
     updateMutation.mutate(submitData);
   };

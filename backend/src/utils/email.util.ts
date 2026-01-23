@@ -50,12 +50,7 @@ const getDynamicTransporter = async () => {
 
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
-    console.log('📧 Attempting to send email to:', options.to);
-    console.log('📧 Subject:', options.subject);
-    
     const { transporter: mailer, from } = await getDynamicTransporter();
-
-    console.log('📧 Using email from:', from);
 
     await mailer.sendMail({
       from: from,
@@ -65,7 +60,6 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
       text: options.text || '',
     });
     
-    console.log('✅ Email sent successfully to:', options.to);
     return true;
   } catch (error) {
     console.error('❌ Email sending failed:', error);

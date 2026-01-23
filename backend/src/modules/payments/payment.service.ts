@@ -159,8 +159,6 @@ export class PaymentService {
       webhook_url: `${env.backendUrl}/api/payments/webhook`,
     };
 
-    console.log('[PAYMENT] Initiating payment:', { transactionId, userId, eventId: data.event_id, amount });
-
     const config = await this._getPaymentConfig();
 
     try {
@@ -180,8 +178,6 @@ export class PaymentService {
       if (!response.data.status || !response.data.payment_url) {
         throw new Error(response.data.message || 'Payment URL not received');
       }
-
-      console.log('[PAYMENT] Payment initiated successfully:', transactionId);
 
       return {
         success: true,
@@ -220,18 +216,11 @@ export class PaymentService {
       throw new AppError('Invoice ID is required for payment verification', 400);
     }
 
-    console.log('[VERIFY] Starting verification for invoice:', invoiceId);
-
     // -------------------------------------------------------------------------
     // 2.1 CALL UDDOKTAPAY VERIFY API
     // -------------------------------------------------------------------------
     let verifyData: UddoktaPayVerifyResponse;
     const config = await this._getPaymentConfig();
-
-    console.log('[VERIFY] Sending request to UddoktaPay:', {
-      url: config.verifyUrl,
-      invoice_id: invoiceId
-    });
 
     try {
       const response = await axios.post<UddoktaPayVerifyResponse>(
@@ -248,7 +237,7 @@ export class PaymentService {
       );
 
       verifyData = response.data;
-      console.log('[VERIFY] Gateway RAW response:', JSON.stringify(verifyData, null, 2));
+      );
 
     } catch (error: any) {
       console.error('[VERIFY] Gateway FAILED:', {
@@ -362,7 +351,7 @@ export class PaymentService {
         });
 
         if (existingReg) {
-          console.log('[VERIFY] Transaction already used (idempotent):', transaction.transactionId);
+          :', transaction.transactionId);
           return {
             success: true,
             status: 'COMPLETED',
@@ -486,12 +475,6 @@ export class PaymentService {
         select: { id: true, name: true, email: true },
       });
 
-      console.log('[VERIFY] Payment verified and registration created:', {
-        transactionId: transaction.transactionId,
-        registrationId: registration.id,
-        userId: transaction.userId,
-      });
-
       return {
         success: true,
         status: 'COMPLETED',
@@ -538,8 +521,6 @@ export class PaymentService {
       throw new AppError('Unauthorized webhook request', 401);
     }
 
-    console.log('[WEBHOOK] Received:', payload);
-
     const { metadata, status, invoice_id, payment_method, sender_number, transaction_id, amount } = payload;
 
     if (!metadata || !metadata.transaction_id) {
@@ -552,14 +533,13 @@ export class PaymentService {
       });
 
       if (!transaction) {
-        console.log('[WEBHOOK] Transaction not found:', metadata.transaction_id);
         return { message: 'Transaction not found', processed: false };
       }
 
       // Idempotency - already processed
       const completedStatusId = await lookupService.getPaymentStatusId('completed');
       if (transaction.statusId === completedStatusId && transaction.registrationId) {
-        console.log('[WEBHOOK] Already processed (idempotent):', transaction.transactionId);
+        :', transaction.transactionId);
         return { message: 'Already processed', processed: false };
       }
 
@@ -571,7 +551,6 @@ export class PaymentService {
         await tx.paymentTransaction.delete({
           where: { id: transaction.id },
         });
-        console.log('[WEBHOOK] Deleted failed transaction:', transaction.transactionId);
         return { message: 'Payment failed - transaction deleted', processed: true, status: 'failed' };
       }
 
@@ -650,11 +629,6 @@ export class PaymentService {
         data: { currentParticipants: { increment: 1 } },
       });
 
-      console.log('[WEBHOOK] Registration created via webhook:', {
-        transactionId: transaction.transactionId,
-        registrationId: registration.id,
-      });
-
       // Send Email Notification (Async)
       const user = await tx.user.findUnique({
         where: { id: transaction.userId },
@@ -712,8 +686,6 @@ export class PaymentService {
     await prisma.paymentTransaction.delete({
       where: { id: transaction.id },
     });
-
-    console.log('[CANCEL] Deleted pending transaction:', transactionId);
 
     return { message: 'Payment cancelled successfully. No record has been kept.' };
   }
@@ -810,8 +782,6 @@ export class PaymentService {
       }
     }
 
-    console.log('[REFUND] Payment refunded:', { transactionId, adminId, reason });
-
     return {
       message: 'Payment refunded and user unenrolled successfully',
       transaction_id: transactionId,
@@ -839,8 +809,6 @@ export class PaymentService {
       },
     });
 
-    console.log(`[CLEANUP] Found ${expiredTransactions.length} expired payments to delete`);
-
     // ⭐ Delete expired transactions (no record kept)
     const deleteResult = await prisma.paymentTransaction.deleteMany({
       where: {
@@ -848,8 +816,6 @@ export class PaymentService {
         expiresAt: { lte: now },
       },
     });
-
-    console.log(`[CLEANUP] Deleted ${deleteResult.count} expired transactions`);
 
     return { expired_count: deleteResult.count };
   }

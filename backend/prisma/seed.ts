@@ -5,8 +5,6 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
-    console.log("Starting database seeding...");
-
     // Get role and auth provider IDs
     const adminRole = await prisma.userRole.findUnique({ where: { code: 'admin' } });
     const userRole = await prisma.userRole.findUnique({ where: { code: 'user' } });
@@ -35,10 +33,8 @@ async function main() {
           authProviderId: localAuth.id,
         },
       });
-      console.log("✅ Created admin user:", admin.email);
-    } else {
-      console.log("ℹ️ Admin user already exists:", existingAdmin.email);
-    }
+      } else {
+      }
 
     // Create demo user
     const demoPassword = await bcrypt.hash("Demo@123", 12);
@@ -58,10 +54,8 @@ async function main() {
           authProviderId: localAuth.id,
         },
       });
-      console.log("✅ Created demo user:", demo.email);
-    } else {
-      console.log("ℹ️ Demo user already exists:", existingDemo.email);
-    }
+      } else {
+      }
 
     // Create default pages
     const pages = [
@@ -82,14 +76,11 @@ async function main() {
         const page = await prisma.page.create({
           data: pageData,
         });
-        console.log("✅ Created page:", page.slug);
-      } else {
-        console.log("ℹ️ Page already exists:", existingPage.slug);
-      }
+        } else {
+        }
     }
 
-    console.log("\n🎉 Database seeding completed!");
-  } catch (error) {
+    } catch (error) {
     console.error("❌ Error during seeding:", error);
     throw error;
   }

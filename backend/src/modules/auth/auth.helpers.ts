@@ -12,10 +12,8 @@ type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>
 
 export class RegistrationService {
   static async createPendingRegistration(email: string, password: string, name: string, phone?: string) {
-    console.log('📧 [HELPER] createPendingRegistration - Received email:', email);
     const normalizedEmail = email.trim();
-    console.log('📧 [HELPER] createPendingRegistration - Normalized email:', normalizedEmail);
-    console.log('📧 [HELPER] createPendingRegistration - Email has dot?', normalizedEmail.includes('.'));
+    );
     const hashedPassword = await bcrypt.hash(password, 12);
     const cleanedPhone = phone ? phone.replace(/[\s\-()]/g, '') : undefined;
 
@@ -33,8 +31,7 @@ export class RegistrationService {
           expiresAt: regExpiresAt,
         },
       });
-      console.log('📧 [HELPER] createPendingRegistration - Saved to DB:', pendingReg.email);
-      console.log('📧 [HELPER] createPendingRegistration - DB email has dot?', pendingReg.email.includes('.'));
+      );
 
       const verificationTypeId = await lookupService.getOtpTypeId('verification');
       await tx.otpCode.create({
@@ -81,8 +78,7 @@ export class RegistrationService {
         },
         select: { id: true, email: true, name: true, role: { select: { code: true } } },
       });
-      console.log('📧 [HELPER] completeRegistration - User created with email:', user.email);
-      console.log('📧 [HELPER] completeRegistration - User email has dot?', user.email.includes('.'));
+      );
 
       await tx.pendingRegistration.delete({
         where: { email: normalizedEmail },

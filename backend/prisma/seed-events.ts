@@ -178,18 +178,12 @@ async function createEvent(
     };
 
     await prisma.event.create({ data: event });
-    console.log(`Created ${status} event [${mode}]: ${title}`);
-}
+    }
 
 async function main() {
-    console.log("Starting seeding...");
-
     // Clear existing events
     await prisma.event.deleteMany({});
-    console.log("✅ Cleared existing events");
-
     // 15 Upcoming (10 Online, 5 Offline)
-    console.log("Seeding Upcoming Events...");
     for (let i = 0; i < 10; i++) {
         await createEvent(i, 'upcoming', 'Online', getRandomInt(5, 60)); // Future 5-60 days
     }
@@ -198,25 +192,21 @@ async function main() {
     }
 
     // 5 Cancelled (Can be future dates but cancelled status)
-    console.log("Seeding Cancelled Events...");
     for (let i = 0; i < 5; i++) {
         await createEvent(i + 15, 'cancelled', 'Online', getRandomInt(5, 30));
     }
 
     // 15 Past/Completed
-    console.log("Seeding Past Events...");
     for (let i = 0; i < 15; i++) {
         await createEvent(i + 20, 'completed', getRandomItem(['Online', 'Offline']), getRandomInt(-100, -1)); // Past 1-100 days
     }
 
     // 15 More Completed (to make total 30 past/completed)
-    console.log("Seeding Completed Events...");
     for (let i = 0; i < 15; i++) {
         await createEvent(i + 35, 'completed', getRandomItem(['Online', 'Offline']), getRandomInt(-200, -101)); // Past 101-200 days
     }
 
-    console.log("Seeding Finished!");
-}
+    }
 
 main()
     .catch((e) => {

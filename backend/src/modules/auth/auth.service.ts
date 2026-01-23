@@ -13,10 +13,8 @@ import type { RegisterInput, LoginInput, VerifyLoginOTPInput } from './auth.type
 export class AuthService {
   async register(data: RegisterInput) {
     const { email, password, name, phone } = data;
-    console.log('📧 [SERVICE] Register - Received email:', email);
     const normalizedEmail = email.trim();
-    console.log('📧 [SERVICE] Register - Normalized email:', normalizedEmail);
-    console.log('📧 [SERVICE] Register - Email has dot?', normalizedEmail.includes('.'));
+    );
 
     try {
       // Validate email not exists

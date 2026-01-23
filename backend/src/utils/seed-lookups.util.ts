@@ -4,8 +4,6 @@ const prisma = new PrismaClient();
 
 export async function seedLookups() {
   try {
-    console.log('🌱 Checking and seeding lookup tables...\n');
-
     // User Roles
     await prisma.userRole.createMany({
       data: [
@@ -179,8 +177,7 @@ export async function seedLookups() {
       skipDuplicates: true,
     });
 
-    console.log('✅ Lookup tables ready!\n');
-  } catch (error) {
+    } catch (error) {
     console.error('⚠️  Error seeding lookups:', error);
     // Don't exit, just log the error - server should continue
   }

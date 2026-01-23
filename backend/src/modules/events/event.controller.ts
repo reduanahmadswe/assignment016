@@ -131,13 +131,9 @@ export class EventController {
   });
 
   updateEvent = asyncHandler(async (req: AuthRequest, res: Response) => {
-    console.log('📝 Update Event Request:');
-    console.log('Event ID:', req.params.id);
-    console.log('Body keys:', Object.keys(req.body));
-    console.log('Guests field:', req.body.guests);
-    console.log('Guests type:', typeof req.body.guests);
+    );
     if (req.body.guests) {
-      console.log('Guests length:', Array.isArray(req.body.guests) ? req.body.guests.length : 'Not an array');
+      ? req.body.guests.length : 'Not an array');
     }
 
     const event = await eventService.updateEvent(parseInt(req.params.id), req.body);
