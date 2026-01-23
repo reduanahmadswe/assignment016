@@ -35,21 +35,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const pageUrl = `${appUrl}/blog/${post.slug}`;
     
-    // Handle different image URL formats
+    // Handle different image URL formats for social media sharing
     let imageUrl = `${appUrl}/images/og-default.jpg`;
     
     if (post.thumbnail) {
-      // If it's already a full URL (Google Drive, Dropbox, etc.), use it directly
-      if (post.thumbnail.startsWith('http://') || post.thumbnail.startsWith('https://')) {
+      // If it's a Google Drive link, proxy it through our API
+      if (post.thumbnail.includes('drive.google.com') || post.thumbnail.includes('docs.google.com')) {
+        imageUrl = `${appUrl}/api/og-image?url=${encodeURIComponent(post.thumbnail)}`;
+      }
+      // If it's already a full URL (not Google Drive), use it directly
+      else if (post.thumbnail.startsWith('http://') || post.thumbnail.startsWith('https://')) {
         imageUrl = post.thumbnail;
-        
-        // For Google Drive, ensure we use the thumbnail endpoint for better preview
-        if (post.thumbnail.includes('drive.google.com')) {
-          const fileIdMatch = post.thumbnail.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-          if (fileIdMatch) {
-            imageUrl = `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w1200`;
-          }
-        }
       } else {
         // If it's a relative path, make it absolute
         imageUrl = `${appUrl}${post.thumbnail.startsWith('/') ? '' : '/'}${post.thumbnail}`;
