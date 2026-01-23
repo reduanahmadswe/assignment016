@@ -80,6 +80,7 @@ export default function EditBlogPostPage() {
     status: 'draft' as 'draft' | 'published',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const { data, isLoading } = useQuery<BlogPost>({
     queryKey: ['admin-blog-post', id],
@@ -107,16 +108,32 @@ export default function EditBlogPostPage() {
   }, [data]);
 
   const updateMutation = useMutation({
-    mutationFn: (payload: any) => api.put(`/blogs/${id}`, payload),
+    mutationFn: (payload: FormData) => api.put(`/blogs/${id}`, payload, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-blog'] });
       queryClient.invalidateQueries({ queryKey: ['admin-blog-post', id] });
+      toast.success('Blog post updated successfully!');
       router.push('/admin/blog');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to update blog post');
     },
   });
 
   const handleThumbnailPreview = (url: string) => {
     setImagePreview(url || null);
+  };
+
+  const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setThumbnailFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -126,21 +143,24 @@ export default function EditBlogPostPage() {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const payload: any = {
-      title: formData.title,
-      excerpt: formData.excerpt,
-      content: formData.content,
-      thumbnail: formData.thumbnail || undefined,
-      author_name: formData.author_name || undefined,
-      author_image: formData.author_image || undefined,
-      author_website: formData.author_website || undefined,
-      meta_title: formData.meta_title || undefined,
-      meta_description: formData.meta_description || undefined,
-      tags: tagsArray,
-      status: formData.status,
-    };
+    const formDataObj = new FormData();
+    formDataObj.append('title', formData.title);
+    formDataObj.append('excerpt', formData.excerpt);
+    formDataObj.append('content', formData.content);
+    if (thumbnailFile) {
+      formDataObj.append('thumbnail', thumbnailFile);
+    } else if (formData.thumbnail) {
+      formDataObj.append('thumbnail', formData.thumbnail);
+    }
+    if (formData.author_name) formDataObj.append('author_name', formData.author_name);
+    if (formData.author_image) formDataObj.append('author_image', formData.author_image);
+    if (formData.author_website) formDataObj.append('author_website', formData.author_website);
+    if (formData.meta_title) formDataObj.append('meta_title', formData.meta_title);
+    if (formData.meta_description) formDataObj.append('meta_description', formData.meta_description);
+    formDataObj.append('tags', JSON.stringify(tagsArray));
+    formDataObj.append('status', formData.status);
 
-    updateMutation.mutate(payload);
+    updateMutation.mutate(formDataObj);
   };
 
   if (isLoading) {
@@ -352,6 +372,27 @@ export default function EditBlogPostPage() {
             </CardHeader>
             <CardContent className="space-y-4 p-6">
               <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Upload New Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailFileChange}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Upload an image file (JPG, PNG, WebP) - Max 5MB
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center">
+                  <div className="flex-grow border-t border-gray-200"></div>
+                  <span className="flex-shrink mx-4 text-xs font-medium text-gray-400">OR</span>
+                  <div className="flex-grow border-t border-gray-200"></div>
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Image URL</label>
                 <Input
                   type="url"
@@ -359,10 +400,14 @@ export default function EditBlogPostPage() {
                   onChange={(e) => {
                     setFormData({ ...formData, thumbnail: e.target.value });
                     handleThumbnailPreview(e.target.value);
+                    setThumbnailFile(null);
                   }}
                   placeholder="https://example.com/image.jpg"
                   className="w-full rounded-xl"
                 />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  Or paste an image URL (Google Drive links supported)
+                </p>
               </div>
 
               <div className="aspect-video w-full bg-gray-50 rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center relative">

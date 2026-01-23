@@ -104,14 +104,11 @@ export default function BlogPostPage() {
         <div className="container-custom -mt-8 sm:-mt-12 relative z-10 px-4 sm:px-6">
           <div className="max-w-4xl mx-auto">
             <div className="aspect-video relative rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-gray-200/50 block bg-gray-200">
-              <Image
+              <img
                 src={getImageUrl(post.thumbnail)}
                 alt={post.title}
-                fill
-                className="object-cover"
-                priority
-                // Disable optimization for Google Drive images to avoid server-side fetching issues
-                unoptimized={post.thumbnail?.includes('drive.google.com') || post.thumbnail?.includes('docs.google.com')}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
               />
             </div>
           </div>

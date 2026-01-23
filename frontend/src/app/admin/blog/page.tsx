@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Button, Input, Modal, Loading, Badge, Pagination } from '@/components/ui';
-import { formatDate } from '@/lib/utils';
+import { formatDate, getImageUrl } from '@/lib/utils';
 
 interface BlogPost {
   id: number;
@@ -107,6 +107,7 @@ export default function AdminBlogPage() {
     status: 'draft' as 'draft' | 'published',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-blog', page, search, status],
@@ -116,19 +117,31 @@ export default function AdminBlogPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => api.post('/blogs', data),
+    mutationFn: (data: FormData) => api.post('/blogs', data, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-blog'] });
       closeFormModal();
+      toast.success('Blog post created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to create blog post');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      api.put(`/blogs/${id}`, data),
+    mutationFn: ({ id, data }: { id: number; data: FormData }) =>
+      api.put(`/blogs/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-blog'] });
       closeFormModal();
+      toast.success('Blog post updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || 'Failed to update blog post');
     },
   });
 
@@ -211,6 +224,16 @@ export default function AdminBlogPage() {
     setImagePreview(url || null);
   };
 
+  const handleThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setThumbnailFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tagsArray = formData.tags
@@ -218,23 +241,26 @@ export default function AdminBlogPage() {
       .map(t => t.trim())
       .filter(Boolean);
 
-    const payload: any = {
-      title: formData.title,
-      excerpt: formData.excerpt,
-      content: formData.content,
-      thumbnail: formData.thumbnail || undefined,
-      author_name: formData.author_name || undefined,
-      author_website: formData.author_website || undefined,
-      meta_title: formData.meta_title || undefined,
-      meta_description: formData.meta_description || undefined,
-      tags: tagsArray,
-      status: formData.status,
-    };
+    const formDataObj = new FormData();
+    formDataObj.append('title', formData.title);
+    formDataObj.append('excerpt', formData.excerpt);
+    formDataObj.append('content', formData.content);
+    if (thumbnailFile) {
+      formDataObj.append('thumbnail', thumbnailFile);
+    } else if (formData.thumbnail) {
+      formDataObj.append('thumbnail', formData.thumbnail);
+    }
+    if (formData.author_name) formDataObj.append('author_name', formData.author_name);
+    if (formData.author_website) formDataObj.append('author_website', formData.author_website);
+    if (formData.meta_title) formDataObj.append('meta_title', formData.meta_title);
+    if (formData.meta_description) formDataObj.append('meta_description', formData.meta_description);
+    formDataObj.append('tags', JSON.stringify(tagsArray));
+    formDataObj.append('status', formData.status);
 
     if (selectedPost) {
-      updateMutation.mutate({ id: selectedPost.id, data: payload });
+      updateMutation.mutate({ id: selectedPost.id, data: formDataObj });
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(formDataObj);
     }
   };
 
@@ -362,7 +388,7 @@ export default function AdminBlogPage() {
                       <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 relative">
                         {post.thumbnail ? (
                           <img
-                            src={getGoogleDriveThumbnailUrl(post.thumbnail)}
+                            src={getImageUrl(post.thumbnail)}
                             alt={post.title}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                             referrerPolicy="no-referrer"

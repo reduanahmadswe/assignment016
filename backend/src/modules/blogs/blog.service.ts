@@ -5,12 +5,19 @@ import { lookupService } from '../../services/lookup.service.js';
 import { CreateBlogInput, UpdateBlogInput, BlogFilters } from './blog.types.js';
 import { blogTransformer } from './blog.transformer.js';
 import { blogQueryBuilder } from './blog.query-builder.js';
+import { getFileUrl, deleteFile } from '../../utils/file.util.js';
 
 export class BlogService {
-  async createPost(data: CreateBlogInput, authorId: number) {
+  async createPost(data: CreateBlogInput, authorId: number, thumbnailFile?: Express.Multer.File) {
     const slug = generateSlug(data.title) + '-' + Date.now().toString(36);
 
     const statusId = await lookupService.getBlogStatusId(data.status || 'draft');
+
+    // Handle thumbnail - use uploaded file or provided URL
+    let thumbnailUrl = data.thumbnail;
+    if (thumbnailFile) {
+      thumbnailUrl = getFileUrl(thumbnailFile.filename, 'images');
+    }
 
     const post = await prisma.blogPost.create({
       data: {
@@ -18,7 +25,7 @@ export class BlogService {
         slug,
         excerpt: data.excerpt,
         content: data.content,
-        thumbnail: data.thumbnail,
+        thumbnail: thumbnailUrl,
         authorId,
         authorName: data.author_name,
         authorImage: data.author_image,
@@ -38,7 +45,7 @@ export class BlogService {
     return this.getPostById(post.id);
   }
 
-  async updatePost(postId: number, data: UpdateBlogInput) {
+  async updatePost(postId: number, data: UpdateBlogInput, thumbnailFile?: Express.Multer.File) {
     const post = await prisma.blogPost.findUnique({ where: { id: postId } });
     if (!post) {
       throw new AppError('Blog post not found', 404);
@@ -49,7 +56,18 @@ export class BlogService {
     if (data.title !== undefined) updateData.title = data.title;
     if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
     if (data.content !== undefined) updateData.content = data.content;
-    if (data.thumbnail !== undefined) updateData.thumbnail = data.thumbnail;
+    
+    // Handle thumbnail update
+    if (thumbnailFile) {
+      // Delete old thumbnail if it exists and is a local file
+      if (post.thumbnail && post.thumbnail.startsWith('/uploads/')) {
+        await deleteFile(post.thumbnail.replace('/uploads/', ''));
+      }
+      updateData.thumbnail = getFileUrl(thumbnailFile.filename, 'images');
+    } else if (data.thumbnail !== undefined) {
+      updateData.thumbnail = data.thumbnail;
+    }
+    
     if (data.author_name !== undefined) updateData.authorName = data.author_name;
     if (data.author_image !== undefined) updateData.authorImage = data.author_image;
     if (data.author_website !== undefined) updateData.authorWebsite = data.author_website;

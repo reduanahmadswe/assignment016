@@ -149,7 +149,17 @@ export function getImageUrl(path: string | null | undefined) {
     return path.replace('view.aspx', 'embed.aspx').replace('redir', 'embed');
   }
 
-  if (path.startsWith('http') || path.startsWith('data:') || path.startsWith('/')) return path;
+  // Handle uploaded files (local server files)
+  if (path.startsWith('/uploads/')) {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:5000';
+    return `${baseUrl}${path}`;
+  }
+
+  // Handle other absolute URLs and data URIs
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
+
+  // Handle other absolute paths (like /images/...)
+  if (path.startsWith('/')) return path;
 
   // Guard against invalid paths (e.g. error messages or text with spaces)
   if (path.includes(' ') || path.length < 3) return '/images/placeholder.svg';
