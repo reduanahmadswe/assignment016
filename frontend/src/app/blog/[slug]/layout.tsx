@@ -3,12 +3,12 @@ import { blogAPI } from '@/lib/api';
 import { getImageUrl } from '@/lib/utils';
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
   children: React.ReactNode;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   
   try {
     // Fetch blog post data server-side
