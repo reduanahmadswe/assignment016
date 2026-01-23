@@ -58,52 +58,51 @@ def find_files_to_process(base_dir: str) -> List[str]:
 
 def remove_console_logs(content: str) -> Tuple[str, int]:
     """
-    Remove console.log statements from content
+    Remove console.log statements from content safely
     Returns: (modified_content, number_of_removals)
     """
     removals = 0
-    
-    # Pattern 1: Single line console.log with various content
-    # Matches: console.log(...); or console.log(...)
-    pattern1 = r'console\.log\s*\([^)]*\)\s*;?\s*\n?'
-    content, count1 = re.subn(pattern1, '', content)
-    removals += count1
-    
-    # Pattern 2: Multi-line console.log
-    # Matches: console.log( ... multiple lines ... )
-    pattern2 = r'console\.log\s*\(\s*(?:[^()]|\([^()]*\))*\)\s*;?\s*\n?'
-    content, count2 = re.subn(pattern2, '', content)
-    removals += count2
-    
-    # Pattern 3: Console methods (log, error, warn, info, debug)
-    # Only removing console.log, but this can be extended
-    pattern3 = r'^\s*console\.log\(.*?\);\s*$'
     lines = content.split('\n')
     new_lines = []
+    i = 0
     
-    for line in lines:
-        # Check if line is only a console.log statement
-        if re.match(r'^\s*console\.log\(', line):
-            # Check if it's a complete statement
-            open_parens = line.count('(')
-            close_parens = line.count(')')
-            if open_parens == close_parens:
-                removals += 1
-                continue  # Skip this line
-        new_lines.append(line)
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        
+        # Check if line starts with console.log
+        if stripped.startswith('console.log('):
+            # Count parentheses to find where statement ends
+            paren_count = 0
+            start_idx = i
+            full_statement = []
+            
+            for j in range(i, len(lines)):
+                current_line = lines[j]
+                full_statement.append(current_line)
+                
+                for char in current_line:
+                    if char == '(':
+                        paren_count += 1
+                    elif char == ')':
+                        paren_count -= 1
+                
+                # Check if statement is complete
+                if paren_count == 0:
+                    # Skip all these lines
+                    i = j + 1
+                    removals += 1
+                    break
+            else:
+                # If we couldn't close parentheses, keep the line
+                new_lines.append(line)
+                i += 1
+        else:
+            # Keep non-console.log lines
+            new_lines.append(line)
+            i += 1
     
     content = '\n'.join(new_lines)
-    
-    # Pattern 4: Handle nested console.log with template literals
-    pattern4 = r'console\.log\s*\(\s*`[^`]*`\s*\)\s*;?\s*\n?'
-    content, count4 = re.subn(pattern4, '', content)
-    removals += count4
-    
-    # Pattern 5: console.log with string concatenation
-    pattern5 = r'console\.log\s*\(\s*["\'][^"\']*["\']\s*(?:\+[^;)]*)*\)\s*;?\s*\n?'
-    content, count5 = re.subn(pattern5, '', content)
-    removals += count5
-    
     return content, removals
 
 def process_file(file_path: str) -> Tuple[bool, int]:

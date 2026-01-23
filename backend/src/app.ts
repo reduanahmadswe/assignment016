@@ -86,10 +86,8 @@ const createApp = (): Application => {
   // This helps debug production-only email dot issues
   app.use((req, res, next) => {
     if (req.body?.email && (req.path.includes('/auth/register') || req.path.includes('/auth/login'))) {
-      ).join(', '));
-      );
-      => c === '.' ? i : null).filter(i => i !== null));
-      }
+      // Logging removed for production
+    }
     next();
   });
 

@@ -14,7 +14,6 @@ export class AuthService {
   async register(data: RegisterInput) {
     const { email, password, name, phone } = data;
     const normalizedEmail = email.trim();
-    );
 
     try {
       // Validate email not exists

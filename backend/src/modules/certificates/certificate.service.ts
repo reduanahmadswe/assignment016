@@ -220,8 +220,6 @@ export class CertificateService {
     for (const cand of candidates) {
       const normalizedCand = CertificateValidator.normalizeForComparison(cand.certificateId);
 
-      vs Cand(${normalizedCand}) [Orig: ${cand.certificateId}]`);
-
       if (normalizedInput === normalizedCand) {
         // Self-healing
         if (cand.certificateId !== cleanId) {

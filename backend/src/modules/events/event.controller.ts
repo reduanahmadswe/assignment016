@@ -131,9 +131,8 @@ export class EventController {
   });
 
   updateEvent = asyncHandler(async (req: AuthRequest, res: Response) => {
-    );
     if (req.body.guests) {
-      ? req.body.guests.length : 'Not an array');
+      // Guests validation
     }
 
     const event = await eventService.updateEvent(parseInt(req.params.id), req.body);

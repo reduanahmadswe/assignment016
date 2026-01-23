@@ -24,7 +24,11 @@ const startServer = async () => {
     const app = createApp();
 
     app.listen(env.port, () => {
-      }               ║
+      console.log(`
+╔═══════════════════════════════════════════════════════════╗
+║                 🚀 Server Started                         ║
+╠═══════════════════════════════════════════════════════════╣
+║   📅 Time: ${new Date().toLocaleString()}               ║
 ║   🔗 API URL: http://localhost:${env.port}/api            ║
 ║   📖 Health: http://localhost:${env.port}/api/health      ║
 ╚═══════════════════════════════════════════════════════════╝

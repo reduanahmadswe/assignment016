@@ -23,7 +23,6 @@ export class AuthValidator {
   static async validateUserCredentials(email: string, password: string) {
     const normalizedEmail = email.trim();
 
-    );
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
       select: {
@@ -57,7 +56,6 @@ export class AuthValidator {
     const isPasswordValid = await bcrypt.compare(password, user.password!);
     
     if (!isPasswordValid) {
-      :', user.password!.substring(0, 30) + '...');
       throw new AppError('Invalid email or password', 401);
     }
 

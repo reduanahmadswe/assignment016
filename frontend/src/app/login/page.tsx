@@ -77,9 +77,6 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // 🔍 DEBUG: Log exact email and password being sent
-    );
-    );
     // Clear any existing tokens before login attempt
     Cookies.remove('accessToken');
     Cookies.remove('refreshToken');

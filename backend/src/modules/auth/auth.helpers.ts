@@ -13,7 +13,6 @@ type TransactionClient = Parameters<Parameters<PrismaClient['$transaction']>[0]>
 export class RegistrationService {
   static async createPendingRegistration(email: string, password: string, name: string, phone?: string) {
     const normalizedEmail = email.trim();
-    );
     const hashedPassword = await bcrypt.hash(password, 12);
     const cleanedPhone = phone ? phone.replace(/[\s\-()]/g, '') : undefined;
 
@@ -31,7 +30,6 @@ export class RegistrationService {
           expiresAt: regExpiresAt,
         },
       });
-      );
 
       const verificationTypeId = await lookupService.getOtpTypeId('verification');
       await tx.otpCode.create({
@@ -78,7 +76,6 @@ export class RegistrationService {
         },
         select: { id: true, email: true, name: true, role: { select: { code: true } } },
       });
-      );
 
       await tx.pendingRegistration.delete({
         where: { email: normalizedEmail },

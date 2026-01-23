@@ -237,7 +237,6 @@ export class PaymentService {
       );
 
       verifyData = response.data;
-      );
 
     } catch (error: any) {
       console.error('[VERIFY] Gateway FAILED:', {
@@ -351,7 +350,6 @@ export class PaymentService {
         });
 
         if (existingReg) {
-          :', transaction.transactionId);
           return {
             success: true,
             status: 'COMPLETED',
@@ -539,7 +537,6 @@ export class PaymentService {
       // Idempotency - already processed
       const completedStatusId = await lookupService.getPaymentStatusId('completed');
       if (transaction.statusId === completedStatusId && transaction.registrationId) {
-        :', transaction.transactionId);
         return { message: 'Already processed', processed: false };
       }
 
