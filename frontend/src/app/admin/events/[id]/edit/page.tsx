@@ -10,6 +10,43 @@ import { adminAPI } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent, Button, Input, Loading, Spinner } from '@/components/ui';
 import toast from '@/lib/toast';
 
+// Helper function to convert Google Drive URL to direct viewable format
+const getGoogleDriveImageUrl = (url: string) => {
+  if (!url) return '';
+  
+  // If it's not a Google Drive URL, return as is
+  if (!url.includes('drive.google.com') && !url.includes('docs.google.com')) {
+    return url;
+  }
+
+  let fileId = '';
+
+  // Format: https://drive.google.com/file/d/FILE_ID/view
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) {
+    fileId = fileMatch[1];
+  }
+
+  // Format: https://drive.google.com/open?id=FILE_ID
+  const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (openMatch) {
+    fileId = openMatch[1];
+  }
+
+  // Format: https://drive.google.com/uc?id=FILE_ID
+  const ucMatch = url.match(/\/uc\?.*id=([a-zA-Z0-9_-]+)/);
+  if (ucMatch) {
+    fileId = ucMatch[1];
+  }
+
+  if (fileId) {
+    // Use thumbnail API for better preview
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400`;
+  }
+
+  return url;
+};
+
 interface Guest {
   name: string;
   email: string;
@@ -137,13 +174,138 @@ export default function EditEventPage() {
       router.push('/admin/events');
     },
     onError: (error: any) => {
-      const message = error.response?.data?.message || error.message || 'Unable to update event. Please try again.';
-      toast.error(message);
+      // Handle network errors
+      if (!error.response) {
+        toast.error('Network error. Please check your connection and try again');
+        return;
+      }
+
+      // Extract specific error messages from backend
+      const errorMessage = error.response?.data?.message || error.message || 'Unable to update event';
+      
+      // Show only first error (split by semicolon and show first one)
+      if (errorMessage.includes(';')) {
+        const firstError = errorMessage.split(';')[0].trim();
+        toast.error(firstError);
+      } else {
+        toast.error(errorMessage);
+      }
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Priority-based validation - show only first error
+    
+    // 1. Required fields - Basic info
+    if (!formData.title.trim()) {
+      toast.error('Event title is required');
+      return;
+    }
+    
+    if (!formData.slug.trim()) {
+      toast.error('Event slug is required');
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      toast.error('Event description is required');
+      return;
+    }
+    
+    if (!thumbnailUrl.trim()) {
+      toast.error('Event thumbnail is required');
+      return;
+    }
+
+    // 2. Date validations
+    if (!formData.startDate) {
+      toast.error('Start date is required');
+      return;
+    }
+    
+    if (!formData.endDate) {
+      toast.error('End date is required');
+      return;
+    }
+    
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
+    const regDeadline = new Date(formData.registrationDeadline);
+    
+    if (startDate >= endDate) {
+      toast.error('End date must be after start date');
+      return;
+    }
+
+    if (!formData.registrationDeadline) {
+      toast.error('Registration deadline is required');
+      return;
+    }
+    
+    if (regDeadline >= startDate) {
+      toast.error('Registration deadline must be before event start date');
+      return;
+    }
+
+    // 3. Mode-specific validations
+    if (formData.eventMode === 'online') {
+      if (!formData.meetingPlatform) {
+        toast.error('Meeting platform is required for online events');
+        return;
+      }
+      if (formData.autoSendMeetingLink && !formData.meetingLink) {
+        toast.error('Meeting link is required when auto-send is enabled');
+        return;
+      }
+    }
+
+    if ((formData.eventMode === 'offline' || formData.eventMode === 'hybrid') && !formData.venue) {
+      toast.error('Venue is required for offline/hybrid events');
+      return;
+    }
+
+    // 4. Email validation
+    if (formData.eventContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.eventContactEmail)) {
+      toast.error('Invalid contact email format');
+      return;
+    }
+
+    // 5. Phone validation
+    if (formData.eventContactPhone && formData.eventContactPhone.length < 10) {
+      toast.error('Invalid contact phone number');
+      return;
+    }
+
+    // 6. URL validations
+    if (formData.meetingLink && formData.meetingLink.trim() && !formData.meetingLink.match(/^https?:\/\/.+/)) {
+      toast.error('Meeting link must be a valid URL');
+      return;
+    }
+
+    if (thumbnailUrl && !thumbnailUrl.match(/^https?:\/\/.+/)) {
+      toast.error('Thumbnail must be a valid URL');
+      return;
+    }
+
+    // 7. Price validation
+    if (formData.price !== '' && formData.price !== 0) {
+      const priceNum = Number(formData.price);
+      if (isNaN(priceNum) || priceNum < 0) {
+        toast.error('Price must be a valid positive number');
+        return;
+      }
+    }
+
+    // 8. Max participants validation
+    if (formData.maxParticipants && formData.maxParticipants !== 0) {
+      const maxNum = Number(formData.maxParticipants);
+      if (isNaN(maxNum) || maxNum < 1) {
+        toast.error('Max participants must be at least 1');
+        return;
+      }
+    }
 
     const submitData: any = {
       ...formData,
@@ -238,7 +400,7 @@ export default function EditEventPage() {
   return (
     <div className="space-y-4 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 mt-6">
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-5">
@@ -432,7 +594,7 @@ export default function EditEventPage() {
                             Bio
                           </label>
                           <textarea
-                            value={guest.bio}
+                            value={guest.bio || ''}
                             onChange={(e) => updateGuest(index, 'bio', e.target.value)}
                             placeholder="Brief guest bio"
                             rows={1}
@@ -543,7 +705,7 @@ export default function EditEventPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                      Max Users
+                      Max Users <span className="text-black font-normal">*</span>
                     </label>
                     <Input
                       type="number"
@@ -552,7 +714,7 @@ export default function EditEventPage() {
                       onChange={handleInputChange}
                       min="0"
                       placeholder="0"
-                      className="rounded-xl w-full"
+                      required
                     />
                   </div>
                 </div>
@@ -588,7 +750,7 @@ export default function EditEventPage() {
 
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                        Meeting Link
+                        Meeting Link <span className="text-black font-normal">*</span>
                       </label>
                       <Input
                         type="url"
@@ -638,7 +800,7 @@ export default function EditEventPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                      Contact Email
+                      Contact Email <span className="text-gray-400 font-normal">(Optional)</span>
                     </label>
                     <Input
                       type="email"
@@ -652,7 +814,7 @@ export default function EditEventPage() {
 
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                      Contact Phone
+                      Contact Phone <span className="text-gray-400 font-normal">(Optional)</span>
                     </label>
                     <Input
                       type="tel"
@@ -699,7 +861,7 @@ export default function EditEventPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-1">
-                          Name
+                          Name <span className="text-gray-400 font-normal">(Optional)</span>
                         </label>
                         <Input
                           name="signature1Name"
@@ -711,7 +873,7 @@ export default function EditEventPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-1">
-                          Title/Position
+                          Title/Position <span className="text-gray-400 font-normal">(Optional)</span>
                         </label>
                         <Input
                           name="signature1Title"
@@ -724,7 +886,7 @@ export default function EditEventPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Signature Image URL <span className="text-gray-400 font-normal">(PNG/JPG)</span>
+                        Signature Image URL <span className="text-gray-400 font-normal">(Optional - PNG/JPG)</span>
                       </label>
                       <Input
                         value={signature1ImageUrl}
@@ -735,10 +897,17 @@ export default function EditEventPage() {
                       {signature1ImageUrl && (
                         <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
                           <img
-                            src={signature1ImageUrl}
+                            src={getGoogleDriveImageUrl(signature1ImageUrl)}
                             alt="Signature 1 preview"
                             className="h-12 object-contain mx-auto"
                             referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              // Fallback to original URL if conversion fails
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== signature1ImageUrl) {
+                                target.src = signature1ImageUrl;
+                              }
+                            }}
                           />
                         </div>
                       )}
@@ -754,7 +923,7 @@ export default function EditEventPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-1">
-                          Name
+                          Name <span className="text-gray-400 font-normal">(Optional)</span>
                         </label>
                         <Input
                           name="signature2Name"
@@ -766,7 +935,7 @@ export default function EditEventPage() {
                       </div>
                       <div>
                         <label className="block text-xs font-semibold text-gray-600 mb-1">
-                          Title/Position
+                          Title/Position <span className="text-gray-400 font-normal">(Optional)</span>
                         </label>
                         <Input
                           name="signature2Title"
@@ -779,7 +948,7 @@ export default function EditEventPage() {
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-600 mb-1">
-                        Signature Image URL <span className="text-gray-400 font-normal">(PNG/JPG)</span>
+                        Signature Image URL <span className="text-gray-400 font-normal">(Optional - PNG/JPG)</span>
                       </label>
                       <Input
                         value={signature2ImageUrl}
@@ -790,10 +959,17 @@ export default function EditEventPage() {
                       {signature2ImageUrl && (
                         <div className="mt-2 p-2 bg-white rounded-lg border border-gray-200">
                           <img
-                            src={signature2ImageUrl}
+                            src={getGoogleDriveImageUrl(signature2ImageUrl)}
                             alt="Signature 2 preview"
                             className="h-12 object-contain mx-auto"
                             referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              // Fallback to original URL if conversion fails
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== signature2ImageUrl) {
+                                target.src = signature2ImageUrl;
+                              }
+                            }}
                           />
                         </div>
                       )}
@@ -818,12 +994,13 @@ export default function EditEventPage() {
               <CardContent className="space-y-3 p-5">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                    Image URL
+                    Image URL *
                   </label>
                   <Input
                     value={thumbnailUrl}
                     onChange={handleThumbnailUrlChange}
                     placeholder="https://..."
+                    required
                     className="w-full rounded-xl"
                   />
                 </div>

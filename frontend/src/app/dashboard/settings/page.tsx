@@ -113,7 +113,7 @@ export default function SettingsPage() {
             </Alert>
           )}
 
-          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
+          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} noValidate className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
                 label="Full Name"
@@ -175,7 +175,7 @@ export default function SettingsPage() {
             </Alert>
           )}
 
-          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-6 max-w-2xl">
+          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} noValidate className="space-y-6 max-w-2xl">
             <Input
               label="Current Password"
               type={showPasswords ? 'text' : 'password'}

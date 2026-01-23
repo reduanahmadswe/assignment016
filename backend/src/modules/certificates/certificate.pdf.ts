@@ -199,12 +199,43 @@ export class CertificatePDFGenerator {
     // Signature image
     if (imageUrl) {
       try {
-        const response = await fetch(imageUrl);
+        // Convert Google Drive URL to direct download URL
+        let directUrl = imageUrl;
+        if (imageUrl.includes('drive.google.com')) {
+          // Extract file ID from various Google Drive URL formats
+          let fileId = '';
+          
+          // Format: https://drive.google.com/file/d/FILE_ID/view
+          const fileMatch = imageUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+          if (fileMatch) {
+            fileId = fileMatch[1];
+          }
+          
+          // Format: https://drive.google.com/open?id=FILE_ID
+          const openMatch = imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+          if (openMatch) {
+            fileId = openMatch[1];
+          }
+          
+          // Format: https://drive.google.com/uc?id=FILE_ID
+          const ucMatch = imageUrl.match(/\/uc\?.*id=([a-zA-Z0-9_-]+)/);
+          if (ucMatch) {
+            fileId = ucMatch[1];
+          }
+          
+          if (fileId) {
+            // Use direct download URL format
+            directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+          }
+        }
+        
+        const response = await fetch(directUrl);
         const arrayBuffer = await response.arrayBuffer();
         const imageBuffer = Buffer.from(arrayBuffer);
         doc.image(imageBuffer, x + 25, y - 35, { width: 100, height: 30, fit: [100, 30], align: 'center' });
       } catch (e) {
-        }
+        console.error('Failed to load signature image:', e);
+      }
     }
 
     // Signature name

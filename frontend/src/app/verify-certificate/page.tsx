@@ -160,7 +160,7 @@ function VerifyContent() {
         <div className="w-full">
           <Card className="border border-gray-100 shadow-xl overflow-hidden bg-white/80 backdrop-blur-sm rounded-[1.5rem] sm:rounded-[2rem] max-w-xl mx-auto">
             <CardContent className="p-5 sm:p-8">
-              <form onSubmit={handleVerify} className="space-y-4 sm:space-y-6">
+              <form onSubmit={handleVerify} noValidate className="space-y-4 sm:space-y-6">
                 <div>
                   <label htmlFor="cert-id" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Certificate ID</label>
                   <div className="relative group">

@@ -329,7 +329,7 @@ export default function LoginPage() {
                   </div>
                 </div> */}
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">Email Address</label>
                 <input

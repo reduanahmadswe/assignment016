@@ -160,7 +160,7 @@ export default function OpportunityDetailPage() {
                         <h3 className="text-2xl font-bold mb-6">Application Form</h3>
                         {status && <Alert variant={status.type} className="mb-4">{status.message}</Alert>}
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={handleSubmit} noValidate className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Input
                                     label="Full Name"

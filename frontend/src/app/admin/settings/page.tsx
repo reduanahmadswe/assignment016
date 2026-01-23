@@ -295,7 +295,7 @@ export default function AdminSettingsPage() {
         <div className="flex-1">
           {/* General Settings */}
           {activeTab === 'general' && (
-            <form onSubmit={handleSaveSite} className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
+            <form onSubmit={handleSaveSite} noValidate className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
               <div className="border-b border-gray-100 pb-6 mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Site Information</h2>
                 <p className="text-sm text-gray-500 mt-1">Basic details about your platform.</p>
@@ -437,7 +437,7 @@ export default function AdminSettingsPage() {
 
           {/* Payment Settings */}
           {activeTab === 'payment' && (
-            <form onSubmit={handleSavePayment} className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
+            <form onSubmit={handleSavePayment} noValidate className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
               <div className="border-b border-gray-100 pb-6 mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Payment Gateway</h2>
                 <p className="text-sm text-gray-500 mt-1">Configure automated payment processing.</p>
@@ -523,7 +523,7 @@ export default function AdminSettingsPage() {
 
           {/* Email Settings */}
           {activeTab === 'email' && (
-            <form onSubmit={handleSaveEmail} className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
+            <form onSubmit={handleSaveEmail} noValidate className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
               <div className="border-b border-gray-100 pb-6 mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Email Configuration</h2>
                 <p className="text-sm text-gray-500 mt-1">Configure SMTP settings for outgoing emails.</p>
@@ -625,7 +625,7 @@ export default function AdminSettingsPage() {
 
           {/* Notification Settings */}
           {activeTab === 'notifications' && (
-            <form onSubmit={handleSaveNotifications} className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
+            <form onSubmit={handleSaveNotifications} noValidate className="bg-white rounded-[1.5rem] shadow-sm border border-gray-100 p-4 sm:p-8 space-y-8 animate-fade-in">
               <div className="border-b border-gray-100 pb-6 mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
                 <p className="text-sm text-gray-500 mt-1">Control when and how users receive automated emails.</p>

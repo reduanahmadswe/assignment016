@@ -11,7 +11,7 @@ const router = Router();
 router.get('/admin/list', authenticate, requireAdmin, opportunityController.getAdminAll);
 router.get('/applications', authenticate, requireAdmin, opportunityController.getApplications);
 router.post('/', authenticate, requireAdmin, validate(createOpportunityValidation), opportunityController.create);
-router.put('/:id', authenticate, requireAdmin, opportunityController.update);
+router.put('/:id', authenticate, requireAdmin, validate(createOpportunityValidation), opportunityController.update);
 router.delete('/:id', authenticate, requireAdmin, opportunityController.delete);
 
 // Public Routes

@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Badge from '@/components/ui/Badge';
 import { Loading } from '@/components/ui/Loading';
+import toast from '@/lib/toast';
 import { Trash, Edit, Plus, ChevronLeft, ChevronRight, Briefcase, MapPin, Clock, Calendar, Users, Search } from 'lucide-react';
 
 interface Opportunity {
@@ -73,6 +74,30 @@ export default function AdminOpportunitiesPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Minimal frontend validation - only check required fields are not empty
+        if (!formData.title.trim()) {
+            toast.error('Please enter a title');
+            return;
+        }
+
+        if (!formData.description.trim()) {
+            toast.error('Please enter a description');
+            return;
+        }
+
+        // Prepare data - remove empty optional fields
+        const submitData = {
+            title: formData.title,
+            type: formData.type,
+            description: formData.description,
+            status: formData.status,
+            ...(formData.location && formData.location.trim() && { location: formData.location }),
+            ...(formData.duration && formData.duration.trim() && { duration: formData.duration }),
+            ...(formData.deadline && formData.deadline.trim() && { deadline: formData.deadline }),
+            ...(formData.banner && formData.banner.trim() && { banner: formData.banner }),
+        };
+
         const url = editingId
             ? `${process.env.NEXT_PUBLIC_API_URL}/opportunities/${editingId}`
             : `${process.env.NEXT_PUBLIC_API_URL}/opportunities`;
@@ -86,17 +111,45 @@ export default function AdminOpportunitiesPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${Cookies.get('accessToken') || localStorage.getItem('token')}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(submitData)
             });
+            
+            // Handle network errors
+            if (!res.ok && !res.headers.get('content-type')?.includes('application/json')) {
+                toast.error('Network error. Please check your connection and try again');
+                return;
+            }
+            
             const data = await res.json();
+            
             if (data.success) {
+                toast.success(editingId ? 'Opportunity updated successfully!' : 'Opportunity created successfully!');
                 fetchOpportunities();
                 setIsModalOpen(false);
                 setEditingId(null);
                 setFormData({ title: '', type: 'INTERNSHIP', description: '', location: '', duration: '', deadline: '', banner: '', status: 'open' });
+            } else {
+                // Display only first backend error message via toast
+                const errorMessage = data.message || 'Failed to save opportunity';
+                
+                if (errorMessage.includes(';')) {
+                    // Multiple errors - show only first one
+                    const firstError = errorMessage.split(';')[0].trim();
+                    toast.error(firstError);
+                } else {
+                    // Single error message
+                    toast.error(errorMessage);
+                }
             }
-        } catch (error) {
-            console.error(error);
+        } catch (error: any) {
+            // Handle network or parsing errors
+            if (!error.response) {
+                toast.error('Network error. Please check your connection and try again');
+            } else {
+                const errorMessage = error.message || 'An error occurred while saving opportunity';
+                toast.error(errorMessage);
+            }
+            console.error('Error saving opportunity:', error);
         }
     };
 
@@ -123,14 +176,41 @@ export default function AdminOpportunitiesPage() {
     const confirmDelete = async () => {
         if (!deleteId) return;
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/opportunities/${deleteId}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/opportunities/${deleteId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${Cookies.get('accessToken') || localStorage.getItem('token')}` }
             });
-            fetchOpportunities();
-            setIsDeleteModalOpen(false);
-            setDeleteId(null);
-        } catch (error) {
+            
+            // Handle network errors
+            if (!res.ok && !res.headers.get('content-type')?.includes('application/json')) {
+                toast.error('Network error. Please check your connection and try again');
+                return;
+            }
+            
+            const data = await res.json();
+            
+            if (data.success || res.ok) {
+                toast.success('Opportunity deleted successfully!');
+                fetchOpportunities();
+                setIsDeleteModalOpen(false);
+                setDeleteId(null);
+            } else {
+                // Show only first backend error message
+                const errorMessage = data.message || 'Failed to delete opportunity';
+                if (errorMessage.includes(';')) {
+                    const firstError = errorMessage.split(';')[0].trim();
+                    toast.error(firstError);
+                } else {
+                    toast.error(errorMessage);
+                }
+            }
+        } catch (error: any) {
+            // Handle network or parsing errors
+            if (!error.response) {
+                toast.error('Network error. Please check your connection and try again');
+            } else {
+                toast.error(error.message || 'An error occurred while deleting opportunity');
+            }
             console.error(error);
         }
     };
@@ -350,11 +430,11 @@ export default function AdminOpportunitiesPage() {
                 title={editingId ? 'Edit Opportunity' : 'New Opportunity'}
                 size="3xl"
             >
-                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5 p-4 sm:p-6">
+                <form onSubmit={handleSubmit} noValidate className="space-y-4 sm:space-y-5 p-4 sm:p-6">
                     {/* Title and Type - Same Line */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <Input
-                            label="Title"
+                            label="Title *"
                             required
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -379,21 +459,21 @@ export default function AdminOpportunitiesPage() {
                     {/* Location, Duration, Deadline - Same Line */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <Input
-                            label="Location"
+                            label="Location (Optional)"
                             value={formData.location}
                             onChange={e => setFormData({ ...formData, location: e.target.value })}
                             className="min-h-[44px]"
                             placeholder="e.g., Remote, Dhaka"
                         />
                         <Input
-                            label="Duration"
+                            label="Duration (Optional)"
                             value={formData.duration}
                             onChange={e => setFormData({ ...formData, duration: e.target.value })}
                             className="min-h-[44px]"
                             placeholder="e.g., 3 months"
                         />
                         <Input
-                            label="Deadline"
+                            label="Deadline (Optional)"
                             type="date"
                             value={formData.deadline}
                             onChange={e => setFormData({ ...formData, deadline: e.target.value })}
@@ -402,7 +482,7 @@ export default function AdminOpportunitiesPage() {
                     </div>
 
                     <Input
-                        label="Banner URL"
+                        label="Banner URL (Optional)"
                         value={formData.banner}
                         onChange={e => setFormData({ ...formData, banner: e.target.value })}
                         placeholder="https://example.com/image.jpg"
@@ -410,12 +490,13 @@ export default function AdminOpportunitiesPage() {
                     />
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Description *</label>
                         <textarea
                             className="w-full border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 rounded-xl px-4 py-3 text-sm sm:text-base font-medium min-h-[120px] sm:min-h-[140px] transition-all outline-none resize-none"
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             placeholder="Describe the opportunity..."
+                            required
                         />
                     </div>
 

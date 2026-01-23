@@ -73,7 +73,7 @@ export default function BlogPage() {
             </p>
 
             {/* Search */}
-            <form onSubmit={handleSearch} className="max-w-xl mx-auto relative group">
+            <form onSubmit={handleSearch} noValidate className="max-w-xl mx-auto relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[#004aad] transition-colors" />
               </div>

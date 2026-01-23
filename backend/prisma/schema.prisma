@@ -293,7 +293,7 @@ model Event {
   isPublished            Boolean   @default(false) @map("is_published")
   isCertificateAvailable Boolean   @default(false) @map("is_certificate_available")
   meetingPlatform        String?   @map("meeting_platform")
-  meetingLink            String?   @map("meeting_link")
+  meetingLink            String?   @map("meeting_link") @db.Text
   autoSendMeetingLink    Boolean   @default(true) @map("auto_send_meeting_link")
   eventContactEmail      String?   @map("event_contact_email")
   eventContactPhone      String?   @map("event_contact_phone")

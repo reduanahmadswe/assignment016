@@ -108,7 +108,13 @@ export default function AdminNewsletterPage() {
       toast.success('✅ Newsletter created successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create newsletter');
+      if (!error.response) {
+        toast.error('❌ Network error. Please check your connection');
+        return;
+      }
+      const errorMessage = error.response?.data?.message || 'Failed to create newsletter';
+      const firstError = errorMessage.split(';')[0].trim();
+      toast.error(firstError);
     },
   });
 
@@ -121,7 +127,13 @@ export default function AdminNewsletterPage() {
       toast.success('✅ Newsletter updated successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update newsletter');
+      if (!error.response) {
+        toast.error('❌ Network error. Please check your connection');
+        return;
+      }
+      const errorMessage = error.response?.data?.message || 'Failed to update newsletter';
+      const firstError = errorMessage.split(';')[0].trim();
+      toast.error(firstError);
     },
   });
 
@@ -134,7 +146,13 @@ export default function AdminNewsletterPage() {
       toast.success('✅ Newsletter deleted successfully');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete newsletter');
+      if (!error.response) {
+        toast.error('❌ Network error. Please check your connection');
+        return;
+      }
+      const errorMessage = error.response?.data?.message || 'Failed to delete newsletter';
+      const firstError = errorMessage.split(';')[0].trim();
+      toast.error(firstError);
     },
   });
 
@@ -145,7 +163,13 @@ export default function AdminNewsletterPage() {
       toast.success('✅ Newsletter status updated');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      if (!error.response) {
+        toast.error('❌ Network error. Please check your connection');
+        return;
+      }
+      const errorMessage = error.response?.data?.message || 'Failed to update status';
+      const firstError = errorMessage.split(';')[0].trim();
+      toast.error(firstError);
     },
   });
 
@@ -193,14 +217,42 @@ export default function AdminNewsletterPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Priority-based validation - check in order, show only first error
+    
+    // Priority 1: Title (required)
     if (!formData.title.trim()) {
       toast.error('❌ Title is required');
       return;
     }
 
+    // Priority 2: PDF Link (required)
     if (!formData.pdf_link.trim()) {
       toast.error('❌ PDF link is required');
       return;
+    }
+
+    // Priority 3: PDF Link format validation
+    const urlPattern = /^https?:\/\/.+/i;
+    if (!urlPattern.test(formData.pdf_link.trim())) {
+      toast.error('❌ PDF link must be a valid URL');
+      return;
+    }
+
+    // Priority 4: Thumbnail format validation (if provided)
+    if (formData.thumbnail.trim() && !urlPattern.test(formData.thumbnail.trim())) {
+      toast.error('❌ Thumbnail must be a valid URL');
+      return;
+    }
+
+    // Priority 5: Date range validation (if both dates provided)
+    if (formData.start_date && formData.end_date) {
+      const startDate = new Date(formData.start_date);
+      const endDate = new Date(formData.end_date);
+      
+      if (startDate > endDate) {
+        toast.error('❌ Start date must be before end date');
+        return;
+      }
     }
 
     if (selectedNewsletter) {
@@ -428,7 +480,7 @@ export default function AdminNewsletterPage() {
         title={selectedNewsletter ? 'Edit Newsletter' : 'Create Newsletter'}
         size="3xl"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           {/* Title */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">

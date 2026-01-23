@@ -159,7 +159,7 @@ export default function AdminProfilePage() {
           <p className="text-gray-600">Manage your account information and security settings</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           {/* Profile Information */}
           <Card className="rounded-[1.5rem] border-gray-100 shadow-sm overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-primary-50 to-primary-100/50 border-b border-primary-100 px-6 py-4">

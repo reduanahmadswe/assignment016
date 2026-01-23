@@ -149,7 +149,7 @@ export default function ForgotPasswordPage() {
 
                 {/* Step 1 Form */}
                 {step === 1 && (
-                    <form onSubmit={handleSubmitStep1(onSubmitRequestOtp)} className="space-y-5">
+                    <form onSubmit={handleSubmitStep1(onSubmitRequestOtp)} noValidate className="space-y-5">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">
                                 Email Address
@@ -202,7 +202,7 @@ export default function ForgotPasswordPage() {
 
                 {/* Step 2 Form */}
                 {step === 2 && (
-                    <form onSubmit={handleSubmitStep2(onSubmitResetPassword)} className="space-y-5">
+                    <form onSubmit={handleSubmitStep2(onSubmitResetPassword)} noValidate className="space-y-5">
                         <div>
                             <label className="block text-xs font-bold text-gray-700 mb-1.5 ml-1 uppercase tracking-wide">
                                 OTP Code

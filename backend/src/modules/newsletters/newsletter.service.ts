@@ -7,28 +7,167 @@ import { newsletterQueryBuilder } from './newsletter.query-builder.js';
 
 export class NewsletterService {
   async createNewsletter(data: CreateNewsletterInput) {
-    const slug = await newsletterSlugGenerator.generateUniqueSlug(data.title);
+    // Comprehensive field validation
+    const errors: string[] = [];
 
-    const newsletter = await prisma.newsletter.create({
-      data: {
-        title: data.title,
-        slug,
-        description: data.description,
-        thumbnail: data.thumbnail,
-        pdfLink: data.pdf_link,
-        startDate: data.start_date ? new Date(data.start_date) : null,
-        endDate: data.end_date ? new Date(data.end_date) : null,
-        isPublished: data.is_published ?? true,
-      },
-    });
+    // Title validation
+    if (!data.title || !data.title.trim()) {
+      errors.push('Title is required');
+    } else if (data.title.trim().length < 3) {
+      errors.push('Title must be at least 3 characters long');
+    } else if (data.title.trim().length > 255) {
+      errors.push('Title cannot exceed 255 characters');
+    }
 
-    return newsletter;
+    // PDF Link validation
+    if (!data.pdf_link || !data.pdf_link.trim()) {
+      errors.push('PDF link is required');
+    } else {
+      const urlPattern = /^https?:\/\/.+/i;
+      if (!urlPattern.test(data.pdf_link.trim())) {
+        errors.push('PDF link must be a valid URL');
+      } else if (data.pdf_link.trim().length > 1000) {
+        errors.push('PDF link cannot exceed 1000 characters');
+      }
+    }
+
+    // Thumbnail validation (optional)
+    if (data.thumbnail && data.thumbnail.trim()) {
+      const urlPattern = /^https?:\/\/.+/i;
+      if (!urlPattern.test(data.thumbnail.trim())) {
+        errors.push('Thumbnail must be a valid URL');
+      } else if (data.thumbnail.trim().length > 1000) {
+        errors.push('Thumbnail URL cannot exceed 1000 characters');
+      }
+    }
+
+    // Description validation (optional)
+    if (data.description && data.description.trim() && data.description.trim().length > 1000) {
+      errors.push('Description cannot exceed 1000 characters');
+    }
+
+    // Date range validation
+    if (data.start_date && data.end_date) {
+      const startDate = new Date(data.start_date);
+      const endDate = new Date(data.end_date);
+      
+      if (isNaN(startDate.getTime())) {
+        errors.push('Start date is invalid');
+      }
+      if (isNaN(endDate.getTime())) {
+        errors.push('End date is invalid');
+      }
+      if (startDate.getTime() && endDate.getTime() && startDate > endDate) {
+        errors.push('Start date must be before end date');
+      }
+    }
+
+    // If there are validation errors, throw them as a single error message
+    if (errors.length > 0) {
+      throw new AppError(errors.join('; '), 400);
+    }
+
+    // Check for duplicate title
+    try {
+      const slug = await newsletterSlugGenerator.generateUniqueSlug(data.title);
+
+      const newsletter = await prisma.newsletter.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description,
+          thumbnail: data.thumbnail,
+          pdfLink: data.pdf_link,
+          startDate: data.start_date ? new Date(data.start_date) : null,
+          endDate: data.end_date ? new Date(data.end_date) : null,
+          isPublished: data.is_published ?? true,
+        },
+      });
+
+      return newsletter;
+    } catch (error: any) {
+      // Handle Prisma-specific errors
+      if (error.code === 'P2002') {
+        throw new AppError('A newsletter with this title already exists', 409);
+      }
+      if (error.code === 'P2003') {
+        throw new AppError('Invalid reference to related data', 400);
+      }
+      throw error;
+    }
   }
 
   async updateNewsletter(id: number, data: UpdateNewsletterInput) {
     const newsletter = await prisma.newsletter.findUnique({ where: { id } });
     if (!newsletter) {
       throw new AppError('Newsletter not found', 404);
+    }
+
+    // Comprehensive field validation (only for fields being updated)
+    const errors: string[] = [];
+
+    // Title validation
+    if (data.title !== undefined) {
+      if (!data.title || !data.title.trim()) {
+        errors.push('Title is required');
+      } else if (data.title.trim().length < 3) {
+        errors.push('Title must be at least 3 characters long');
+      } else if (data.title.trim().length > 255) {
+        errors.push('Title cannot exceed 255 characters');
+      }
+    }
+
+    // PDF Link validation
+    if (data.pdf_link !== undefined) {
+      if (!data.pdf_link || !data.pdf_link.trim()) {
+        errors.push('PDF link is required');
+      } else {
+        const urlPattern = /^https?:\/\/.+/i;
+        if (!urlPattern.test(data.pdf_link.trim())) {
+          errors.push('PDF link must be a valid URL');
+        } else if (data.pdf_link.trim().length > 1000) {
+          errors.push('PDF link cannot exceed 1000 characters');
+        }
+      }
+    }
+
+    // Thumbnail validation (optional)
+    if (data.thumbnail !== undefined && data.thumbnail && data.thumbnail.trim()) {
+      const urlPattern = /^https?:\/\/.+/i;
+      if (!urlPattern.test(data.thumbnail.trim())) {
+        errors.push('Thumbnail must be a valid URL');
+      } else if (data.thumbnail.trim().length > 1000) {
+        errors.push('Thumbnail URL cannot exceed 1000 characters');
+      }
+    }
+
+    // Description validation (optional)
+    if (data.description !== undefined && data.description && data.description.trim() && data.description.trim().length > 1000) {
+      errors.push('Description cannot exceed 1000 characters');
+    }
+
+    // Date range validation
+    const startDateToCheck = data.start_date !== undefined ? data.start_date : newsletter.startDate?.toISOString();
+    const endDateToCheck = data.end_date !== undefined ? data.end_date : newsletter.endDate?.toISOString();
+
+    if (startDateToCheck && endDateToCheck) {
+      const startDate = new Date(startDateToCheck);
+      const endDate = new Date(endDateToCheck);
+      
+      if (isNaN(startDate.getTime())) {
+        errors.push('Start date is invalid');
+      }
+      if (isNaN(endDate.getTime())) {
+        errors.push('End date is invalid');
+      }
+      if (startDate.getTime() && endDate.getTime() && startDate > endDate) {
+        errors.push('Start date must be before end date');
+      }
+    }
+
+    // If there are validation errors, throw them as a single error message
+    if (errors.length > 0) {
+      throw new AppError(errors.join('; '), 400);
     }
 
     const updateData: any = {};
@@ -46,12 +185,23 @@ export class NewsletterService {
     if (data.end_date !== undefined) updateData.endDate = data.end_date ? new Date(data.end_date) : null;
     if (data.is_published !== undefined) updateData.isPublished = data.is_published;
 
-    const updated = await prisma.newsletter.update({
-      where: { id },
-      data: updateData,
-    });
+    try {
+      const updated = await prisma.newsletter.update({
+        where: { id },
+        data: updateData,
+      });
 
-    return updated;
+      return updated;
+    } catch (error: any) {
+      // Handle Prisma-specific errors
+      if (error.code === 'P2002') {
+        throw new AppError('A newsletter with this title already exists', 409);
+      }
+      if (error.code === 'P2003') {
+        throw new AppError('Invalid reference to related data', 400);
+      }
+      throw error;
+    }
   }
 
   async deleteNewsletter(id: number) {

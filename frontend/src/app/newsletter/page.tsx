@@ -373,7 +373,7 @@ export default function NewsletterPage() {
       <section className="relative pb-12 z-10">
         <div className="container-custom">
           <div className="max-w-xl mx-auto">
-            <form onSubmit={handleSearch} className="relative group">
+            <form onSubmit={handleSearch} noValidate className="relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400 group-focus-within:text-[#004aad] transition-colors" />
               </div>

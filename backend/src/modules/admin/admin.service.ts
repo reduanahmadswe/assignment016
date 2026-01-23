@@ -331,6 +331,114 @@ export class AdminService {
   }
 
   async createEvent(data: any) {
+    // Comprehensive validation
+    const errors: string[] = [];
+
+    // Required fields validation
+    if (!data.title?.trim()) {
+      errors.push('Event title is required');
+    }
+    
+    if (!data.slug?.trim()) {
+      errors.push('Event slug is required');
+    }
+    
+    if (!data.description?.trim()) {
+      errors.push('Event description is required');
+    }
+    
+    if (!data.eventType) {
+      errors.push('Event type is required');
+    }
+    
+    if (!data.eventMode) {
+      errors.push('Event mode is required');
+    }
+    
+    if (!data.startDate) {
+      errors.push('Start date is required');
+    }
+    
+    if (!data.endDate) {
+      errors.push('End date is required');
+    }
+    
+    if (!data.registrationDeadline) {
+      errors.push('Registration deadline is required');
+    }
+    
+    if (!data.thumbnail && !data.thumbnailUrl) {
+      errors.push('Event thumbnail is required');
+    }
+
+    // Date validations
+    if (data.startDate && data.endDate) {
+      const startDate = new Date(data.startDate);
+      const endDate = new Date(data.endDate);
+      
+      if (startDate >= endDate) {
+        errors.push('End date must be after start date');
+      }
+    }
+
+    if (data.registrationDeadline && data.startDate) {
+      const regDeadline = new Date(data.registrationDeadline);
+      const startDate = new Date(data.startDate);
+      
+      if (regDeadline >= startDate) {
+        errors.push('Registration deadline must be before event start date');
+      }
+    }
+
+    // Event mode specific validation
+    if (data.eventMode === 'online' && !data.meetingPlatform) {
+      errors.push('Meeting platform is required for online events');
+    }
+
+    if (data.eventMode === 'online' && data.autoSendMeetingLink && !data.meetingLink) {
+      errors.push('Meeting link is required when auto-send is enabled');
+    }
+
+    if ((data.eventMode === 'offline' || data.eventMode === 'hybrid') && !data.venue) {
+      errors.push('Venue is required for offline/hybrid events');
+    }
+
+    // Email format validation
+    if (data.eventContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.eventContactEmail)) {
+      errors.push('Invalid contact email format');
+    }
+
+    // Phone format validation (optional but if provided should be valid)
+    if (data.eventContactPhone && data.eventContactPhone.length < 10) {
+      errors.push('Invalid contact phone number');
+    }
+
+    // Price validation
+    if (data.price && (isNaN(data.price) || parseFloat(data.price) < 0)) {
+      errors.push('Price must be a valid positive number');
+    }
+
+    // Max participants validation
+    if (data.maxParticipants && (isNaN(data.maxParticipants) || parseInt(data.maxParticipants) < 1)) {
+      errors.push('Max participants must be at least 1');
+    }
+
+    // URL validations
+    if (data.meetingLink && data.meetingLink.trim() && !data.meetingLink.match(/^https?:\/\/.+/)) {
+      errors.push('Meeting link must be a valid URL');
+    }
+
+    if (data.thumbnail && !data.thumbnail.match(/^https?:\/\/.+/)) {
+      errors.push('Thumbnail must be a valid URL');
+    } else if (data.thumbnailUrl && !data.thumbnailUrl.match(/^https?:\/\/.+/)) {
+      errors.push('Thumbnail must be a valid URL');
+    }
+
+    // Throw all validation errors at once
+    if (errors.length > 0) {
+      throw new AppError(errors.join('; '), 400);
+    }
+
     // Format and validate slug
     const formattedSlug = data.slug
       .toLowerCase()
@@ -338,25 +446,20 @@ export class AdminService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    // Validate conditional fields
-    if (data.eventMode === 'online' && !data.meetingPlatform) {
-      throw new AppError('Meeting platform is required for online events', 400);
-    }
-
-    if (data.eventMode === 'online' && data.autoSendMeetingLink && !data.meetingLink) {
-      throw new AppError('Meeting link is required when auto-send is enabled', 400);
-    }
-
-    // Validate email format
-    if (data.eventContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.eventContactEmail)) {
-      throw new AppError('Invalid email format', 400);
-    }
-
     // Get lookup IDs
     const eventTypeId = await lookupService.getEventTypeId(data.eventType);
     const eventModeId = await lookupService.getEventModeId(data.eventMode || 'offline');
     const eventStatusId = await lookupService.getEventStatusId(data.status || 'upcoming');
     const registrationStatusId = await lookupService.getRegistrationStatusId('open');
+
+    // Check for duplicate slug
+    const existingEvent = await prisma.event.findUnique({
+      where: { slug: formattedSlug },
+    });
+
+    if (existingEvent) {
+      throw new AppError('Event slug already exists. Please use a different slug', 400);
+    }
 
     const eventData: any = {
       title: data.title,
@@ -422,10 +525,26 @@ export class AdminService {
       eventData.thumbnail = imageUrl;
     }
 
-    // Create event
-    const event = await prisma.event.create({
-      data: eventData,
-    });
+    // Create event with database error handling
+    let event;
+    try {
+      event = await prisma.event.create({
+        data: eventData,
+      });
+    } catch (dbError: any) {
+      // Convert Prisma errors to user-friendly messages
+      if (dbError.code === 'P2002') {
+        throw new AppError('Event slug already exists. Please use a different slug', 400);
+      } else if (dbError.code === 'P2000') {
+        const columnName = dbError.meta?.column_name || 'field';
+        throw new AppError(`${columnName.replace(/_/g, ' ')} is too long`, 400);
+      } else if (dbError.code === 'P2003') {
+        throw new AppError('Invalid reference data provided', 400);
+      }
+      
+      // For unknown database errors, throw a generic message
+      throw new AppError('Failed to create event. Please check all fields and try again', 500);
+    }
 
     // Handle signatures
     if (data.signature1Name || data.signature1_name) {
@@ -530,6 +649,56 @@ export class AdminService {
   }
 
   async updateEvent(id: number, data: any) {
+    // Validation
+    const errors: string[] = [];
+
+    // Check if thumbnail is being removed (set to empty)
+    if (data.thumbnail === '' || data.thumbnailUrl === '') {
+      errors.push('Event thumbnail is required');
+    }
+
+    // Email validation
+    if (data.eventContactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.eventContactEmail)) {
+      errors.push('Invalid contact email format');
+    }
+
+    // Date validations if updating dates
+    if (data.startDate && data.endDate) {
+      const startDate = new Date(data.startDate);
+      const endDate = new Date(data.endDate);
+      
+      if (startDate >= endDate) {
+        errors.push('End date must be after start date');
+      }
+    }
+
+    if (data.registrationDeadline && data.startDate) {
+      const regDeadline = new Date(data.registrationDeadline);
+      const startDate = new Date(data.startDate);
+      
+      if (regDeadline >= startDate) {
+        errors.push('Registration deadline must be before event start date');
+      }
+    }
+
+    // Mode-specific validations
+    if (data.eventMode === 'online' && data.meetingPlatform === undefined) {
+      errors.push('Meeting platform is required for online events');
+    }
+
+    if (data.eventMode === 'online' && data.autoSendMeetingLink && !data.meetingLink) {
+      errors.push('Meeting link is required when auto-send is enabled');
+    }
+
+    if ((data.eventMode === 'offline' || data.eventMode === 'hybrid') && data.venue === '') {
+      errors.push('Venue is required for offline/hybrid events');
+    }
+
+    // Throw all validation errors at once
+    if (errors.length > 0) {
+      throw new AppError(errors.join('; '), 400);
+    }
+
     const eventData: any = {};
 
     if (data.title) eventData.title = data.title;
@@ -548,10 +717,6 @@ export class AdminService {
     if (data.eventMode) {
       const eventModeId = await lookupService.getEventModeId(data.eventMode);
       eventData.eventMode = { connect: { id: eventModeId } };
-
-      if (data.eventMode === 'online' && data.meetingPlatform === undefined) {
-        throw new AppError('Meeting platform is required for online events', 400);
-      }
     }
 
     // Boolean fields
@@ -560,16 +725,9 @@ export class AdminService {
     if (data.meetingPlatform !== undefined) eventData.meetingPlatform = data.meetingPlatform;
     if (data.meetingLink !== undefined) eventData.meetingLink = data.meetingLink;
     if (data.autoSendMeetingLink !== undefined) {
-      const autoSendValue = data.autoSendMeetingLink === true || data.autoSendMeetingLink === 'true';
-      if (data.eventMode === 'online' && autoSendValue && !data.meetingLink) {
-        throw new AppError('Meeting link is required when auto-send is enabled', 400);
-      }
-      eventData.autoSendMeetingLink = autoSendValue;
+      eventData.autoSendMeetingLink = data.autoSendMeetingLink === true || data.autoSendMeetingLink === 'true';
     }
     if (data.eventContactEmail) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.eventContactEmail)) {
-        throw new AppError('Invalid email format', 400);
-      }
       eventData.eventContactEmail = data.eventContactEmail;
     }
     if (data.eventContactPhone !== undefined) eventData.eventContactPhone = data.eventContactPhone;
