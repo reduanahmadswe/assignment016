@@ -16,6 +16,7 @@ interface BlogPost {
   excerpt?: string;
   content: string;
   thumbnail?: string | null;
+  category?: string;
   authorName?: string;
   authorImage?: string;
   authorWebsite?: string;
@@ -71,6 +72,7 @@ export default function EditBlogPostPage() {
     excerpt: '',
     content: '',
     thumbnail: '',
+    category: '',
     author_name: '',
     author_image: '',
     author_website: '',
@@ -95,6 +97,7 @@ export default function EditBlogPostPage() {
         excerpt: p.excerpt || '',
         content: p.content,
         thumbnail: p.thumbnail || '',
+        category: p.category || '',
         author_name: p.authorName || p.author?.name || '',
         author_image: p.authorImage || p.author?.avatar || '',
         author_website: p.authorWebsite || p.author?.website || '',
@@ -143,6 +146,9 @@ export default function EditBlogPostPage() {
       .map((t) => t.trim())
       .filter(Boolean);
 
+    console.log('Edit - Frontend formData.category:', formData.category);
+    console.log('Edit - Full formData:', formData);
+
     const formDataObj = new FormData();
     formDataObj.append('title', formData.title);
     formDataObj.append('excerpt', formData.excerpt);
@@ -152,6 +158,9 @@ export default function EditBlogPostPage() {
     } else if (formData.thumbnail) {
       formDataObj.append('thumbnail', formData.thumbnail);
     }
+    if (formData.category) formDataObj.append('category', formData.category);
+    console.log('Edit - Category being sent:', formData.category);
+    console.log('Edit - FormData entries:', Array.from(formDataObj.entries()));
     if (formData.author_name) formDataObj.append('author_name', formData.author_name);
     if (formData.author_image) formDataObj.append('author_image', formData.author_image);
     if (formData.author_website) formDataObj.append('author_website', formData.author_website);
@@ -225,6 +234,19 @@ export default function EditBlogPostPage() {
                   placeholder="Brief summary of the post..."
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
+                <Input
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  placeholder="e.g., Research, Technology, Education"
+                  className="w-full rounded-xl"
+                />
+                <p className="text-xs text-gray-500 mt-1.5">
+                  This will be displayed as a tag on the blog listing page
+                </p>
               </div>
 
               <div>

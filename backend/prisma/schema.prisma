@@ -501,6 +501,7 @@ model BlogPost {
   excerpt         String?   @db.Text
   content         String?   @db.LongText
   thumbnail       String?
+  category        String?
   authorId        Int?      @map("author_id")
   authorName      String?   @map("author_name")
   authorImage     String?   @map("author_image")

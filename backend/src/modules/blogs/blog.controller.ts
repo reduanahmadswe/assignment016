@@ -64,6 +64,7 @@ export class BlogController {
 
   createPost = asyncHandler(async (req: AuthRequest, res: Response) => {
     const thumbnailFile = req.file as Express.Multer.File | undefined;
+    console.log('Create Post Request Body:', req.body);
     const post = await blogService.createPost(req.body, req.user!.id, thumbnailFile);
     res.status(201).json({
       success: true,
@@ -73,6 +74,7 @@ export class BlogController {
 
   updatePost = asyncHandler(async (req: AuthRequest, res: Response) => {
     const thumbnailFile = req.file as Express.Multer.File | undefined;
+    console.log('Update Post Request Body:', req.body);
     const post = await blogService.updatePost(parseInt(req.params.id), req.body, thumbnailFile);
     res.json({
       success: true,

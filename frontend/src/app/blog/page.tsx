@@ -130,11 +130,13 @@ export default function BlogPage() {
                       )}
 
                       <div className="p-5 flex flex-col flex-grow">
-                        <div className="flex items-center justify-start text-xs font-medium text-gray-500 mb-4">
-                          <span className="flex items-center text-[#ff7620] bg-[#ff7620]/10 px-2 py-1 rounded-md">
-                            {post.category || 'Research'}
-                          </span>
-                        </div>
+                        {post.category && (
+                          <div className="flex items-center justify-start text-xs font-medium text-gray-500 mb-4">
+                            <span className="flex items-center text-[#ff7620] bg-[#ff7620]/10 px-2 py-1 rounded-md">
+                              {post.category}
+                            </span>
+                          </div>
+                        )}
 
                         <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-[#004aad] transition-colors leading-tight">
                           {post.title}

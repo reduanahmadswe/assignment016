@@ -19,6 +19,8 @@ export class BlogService {
       thumbnailUrl = getFileUrl(thumbnailFile.filename, 'images');
     }
 
+    console.log('Creating post with data:', { category: data.category, title: data.title });
+
     const post = await prisma.blogPost.create({
       data: {
         title: data.title,
@@ -26,6 +28,7 @@ export class BlogService {
         excerpt: data.excerpt,
         content: data.content,
         thumbnail: thumbnailUrl,
+        category: data.category || null,
         authorId,
         authorName: data.author_name,
         authorImage: data.author_image,
@@ -56,6 +59,9 @@ export class BlogService {
     if (data.title !== undefined) updateData.title = data.title;
     if (data.excerpt !== undefined) updateData.excerpt = data.excerpt;
     if (data.content !== undefined) updateData.content = data.content;
+    if (data.category !== undefined) updateData.category = data.category || null;
+    
+    console.log('Updating post with data:', { category: data.category, updateData });
     
     // Handle thumbnail update
     if (thumbnailFile) {
@@ -196,6 +202,7 @@ export class BlogService {
           slug: true,
           excerpt: true,
           thumbnail: true,
+          category: true,
           authorName: true,
           authorImage: true,
           authorWebsite: true,

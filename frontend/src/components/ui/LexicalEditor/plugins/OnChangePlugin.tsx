@@ -22,9 +22,11 @@ export default function OnChangePlugin({ value, onChange }: OnChangePluginProps)
         const parser = new DOMParser();
         const dom = parser.parseFromString(value, 'text/html');
         const nodes = $generateNodesFromDOM(editor, dom);
+        
+        // Clear the root and use $insertNodes to properly handle all node types
         const root = $getRoot();
         root.clear();
-        root.append(...nodes);
+        $insertNodes(nodes);
       });
     }
   }, [editor, value]);

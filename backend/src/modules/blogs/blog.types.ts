@@ -3,6 +3,7 @@ export interface CreateBlogInput {
   excerpt?: string;
   content: string;
   thumbnail?: string;
+  category?: string;
   author_name?: string;
   author_image?: string;
   author_website?: string;
