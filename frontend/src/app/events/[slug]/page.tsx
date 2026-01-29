@@ -623,7 +623,7 @@ export default function EventDetailsPage() {
             <div className="lg:col-span-1 order-1 lg:order-2">
               <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-200 p-5 sm:p-6 lg:sticky lg:top-24 shadow-lg lg:shadow-none hover:shadow-xl transition-shadow duration-300">
                 <div className="text-center mb-6 pb-6 border-b border-gray-100">
-                  <span className="text-gray-500 text-sm font-medium uppercase tracking-wider">Price</span>
+                  <span className="text-gray-500 text-sm font-medium uppercase tracking-wider">Registration Fee</span>
                   <div className="text-4xl font-black text-primary-600 mt-2">
                     {isFree ? 'Free' : formatCurrency(event.price)}
                   </div>
