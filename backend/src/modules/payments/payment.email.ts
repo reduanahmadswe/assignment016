@@ -187,8 +187,7 @@ export const sendRegistrationConfirmation = async (
             <p>Education & Event Platform</p>
           </div>
           <div class="content">
-            <div class="celebration">🎉</div>
-            <h2 class="title">Congratulations!</h2>
+            <h2 class="title">Congratulations!🎉</h2>
             <p class="subtitle">Registration Confirmed</p>
             <p class="greeting">Hello <strong>${userName}</strong>,</p>
             <p style="color: #475569; text-align: center; margin-bottom: 30px;">You're all set! Your registration has been successfully confirmed.</p>
@@ -283,7 +282,6 @@ export const sendEventLink = async (
             <p>Education & Event Platform</p>
           </div>
           <div class="content">
-            <div class="link-icon">🔗</div>
             <h2 class="title">Your Event Access Link</h2>
             <p class="subtitle">Click the button below to join the event</p>
             <p class="greeting">Hello <strong>${userName}</strong>,</p>
