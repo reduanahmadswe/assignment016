@@ -22,6 +22,33 @@ const toISOStringDhaka = (date: Date | string | null | undefined): string | null
   return dateObj.toISOString();
 };
 
+/**
+ * Convert date to Dhaka timezone for datetime-local input (YYYY-MM-DDTHH:mm format)
+ * This is used for edit forms to show the correct time
+ */
+const toDateTimeLocalDhaka = (date: Date | string | null | undefined): string | null => {
+  if (!date) return null;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Get time in Dhaka timezone
+  const dhakaTime = dateObj.toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  
+  // Parse and format to YYYY-MM-DDTHH:mm
+  const [datePart, timePart] = dhakaTime.split(', ');
+  const [month, day, year] = datePart.split('/');
+  const [hour, minute] = timePart.split(':');
+  
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+};
+
 export class EventTransformer {
   /**
    * Transform single event - extracts code from relation objects
@@ -43,6 +70,10 @@ export class EventTransformer {
       startDateFormatted: formatDateToDhaka(eventData.startDate),
       endDateFormatted: formatDateToDhaka(eventData.endDate),
       registrationDeadlineFormatted: formatDateToDhaka(eventData.registrationDeadline),
+      // For edit form inputs (datetime-local format in Dhaka time)
+      startDateInput: toDateTimeLocalDhaka(eventData.startDate),
+      endDateInput: toDateTimeLocalDhaka(eventData.endDate),
+      registrationDeadlineInput: toDateTimeLocalDhaka(eventData.registrationDeadline),
     };
   }
 
@@ -78,6 +109,10 @@ export class EventTransformer {
       startDateFormatted: formatDateToDhaka(eventData.startDate),
       endDateFormatted: formatDateToDhaka(eventData.endDate),
       registrationDeadlineFormatted: formatDateToDhaka(eventData.registrationDeadline),
+      // For edit form inputs (datetime-local format in Dhaka time)
+      startDateInput: toDateTimeLocalDhaka(eventData.startDate),
+      endDateInput: toDateTimeLocalDhaka(eventData.endDate),
+      registrationDeadlineInput: toDateTimeLocalDhaka(eventData.registrationDeadline),
       guests: eventGuests?.map((g: any) => ({
         name: g.name,
         email: g.email,
@@ -114,6 +149,10 @@ export class EventTransformer {
       startDateFormatted: formatDateToDhaka(event.startDate),
       endDateFormatted: formatDateToDhaka(event.endDate),
       registrationDeadlineFormatted: formatDateToDhaka(event.registrationDeadline),
+      // For edit form inputs (datetime-local format in Dhaka time)
+      startDateInput: toDateTimeLocalDhaka(event.startDate),
+      endDateInput: toDateTimeLocalDhaka(event.endDate),
+      registrationDeadlineInput: toDateTimeLocalDhaka(event.registrationDeadline),
     }));
   }
 
@@ -139,6 +178,10 @@ export class EventTransformer {
       startDateFormatted: formatDateToDhaka(registration.event.startDate),
       endDateFormatted: formatDateToDhaka(registration.event.endDate),
       registrationDeadlineFormatted: formatDateToDhaka(registration.event.registrationDeadline),
+      // For edit form inputs (datetime-local format in Dhaka time)
+      startDateInput: toDateTimeLocalDhaka(registration.event.startDate),
+      endDateInput: toDateTimeLocalDhaka(registration.event.endDate),
+      registrationDeadlineInput: toDateTimeLocalDhaka(registration.event.registrationDeadline),
     };
   }
 }
