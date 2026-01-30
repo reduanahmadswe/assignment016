@@ -38,6 +38,20 @@ const sendEmail = async (options: EmailOptions): Promise<boolean> => {
 };
 
 /**
+ * Convert date to Dhaka timezone with proper formatting
+ */
+const formatDateToDhaka = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    dateStyle: 'full',
+    timeStyle: 'short',
+    hour12: true
+  });
+};
+
+/**
  * Payment Email Templates
  */
 export const sendPaymentConfirmation = async (
@@ -511,7 +525,7 @@ export class PaymentEmailService {
         registration.user.email,
         registration.user.name,
         registration.event.title,
-        new Date(registration.event.startDate).toLocaleString(),
+        formatDateToDhaka(registration.event.startDate),
         registration.registrationNumber || ''
       );
 
@@ -522,7 +536,7 @@ export class PaymentEmailService {
           registration.user.email,
           registration.user.name,
           registration.event.title,
-          new Date(registration.event.startDate).toLocaleString(),
+          formatDateToDhaka(registration.event.startDate),
           eventLink,
           registration.event.onlinePlatform || registration.event.meetingPlatform || 'Online'
         );

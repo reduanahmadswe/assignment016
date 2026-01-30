@@ -2,6 +2,20 @@ import cron from 'node-cron';
 import prisma from '../config/db.js';
 import { sendEventReminder } from '../utils/email.util.js';
 
+/**
+ * Convert date to Dhaka timezone with proper formatting
+ */
+const formatDateToDhaka = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    dateStyle: 'full',
+    timeStyle: 'short',
+    hour12: true
+  });
+};
+
 export const startEventReminderCron = () => {
   // Run every hour
   cron.schedule('0 * * * *', async () => {
@@ -46,7 +60,7 @@ export const startEventReminderCron = () => {
               user.email,
               user.name,
               event.title,
-              new Date(event.startDate).toLocaleString(),
+              formatDateToDhaka(event.startDate),
               event.eventMode.code !== 'offline' ? eventLink ?? undefined : undefined
             );
             } catch (error) {

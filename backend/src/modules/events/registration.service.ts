@@ -6,6 +6,20 @@ import { sendRegistrationConfirmation, sendEventLink } from '../payments/payment
 import { lookupService } from '../../services/lookup.service.js';
 import { eventTransformer } from './event.transformer.js';
 
+/**
+ * Convert date to Dhaka timezone with proper formatting
+ */
+const formatDateToDhaka = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    dateStyle: 'full',
+    timeStyle: 'short',
+    hour12: true
+  });
+};
+
 export class RegistrationService {
   /**
    * Register user for free event
@@ -89,7 +103,7 @@ export class RegistrationService {
         user.email,
         user.name,
         event.title,
-        new Date(event.startDate).toLocaleString(),
+        formatDateToDhaka(event.startDate),
         registrationNumber
       );
 
@@ -100,7 +114,7 @@ export class RegistrationService {
           user.email,
           user.name,
           event.title,
-          new Date(event.startDate).toLocaleString(),
+          formatDateToDhaka(event.startDate),
           eventLink,
           event.onlinePlatform || event.meetingPlatform || 'Online'
         );

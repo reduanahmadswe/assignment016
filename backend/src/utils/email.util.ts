@@ -10,6 +10,20 @@ interface EmailOptions {
   text?: string;
 }
 
+/**
+ * Convert date to Dhaka timezone with proper formatting
+ */
+const formatDateToDhaka = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    dateStyle: 'full',
+    timeStyle: 'short',
+    hour12: true
+  });
+};
+
 const getDynamicTransporter = async () => {
   /*
   // DYNAMIC CONFIG FROM DB (DISABLED FOR NOW)
