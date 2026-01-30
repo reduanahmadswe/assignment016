@@ -30,8 +30,8 @@ const toDateTimeLocalDhaka = (date: Date | string | null | undefined): string | 
   if (!date) return null;
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   
-  // Get time in Dhaka timezone
-  const dhakaTime = dateObj.toLocaleString('en-US', {
+  // Convert to Dhaka timezone
+  const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Dhaka',
     year: 'numeric',
     month: '2-digit',
@@ -41,10 +41,12 @@ const toDateTimeLocalDhaka = (date: Date | string | null | undefined): string | 
     hour12: false
   });
   
-  // Parse and format to YYYY-MM-DDTHH:mm
-  const [datePart, timePart] = dhakaTime.split(', ');
-  const [month, day, year] = datePart.split('/');
-  const [hour, minute] = timePart.split(':');
+  const parts = formatter.formatToParts(dateObj);
+  const year = parts.find(p => p.type === 'year')?.value;
+  const month = parts.find(p => p.type === 'month')?.value;
+  const day = parts.find(p => p.type === 'day')?.value;
+  const hour = parts.find(p => p.type === 'hour')?.value;
+  const minute = parts.find(p => p.type === 'minute')?.value;
   
   return `${year}-${month}-${day}T${hour}:${minute}`;
 };
