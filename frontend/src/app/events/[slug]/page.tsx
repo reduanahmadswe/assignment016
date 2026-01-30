@@ -278,7 +278,12 @@ export default function EventDetailsPage() {
       content: (
         <div className="space-y-6">
           <div className="prose prose-gray max-w-none">
-            <div dangerouslySetInnerHTML={{ __html: event.description }} />
+            <div 
+              className="whitespace-pre-wrap text-gray-700 leading-relaxed"
+              style={{ wordBreak: 'break-word' }}
+            >
+              {event.description}
+            </div>
           </div>
 
           {/* Participant Instructions */}
