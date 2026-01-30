@@ -83,7 +83,7 @@ export class EventTransformer {
       eventStatus: registration.event.eventStatus.code,
       registration_status: registration.status.code,
       payment_status: registration.paymentStatus.code,
-      meeting_link: registration.status.code === 'confirmed' ? registration.event.onlineLink : null,
+      meeting_link: registration.status.code === 'confirmed' ? (registration.event.onlineLink || registration.event.meetingLink) : null,
       certificate_available: registration.event.hasCertificate,
       certificate_id: registration.certificates?.[0]?.certificateId,
       registration_id: registration.id,

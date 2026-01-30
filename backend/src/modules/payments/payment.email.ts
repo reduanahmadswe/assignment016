@@ -389,15 +389,16 @@ export class PaymentEmailService {
         registration.registrationNumber || ''
       );
 
-      // Event link for online events
-      if (registration.event.eventMode !== 'offline' && registration.event.onlineLink) {
+      // Event link for online events (check both onlineLink and meetingLink)
+      const eventLink = registration.event.onlineLink || registration.event.meetingLink;
+      if (registration.event.eventMode !== 'offline' && eventLink) {
         await sendEventLink(
           registration.user.email,
           registration.user.name,
           registration.event.title,
           new Date(registration.event.startDate).toLocaleString(),
-          registration.event.onlineLink,
-          registration.event.onlinePlatform || 'Online'
+          eventLink,
+          registration.event.onlinePlatform || registration.event.meetingPlatform || 'Online'
         );
       }
     } catch (error) {

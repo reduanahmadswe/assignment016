@@ -41,12 +41,13 @@ export const startEventReminderCron = () => {
           const user = reg.user;
           if (!user) continue;
           try {
+            const eventLink = event.onlineLink || event.meetingLink;
             await sendEventReminder(
               user.email,
               user.name,
               event.title,
               new Date(event.startDate).toLocaleString(),
-              event.eventMode.code !== 'offline' ? event.onlineLink ?? undefined : undefined
+              event.eventMode.code !== 'offline' ? eventLink ?? undefined : undefined
             );
             } catch (error) {
             console.error(`Failed to send reminder to ${user.email}:`, error);

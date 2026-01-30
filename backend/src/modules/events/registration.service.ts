@@ -93,15 +93,16 @@ export class RegistrationService {
         registrationNumber
       );
 
-      // Send event link if online
-      if (event.eventMode !== 'offline' && event.onlineLink) {
+      // Send event link if online (check both onlineLink and meetingLink)
+      const eventLink = event.onlineLink || event.meetingLink;
+      if (event.eventMode !== 'offline' && eventLink) {
         await sendEventLink(
           user.email,
           user.name,
           event.title,
           new Date(event.startDate).toLocaleString(),
-          event.onlineLink,
-          event.onlinePlatform || 'Online'
+          eventLink,
+          event.onlinePlatform || event.meetingPlatform || 'Online'
         );
       }
     }
