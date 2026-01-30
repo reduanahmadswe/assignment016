@@ -1,3 +1,27 @@
+/**
+ * Convert date to Dhaka timezone with proper formatting
+ */
+const formatDateToDhaka = (date: Date | string | null | undefined): string | null => {
+  if (!date) return null;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleString('en-US', {
+    timeZone: 'Asia/Dhaka',
+    dateStyle: 'full',
+    timeStyle: 'short',
+    hour12: true
+  });
+};
+
+/**
+ * Format date to ISO string in Dhaka timezone
+ */
+const toISOStringDhaka = (date: Date | string | null | undefined): string | null => {
+  if (!date) return null;
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toISOString();
+};
+
 export class EventTransformer {
   /**
    * Transform single event - extracts code from relation objects
@@ -12,6 +36,13 @@ export class EventTransformer {
       eventStatus: eventStatus?.code,
       registrationStatus: registrationStatus?.code,
       onlinePlatform: onlinePlatform?.code,
+      // Format dates to Dhaka timezone
+      startDate: toISOStringDhaka(eventData.startDate),
+      endDate: toISOStringDhaka(eventData.endDate),
+      registrationDeadline: toISOStringDhaka(eventData.registrationDeadline),
+      startDateFormatted: formatDateToDhaka(eventData.startDate),
+      endDateFormatted: formatDateToDhaka(eventData.endDate),
+      registrationDeadlineFormatted: formatDateToDhaka(eventData.registrationDeadline),
     };
   }
 
@@ -40,6 +71,13 @@ export class EventTransformer {
       registrationStatus: registrationStatus.code,
       onlinePlatform: onlinePlatform?.code,
       registered_count: _count?.registrations || 0,
+      // Format dates to Dhaka timezone
+      startDate: toISOStringDhaka(eventData.startDate),
+      endDate: toISOStringDhaka(eventData.endDate),
+      registrationDeadline: toISOStringDhaka(eventData.registrationDeadline),
+      startDateFormatted: formatDateToDhaka(eventData.startDate),
+      endDateFormatted: formatDateToDhaka(eventData.endDate),
+      registrationDeadlineFormatted: formatDateToDhaka(eventData.registrationDeadline),
       guests: eventGuests?.map((g: any) => ({
         name: g.name,
         email: g.email,
@@ -69,6 +107,13 @@ export class EventTransformer {
       eventMode: event.eventMode.code,
       registrationStatus: event.registrationStatus?.code,
       eventStatus: event.eventStatus?.code,
+      // Format dates to Dhaka timezone
+      startDate: toISOStringDhaka(event.startDate),
+      endDate: toISOStringDhaka(event.endDate),
+      registrationDeadline: toISOStringDhaka(event.registrationDeadline),
+      startDateFormatted: formatDateToDhaka(event.startDate),
+      endDateFormatted: formatDateToDhaka(event.endDate),
+      registrationDeadlineFormatted: formatDateToDhaka(event.registrationDeadline),
     }));
   }
 
@@ -87,6 +132,13 @@ export class EventTransformer {
       certificate_available: registration.event.hasCertificate,
       certificate_id: registration.certificates?.[0]?.certificateId,
       registration_id: registration.id,
+      // Format dates to Dhaka timezone
+      startDate: toISOStringDhaka(registration.event.startDate),
+      endDate: toISOStringDhaka(registration.event.endDate),
+      registrationDeadline: toISOStringDhaka(registration.event.registrationDeadline),
+      startDateFormatted: formatDateToDhaka(registration.event.startDate),
+      endDateFormatted: formatDateToDhaka(registration.event.endDate),
+      registrationDeadlineFormatted: formatDateToDhaka(registration.event.registrationDeadline),
     };
   }
 }
