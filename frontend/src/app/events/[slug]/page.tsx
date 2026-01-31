@@ -24,7 +24,10 @@ import {
   Check,
   Mail,
   FileText,
-  Globe2
+  Globe2,
+  Facebook,
+  Twitter,
+  Linkedin
 } from 'lucide-react';
 import { eventAPI, paymentAPI, certificateAPI } from '@/lib/api';
 import { useAppSelector } from '@/store/hooks';
@@ -697,44 +700,53 @@ export default function EventDetailsPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mt-6">
-                  {/* Copy Link Button */}
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all text-sm font-medium ${copied
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                      }`}
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied' : 'Copy'}
-                  </button>
-
-                  {/* Share Button */}
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: event?.title,
-                          text: event?.description?.substring(0, 100) + '...',
-                          url: window.location.href,
-                        });
-                      } else {
-                        // Fallback - copy to clipboard
-                        navigator.clipboard.writeText(window.location.href);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }
-                    }}
-                    className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors text-sm font-medium"
-                  >
-                    <Share2 className="w-4 h-4" />
-                    Share
-                  </button>
+                {/* Share Section */}
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <h4 className="font-bold text-gray-900 text-sm mb-1">Share this event</h4>
+                      <p className="text-xs text-gray-500">Spread the word with your network</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-11 h-11 rounded-full bg-white text-[#1877F2] border-2 border-gray-200 flex items-center justify-center hover:scale-110 hover:border-[#1877F2] transition-all shadow-sm"
+                      >
+                        <Facebook className="w-5 h-5" />
+                      </a>
+                      <a
+                        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(event?.title || '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-11 h-11 rounded-full bg-white text-[#1DA1F2] border-2 border-gray-200 flex items-center justify-center hover:scale-110 hover:border-[#1DA1F2] transition-all shadow-sm"
+                      >
+                        <Twitter className="w-5 h-5" />
+                      </a>
+                      <a
+                        href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&title=${encodeURIComponent(event?.title || '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-11 h-11 rounded-full bg-white text-[#0A66C2] border-2 border-gray-200 flex items-center justify-center hover:scale-110 hover:border-[#0A66C2] transition-all shadow-sm"
+                      >
+                        <Linkedin className="w-5 h-5" />
+                      </a>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.href);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all shadow-sm ${copied
+                          ? 'bg-green-50 text-green-700 border-green-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:scale-110 hover:border-gray-400'
+                        }`}
+                      >
+                        {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
