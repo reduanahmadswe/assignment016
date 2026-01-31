@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         // Check if it's Google Drive
         if (thumbnail.includes('drive.google.com') || thumbnail.includes('docs.google.com')) {
           const directUrl = getGoogleDriveDirectUrl(thumbnail);
-          imageUrl = directUrl || `${appUrl}/api/og-image?url=${encodeURIComponent(thumbnail)}`;
+          imageUrl = directUrl || thumbnail;
           console.log('📸 Using Google Drive image:', imageUrl);
         } else {
           imageUrl = thumbnail;
@@ -88,18 +88,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         imageUrl = `${appUrl}${thumbnail}`;
         console.log('📸 Using relative path image:', imageUrl);
       }
+      // Priority 4: If no protocol or slash, assume it's from /images/
+      else {
+        imageUrl = `${appUrl}/images/${thumbnail}`;
+        console.log('📸 Using default images folder:', imageUrl);
+      }
     } else {
       console.log('📸 No thumbnail, using default:', imageUrl);
     }
     
     console.log('🔍 Final OG Image URL:', imageUrl);
     console.log('🔍 Event thumbnail from DB:', event.thumbnail);
+    console.log('🔍 Page URL:', pageUrl);
+    console.log('🔍 App URL:', appUrl);
+    console.log('🔍 API Base URL:', apiBaseUrl);
 
     const description = event.description?.substring(0, 160) || event.title;
     
-    // Format event dates
-    const startDate = new Date(event.startDateTime);
-    const endDate = new Date(event.endDateTime);
+    // Format event dates - API returns startDate not startDateTime
+    const startDate = event.startDate ? new Date(event.startDate) : new Date();
     const eventDate = startDate.toISOString();
 
     return {
@@ -116,6 +123,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             width: 1200,
             height: 630,
             alt: event.title,
+            type: 'image/jpeg',
           },
         ],
         locale: 'en_US',
@@ -128,10 +136,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description,
         images: [imageUrl],
         creator: '@ORIYET',
+        site: '@ORIYET',
       },
       alternates: {
         canonical: pageUrl,
       },
+      metadataBase: new URL(appUrl),
     };
   } catch (error) {
     console.error('Error generating event metadata:', error);
