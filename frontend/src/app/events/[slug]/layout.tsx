@@ -115,6 +115,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             width: 1200,
             height: 630,
             alt: event.title,
+            type: 'image/jpeg',
           },
         ],
         locale: 'en_US',
@@ -130,6 +131,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
       alternates: {
         canonical: pageUrl,
+      },
+      other: {
+        'og:image:width': '1200',
+        'og:image:height': '630',
+        'og:image:type': 'image/jpeg',
+        'og:type': 'article',
       },
     };
   } catch (error) {
