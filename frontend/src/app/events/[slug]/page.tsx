@@ -647,12 +647,6 @@ export default function EventDetailsPage() {
                     <span className="text-gray-500 group-hover:text-primary-600 transition-colors">Duration</span>
                     <span className="font-bold text-gray-900">{getDuration()}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm group">
-                    <span className="text-gray-500 group-hover:text-primary-600 transition-colors">Participants</span>
-                    <span className="font-bold text-gray-900">
-                      {event.current_participants || 0}{event.max_participants ? `/${event.max_participants}` : ''}
-                    </span>
-                  </div>
                   {event.certificate_available && (
                     <div className="flex items-center justify-center pt-2 text-sm text-green-600 font-bold bg-green-50 py-2 rounded-lg mt-2">
                       <Award className="w-4 h-4 mr-2" />
