@@ -17,6 +17,10 @@ export const createEventValidation = [
   body('end_date')
     .isISO8601()
     .withMessage('Invalid end date format'),
+  body('timezone')
+    .optional()
+    .isString()
+    .withMessage('Timezone must be a string'),
   body('is_free')
     .isBoolean()
     .withMessage('is_free must be a boolean'),
@@ -67,6 +71,10 @@ export const updateEventValidation = [
     .optional()
     .isISO8601()
     .withMessage('Invalid end date format'),
+  body('timezone')
+    .optional()
+    .isString()
+    .withMessage('Timezone must be a string'),
   body('event_status')
     .optional()
     .isIn(['upcoming', 'ongoing', 'completed', 'cancelled'])

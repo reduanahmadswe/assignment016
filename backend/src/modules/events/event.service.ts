@@ -10,6 +10,9 @@ import { registrationService } from './registration.service.js';
 
 export class EventService {
   async createEvent(data: CreateEventInput, createdBy: number) {
+    console.log('--- EVENT SERVICE CREATE ---');
+    console.log('Input Data Timezone:', data.timezone);
+    
     const slug = generateSlug(data.title) + '-' + Date.now().toString(36);
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -37,6 +40,7 @@ export class EventService {
           onlineLink: data.online_link,
           onlinePlatformId,
           startDate: new Date(data.start_date),
+          timezone: data.timezone,
           endDate: new Date(data.end_date),
           registrationDeadline: data.registration_deadline ? new Date(data.registration_deadline) : null,
           isFree: data.is_free,
@@ -91,15 +95,29 @@ export class EventService {
         }
       }
 
-      return this.getEventById(event.id);
+      return this.getEventById(event.id, tx);
     });
   }
 
   async updateEvent(eventId: number, data: UpdateEventInput) {
+    // FIRST THING - log synchronously
+    console.log('\n🔴🔴🔴 SERVICE UPDATEVENT CALLED 🔴🔴🔴');
+    console.log('  eventId:', eventId);
+    console.log('  data keys:', Object.keys(data));
+    console.log('  data.timezone:', data.timezone);
+    
     const event = await this.getEventById(eventId);
     if (!event) {
       throw new AppError('Event not found', 404);
     }
+
+    console.log('\n╔════ EVENT SERVICE UPDATE ════╗');
+    console.log('Input data keys:', Object.keys(data));
+    console.log('data.timezone VALUE:', data.timezone);
+    console.log('data.timezone EXISTS?:', 'timezone' in data);
+    console.log('data.timezone UNDEFINED?:', data.timezone === undefined);
+    console.log('Full data object:', JSON.stringify(data, null, 2));
+    console.log('╚═══════════════════════════════╝\n');
 
     return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updateData: any = {};
@@ -113,6 +131,21 @@ export class EventService {
       if (data.online_link !== undefined) updateData.onlineLink = data.online_link;
       if (data.online_platform !== undefined) updateData.onlinePlatformId = data.online_platform ? await lookupService.getOnlinePlatformId(data.online_platform) : null;
       if (data.start_date !== undefined) updateData.startDate = new Date(data.start_date);
+      
+      // CRITICAL: Timezone field handling
+      console.log('\n🔍 TIMEZONE CHECK:');
+      console.log('  "timezone" in data:', 'timezone' in data);
+      console.log('  data.timezone:', data.timezone);
+      console.log('  typeof data.timezone:', typeof data.timezone);
+      
+      if ('timezone' in data && data.timezone !== undefined) {
+        console.log('  ✅ TIMEZONE WILL BE UPDATED TO:', data.timezone);
+        updateData.timezone = data.timezone;
+      } else {
+        console.log('  ⚠️ TIMEZONE NOT IN UPDATE PAYLOAD');
+        console.log('     Will keep existing timezone:', event.timezone);
+      }
+      
       if (data.end_date !== undefined) updateData.endDate = new Date(data.end_date);
       if (data.registration_deadline !== undefined) updateData.registrationDeadline = data.registration_deadline ? new Date(data.registration_deadline) : null;
       if (data.is_free !== undefined) updateData.isFree = data.is_free;
@@ -137,8 +170,16 @@ export class EventService {
         updateData.slug = generateSlug(data.title) + '-' + Date.now().toString(36);
       }
 
+      console.log('Final Update Payload:', JSON.stringify(updateData, null, 2));
+
       if (Object.keys(updateData).length > 0) {
-        await tx.event.update({ where: { id: eventId }, data: updateData });
+        console.log('🔄 About to execute Prisma update with:', JSON.stringify({ where: { id: eventId }, data: updateData }, null, 2));
+        console.log('   📌 updateData.timezone before Prisma:', updateData.timezone);
+        const updateResult = await tx.event.update({ where: { id: eventId }, data: updateData });
+        console.log('✅ Update executed. Result timezone from DB:', updateResult.timezone);
+        console.log('   📌 Did timezone actually update in DB?', updateResult.timezone === updateData.timezone ? 'YES ✅' : 'NO ❌');
+      } else {
+        console.log('⚠️ No fields to update');
       }
 
       // Handle Certificate Signatures update
@@ -241,13 +282,16 @@ export class EventService {
           }
         }
       }
-
-      return this.getEventById(eventId);
+      
+      console.log('📦 Calling getEventById with transaction client...');
+      const result = await this.getEventById(eventId, tx);
+      console.log('📦 getEventById returned timezone:', result.timezone);
+      return result;
     });
   }
 
-  async getEventById(eventId: number) {
-    let event = await prisma.event.findUnique({
+  async getEventById(eventId: number, tx: Prisma.TransactionClient | Prisma.PrismaClient = prisma) {
+    let event = await tx.event.findUnique({
       where: { id: eventId },
       include: {
         eventType: true,
@@ -276,12 +320,16 @@ export class EventService {
       throw new AppError('Event not found', 404);
     }
 
+    console.log('🗄️ getEventById raw event from DB - id:', event.id, 'timezone:', event.timezone);
+
     // Lazy update: Check if event has ended but status not updated
     if (new Date(event.endDate) < new Date() && ['upcoming', 'ongoing'].includes(event.eventStatus.code)) {
       const completedStatusId = await lookupService.getEventStatusId('completed');
       const closedStatusId = await lookupService.getRegistrationStatusId('closed');
       
-      event = await prisma.event.update({
+      // Use the provided transaction client for the update if possible, otherwise cast to any is safe here as both have event.update
+      const client = tx as any;
+      event = await client.event.update({
         where: { id: eventId },
         data: {
           eventStatusId: completedStatusId,
@@ -413,6 +461,7 @@ export class EventService {
           eventType: { select: { code: true, label: true } },
           eventMode: { select: { code: true, label: true } },
           startDate: true,
+          timezone: true,
           endDate: true,
           isFree: true,
           price: true,
@@ -458,6 +507,7 @@ export class EventService {
         eventType: { select: { code: true, label: true } },
         eventMode: { select: { code: true, label: true } },
         startDate: true,
+        timezone: true,
         endDate: true,
         isFree: true,
         price: true,
@@ -487,6 +537,7 @@ export class EventService {
         eventType: { select: { code: true, label: true } },
         eventMode: { select: { code: true, label: true } },
         startDate: true,
+        timezone: true,
         endDate: true,
         isFree: true,
         price: true,
@@ -516,6 +567,7 @@ export class EventService {
         eventType: { select: { code: true, label: true } },
         eventMode: { select: { code: true, label: true } },
         startDate: true,
+        timezone: true,
         endDate: true,
         isFree: true,
         price: true,
@@ -547,6 +599,7 @@ export class EventService {
           eventType: { select: { code: true, label: true } },
           eventMode: { select: { code: true, label: true } },
           startDate: true,
+          timezone: true,
           endDate: true,
           videoLink: true,
           sessionSummary: true,

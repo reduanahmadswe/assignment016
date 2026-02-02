@@ -244,8 +244,17 @@ export default function AdminEventsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 font-bold">{formatDate(event.startDate)}</div>
                       <div className="text-xs text-gray-500 font-medium mt-0.5">
-                        {new Date(event.startDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}{' '}
-                        <span className="font-bold text-red-600">(Dhaka time)</span>
+                        {new Date(event.startDate).toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                          timeZone: event.timezone || undefined
+                        })}{' '}
+                        {event.timezone ? (
+                          <span className="text-[10px] text-gray-500">({event.timezone.split('/')[1] || event.timezone})</span>
+                        ) : (
+                          <span className="font-bold text-red-600">(Dhaka time)</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">

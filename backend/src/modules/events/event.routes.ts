@@ -7,6 +7,13 @@ import { createEventValidation, updateEventValidation } from './event.validation
 
 const router = Router();
 
+// 🔍 Debug middleware for PUT requests
+router.put('/:id', (req, res, next) => {
+  console.log('\n🔍 ROUTER LEVEL - PUT /:id');
+  console.log('Body timezone:', req.body.timezone);
+  next();
+});
+
 // Public routes
 router.get('/', optionalAuth, eventController.getAllEvents);
 router.get('/upcoming', eventController.getUpcomingEvents);
@@ -22,8 +29,17 @@ router.delete('/:id/register', authenticate, eventController.cancelRegistration)
 router.get('/:id/registration-status', authenticate, eventController.checkRegistrationStatus);
 
 // Admin routes
-router.post('/', authenticate, requireAdmin, validate(createEventValidation), eventController.createEvent);
-router.put('/:id', authenticate, requireAdmin, validate(updateEventValidation), eventController.updateEvent);
+router.post('/', authenticate, requireAdmin, validate(createEventValidation), (req, res, next) => {
+  console.log('After validation - createEvent timezone:', req.body.timezone);
+  next();
+}, eventController.createEvent);
+
+router.put('/:id', authenticate, requireAdmin, validate(updateEventValidation), (req, res, next) => {
+  console.log('After validation - updateEvent timezone:', req.body.timezone);
+  console.log('After validation - updateEvent body keys:', Object.keys(req.body));
+  next();
+}, eventController.updateEvent);
+
 router.delete('/:id', authenticate, requireAdmin, eventController.deleteEvent);
 router.get('/:id/registrations', authenticate, requireAdmin, eventController.getEventRegistrations);
 router.get('/:id', authenticate, requireAdmin, eventController.getEventById);

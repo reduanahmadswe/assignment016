@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +13,6 @@ import {
   Clock,
   Globe,
   Share2,
-  ArrowLeft,
   CheckCircle,
   ExternalLink,
   Video,
@@ -32,7 +31,7 @@ import {
 import { eventAPI, paymentAPI, certificateAPI } from '@/lib/api';
 import { useAppSelector } from '@/store/hooks';
 import { formatDate, formatDateTime, formatCurrency, getEventTypeLabel, getImageUrl, cn } from '@/lib/utils';
-import { Button, Loading, Badge, Modal, Alert, Tabs } from '@/components/ui';
+import { Button, Loading, Badge, Modal, Alert, Tabs, Breadcrumb } from '@/components/ui';
 
 export default function EventDetailsPage() {
   const { slug } = useParams();
@@ -47,6 +46,11 @@ export default function EventDetailsPage() {
   const [copied, setCopied] = useState(false);
   const [generatingCertificate, setGeneratingCertificate] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [userTimezone, setUserTimezone] = useState('');
+
+  useEffect(() => {
+    setUserTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  }, []);
 
   // Helper to extract embed URL (reused logic)
   const getEmbedUrl = (url: string) => {
@@ -171,15 +175,29 @@ export default function EventDetailsPage() {
   };
 
   // Helper to safely format time
-  const safeFormatTime = (dateStr: string | Date | undefined) => {
+  const safeFormatTime = (dateStr: string | Date | undefined, targetTimezone?: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return '';
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Asia/Dhaka',
-    });
+    
+    // Use target timezone if provided, otherwise event timezone, otherwise default to Dhaka
+    const tz = targetTimezone || event?.timezone || 'Asia/Dhaka';
+    
+    try {
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: tz,
+      });
+    } catch (e) {
+      // Fallback if timezone is invalid
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
   };
 
   // Helper to calculate duration
@@ -438,10 +456,14 @@ export default function EventDetailsPage() {
       {/* Hero Section */}
       <section className="bg-white border-b">
         <div className="container-custom py-6 lg:py-8">
-          <Link href="/events" className="inline-flex items-center text-gray-600 hover:text-primary-600 mb-4 md:mb-6 transition-colors p-1 -ml-1">
-            <ArrowLeft className="w-5 h-5 mr-1" />
-            <span className="font-medium">Back to Events</span>
-          </Link>
+          <div className="mb-4 md:mb-6">
+            <Breadcrumb
+              items={[
+                { label: 'Events', href: '/events' },
+                { label: event.title, active: true },
+              ]}
+            />
+          </div>
 
           <div className="grid lg:grid-cols-3 gap-6 lg:gap-10">
             {/* Main Content */}
@@ -487,9 +509,41 @@ export default function EventDetailsPage() {
                   </div>
                   <div className="flex items-center p-2 bg-gray-50 rounded-lg">
                     <Clock className="w-5 h-5 mr-3 text-primary-500 flex-shrink-0" />
-                    <span className="font-medium">
-                      {safeFormatTime(event.start_date)}{' '}
-                      <span className="font-bold text-red-600">(Dhaka time)</span>
+                    <span className="font-medium flex flex-col leading-tight">
+                      <span>{safeFormatTime(event.start_date)}</span>
+                      {event.timezone ? (
+                        <span className="text-[11px] text-gray-500 font-normal mt-0.5">
+                          {event.timezone} ({(() => {
+                            try {
+                              return new Intl.DateTimeFormat('en-US', { timeZone: event.timezone, timeZoneName: 'long' })
+                                .formatToParts(new Date())
+                                .find(p => p.type === 'timeZoneName')?.value;
+                            } catch (e) {
+                              return '';
+                            }
+                          })()})
+                        </span>
+                      ) : (
+                        <span className="font-bold text-red-600 text-xs">(Dhaka time)</span>
+                      )}
+                      
+                       {/* Show User's Local Time if different from event timezone */}
+                       {userTimezone && event.timezone && userTimezone !== event.timezone && (
+                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="w-3.5 h-3.5 text-secondary-500" />
+                            <span className="text-xs font-bold text-gray-900 uppercase tracking-wide">Your Local Time</span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-lg font-bold text-secondary-600 leading-none">
+                              {safeFormatTime(event.start_date, userTimezone)}
+                            </span>
+                            <span className="text-[11px] text-gray-500 mt-1 font-medium">
+                              {userTimezone}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </span>
                   </div>
                   {/* Show venue for offline/hybrid, show Online for online events */}
@@ -642,6 +696,23 @@ export default function EventDetailsPage() {
                   <div className="flex items-center justify-between text-sm group">
                     <span className="text-gray-500 group-hover:text-primary-600 transition-colors">Date</span>
                     <span className="font-bold text-gray-900">{safeFormatDate(event.start_date)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm group">
+                    <span className="text-gray-500 group-hover:text-primary-600 transition-colors">Timezone</span>
+                    <span className="font-bold text-gray-900 text-right max-w-[60%]">
+                      {event.timezone}
+                      <span className="block text-[10px] text-gray-500 font-normal">
+                        ({(() => {
+                            try {
+                              return new Intl.DateTimeFormat('en-US', { timeZone: event.timezone, timeZoneName: 'long' })
+                                .formatToParts(new Date())
+                                .find(p => p.type === 'timeZoneName')?.value;
+                            } catch (e) {
+                              return '';
+                            }
+                        })()})
+                      </span>
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-sm group">
                     <span className="text-gray-500 group-hover:text-primary-600 transition-colors">Duration</span>

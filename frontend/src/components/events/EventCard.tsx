@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Calendar, MapPin, Users, Clock, Tag, ArrowRight } from 'lucide-react';
-import { formatDate, formatCurrency, getEventTypeLabel, getImageUrl, isBase64Image, cn } from '@/lib/utils';
+import { formatDate, formatDateTime, formatCurrency, getEventTypeLabel, getImageUrl, isBase64Image, cn } from '@/lib/utils';
 
 interface Event {
   id: number;
@@ -18,6 +18,7 @@ interface Event {
   max_participants?: number;
   current_participants: number;
   status: string;
+  timezone?: string;
 }
 
 interface EventCardProps {
@@ -58,6 +59,26 @@ export default function EventCard({ event, variant = 'default', className }: Eve
     if (type === 'online') return 'badge-blue';
     if (type === 'offline') return 'badge-purple';
     return 'badge-blue';
+  };
+
+  // Helper to format date with timezone
+  const formatEventDate = (date: string | Date, timezone?: string) => {
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return 'Invalid Date';
+      
+      return d.toLocaleString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true, // Force AM/PM
+        timeZone: timezone || undefined
+      });
+    } catch (e) {
+      return formatDateTime(date);
+    }
   };
 
   if (variant === 'horizontal') {
@@ -102,7 +123,8 @@ export default function EventCard({ event, variant = 'default', className }: Eve
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-5">
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2 text-secondary-500" />
-                {formatDate(startDate)}
+                {formatEventDate(startDate, e.timezone)}
+                {e.timezone && <span className="ml-1 text-xs">({e.timezone.split('/')[1] || e.timezone})</span>}
               </div>
               {event.venue && (
                 <div className="flex items-center">
@@ -151,7 +173,8 @@ export default function EventCard({ event, variant = 'default', className }: Eve
             </h4>
             <div className="flex items-center text-sm text-gray-500">
               <Calendar className="w-3.5 h-3.5 mr-1.5" />
-              {formatDate(startDate)}
+              {formatEventDate(startDate, e.timezone)}
+              {e.timezone && <span className="ml-1 text-xs">({e.timezone.split('/')[1] || e.timezone})</span>}
             </div>
           </div>
           <div className="text-base font-bold text-accent-600">
@@ -232,7 +255,8 @@ export default function EventCard({ event, variant = 'default', className }: Eve
           <div className="space-y-1.5">
             <div className="flex items-center text-[11px] font-medium text-gray-600 group-hover:text-[#004aad] transition-colors duration-300">
               <Calendar className="w-3 h-3 mr-1 text-[#004aad] group-hover:scale-110 transition-transform duration-300" />
-              {formatDate(startDate)}
+              {formatEventDate(startDate, e.timezone)}
+              {e.timezone && <span className="ml-1 text-[9px]">({e.timezone.split('/')[1] || e.timezone})</span>}
             </div>
 
             {event.venue && (

@@ -11,6 +11,7 @@ export interface CreateEventInput {
   start_date: string;
   end_date: string;
   registration_deadline?: string;
+  timezone?: string;
   is_free: boolean;
   price?: number;
   max_participants?: number;

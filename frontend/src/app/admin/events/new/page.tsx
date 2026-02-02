@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { getImageUrl } from '@/lib/utils';
 import { adminAPI } from '@/lib/api';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Spinner } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Spinner, TimezoneSelect } from '@/components/ui';
 import toast from '@/lib/toast';
 
 // Helper function to convert Google Drive URL to direct viewable format
@@ -73,6 +73,7 @@ export default function CreateEventPage() {
     startDate: '',
     endDate: '',
     registrationDeadline: '',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     price: '' as string | number,
     maxParticipants: '' as string | number,
     status: 'upcoming',
@@ -89,6 +90,34 @@ export default function CreateEventPage() {
     signature2Name: '',
     signature2Title: '',
   });
+
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      if (formData.timezone && typeof formData.timezone === 'string') {
+        try {
+          const time = new Date().toLocaleString('en-GB', {
+            timeZone: formData.timezone,
+            year: '2-digit',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).replace(',', '').replace(/\//g, '.');
+           setCurrentTime(time);
+        } catch (e) {
+           // Invalid timezone
+        }
+      }
+    };
+    
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, [formData.timezone]);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -277,11 +306,16 @@ export default function CreateEventPage() {
 
     const submitData: any = {
       ...formData,
+      timezone: formData.timezone, // Explicitly pass timezone
       price: formData.price === '' ? 0 : Number(formData.price),
       maxParticipants: formData.maxParticipants === '' ? 0 : Number(formData.maxParticipants),
+      // Send both camelCase and snake_case to be safe with backend handling
       startDate: new Date(formData.startDate).toISOString(),
+      start_date: new Date(formData.startDate).toISOString(),
       endDate: new Date(formData.endDate).toISOString(),
+      end_date: new Date(formData.endDate).toISOString(),
       registrationDeadline: new Date(formData.registrationDeadline).toISOString(),
+      registration_deadline: new Date(formData.registrationDeadline).toISOString(),
     };
 
     if (thumbnailUrl) {
@@ -551,6 +585,23 @@ export default function CreateEventPage() {
                 <CardTitle className="text-base font-bold">Date & Time</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 p-5">
+                <div className="mb-4">
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                    Timezone
+                  </label>
+                  <div className="text-sm">
+                    <TimezoneSelect
+                      value={formData.timezone}
+                      onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                    />
+                  </div>
+                  {formData.timezone && (
+                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100 flex items-center gap-2">
+                       <span className="font-semibold text-primary-600">Current Date / Time in {formData.timezone.split('/')[1] || formData.timezone}:</span>
+                       <span className="font-mono text-gray-900 bg-white px-2 py-0.5 rounded border border-gray-200">{currentTime}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1.5">

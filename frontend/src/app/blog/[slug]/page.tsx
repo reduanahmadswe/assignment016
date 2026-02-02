@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Calendar, User, Clock, Share2, Facebook, Twitter, Linkedin, Eye, Download } from 'lucide-react';
+import { Calendar, User, Clock, Share2, Facebook, Twitter, Linkedin, Eye, Download } from 'lucide-react';
 import { blogAPI } from '@/lib/api';
 import { formatDate, getImageUrl } from '@/lib/utils';
-import { Loading, Badge } from '@/components/ui';
+import { Loading, Badge, Breadcrumb } from '@/components/ui';
 
 export default function BlogPostPage() {
   const { slug } = useParams();
@@ -73,16 +73,15 @@ export default function BlogPostPage() {
       <section className="bg-white border-b border-gray-100">
         <div className="container-custom py-6 sm:py-10">
           <div className="max-w-4xl mx-auto">
-            {/* Back Nav */}
-            <Link
-              href="/blog"
-              className="inline-flex items-center text-gray-500 hover:text-[#004aad] mb-6 sm:mb-8 transition-colors group"
-            >
-              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#004aad]/10 transition-colors mr-2">
-                <ArrowLeft className="w-4 h-4 group-hover:px-0 transition-all" />
-              </div>
-              <span className="font-medium">Back to Blog</span>
-            </Link>
+            {/* Breadcrumb */}
+            <div className="mb-6 sm:mb-8">
+              <Breadcrumb
+                items={[
+                  { label: 'Blog', href: '/blog' },
+                  { label: post.title, active: true },
+                ]}
+              />
+            </div>
 
 
 

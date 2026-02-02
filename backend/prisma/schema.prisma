@@ -274,6 +274,7 @@ model Event {
   onlineLink             String?   @map("online_link")
   onlinePlatformId       Int?      @map("online_platform_id")
   startDate              DateTime  @map("start_date")
+  timezone               String    @default("Asia/Dhaka") // Default to Bangladesh time
   endDate                DateTime  @map("end_date")
   registrationDeadline   DateTime? @map("registration_deadline")
   isFree                 Boolean   @default(true) @map("is_free")

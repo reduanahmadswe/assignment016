@@ -123,10 +123,21 @@ export class EventController {
 
   // Admin endpoints
   createEvent = asyncHandler(async (req: AuthRequest, res: Response) => {
-    const event = await eventService.createEvent(req.body, req.user!.id);
+    console.log('--- DEBUG CREATE EVENT ---');
+    console.log('Request Body Timezone:', req.body.timezone);
+    
+    // Ensure timezone is passed explicitly
+    const eventData = {
+      ...req.body,
+      timezone: req.body.timezone
+    };
+    const event = await eventService.createEvent(eventData, req.user!.id);
     res.status(201).json({
       success: true,
       data: event,
+      _debug: {
+        receivedTimezone: req.body.timezone
+      }
     });
   });
 
@@ -135,11 +146,43 @@ export class EventController {
       // Guests validation
     }
 
-    const event = await eventService.updateEvent(parseInt(req.params.id), req.body);
-    res.json({
-      success: true,
-      data: event,
-    });
+    console.log('\n\n========== 🚀 UPDATE EVENT START ==========');
+    console.log('FULL REQUEST BODY:', JSON.stringify(req.body, null, 2));
+    console.log('Request Body Timezone VALUE:', req.body.timezone);
+    console.log('Request Body Timezone TYPE:', typeof req.body.timezone);
+    console.log('='.repeat(50));
+
+    // Ensure timezone is passed explicitly
+    const eventData = {
+      ...req.body,
+      timezone: req.body.timezone
+    };
+    
+    console.log('EVENT DATA BEING SENT TO SERVICE:');
+    console.log('  timezone:', eventData.timezone);
+    console.log('  timezone type:', typeof eventData.timezone);
+
+    try {
+      console.log('📞 ABOUT TO CALL eventService.updateEvent...');
+      const event = await eventService.updateEvent(parseInt(req.params.id), eventData);
+      console.log('📞 eventService.updateEvent RETURNED');
+      console.log('RESPONSE FROM SERVICE - timezone:', event.timezone);
+      console.log('========== ✅ UPDATE EVENT END ==========\n\n');
+      
+      // DEBUG: Return what we received to debug frontend/backend communication
+      res.json({
+        success: true,
+        data: event,
+        _debug: {
+          receivedTimezone: req.body.timezone,
+          returnedTimezone: event.timezone,
+          receivedBodyKeys: Object.keys(req.body)
+        }
+      });
+    } catch (error) {
+      console.log('❌ ERROR IN updateEvent:', error);
+      throw error;
+    }
   });
 
   deleteEvent = asyncHandler(async (req: AuthRequest, res: Response) => {

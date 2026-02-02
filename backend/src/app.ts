@@ -94,6 +94,18 @@ const createApp = (): Application => {
   app.use(express.json({ limit: '20mb' }));
   app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
+  // 🔍 REQUEST LOGGING MIDDLEWARE - Log all incoming requests
+  app.use((req, res, next) => {
+    if (req.path.includes('/admin/events') && req.method === 'PUT') {
+      console.log('\n🔍 INCOMING REQUEST TO /admin/events/:');
+      console.log('METHOD:', req.method);
+      console.log('PATH:', req.path);
+      console.log('FULL BODY:', JSON.stringify(req.body, null, 2));
+      console.log('TIMEZONE in body:', req.body?.timezone);
+    }
+    next();
+  });
+
   // ⚠️ RAW BODY LOGGER - Log email BEFORE any middleware processing
   // This helps debug production-only email dot issues
   app.use((req, res, next) => {

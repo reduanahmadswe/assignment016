@@ -3,8 +3,17 @@ import { body, param, query, validationResult, ValidationChain } from 'express-v
 
 export const validate = (validations: ValidationChain[]) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    // DEBUG: Log timezone BEFORE validation
+    console.log('\n✋ VALIDATION MIDDLEWARE - BEFORE');
+    console.log('  req.body.timezone:', req.body.timezone);
+    console.log('  req.body keys:', Object.keys(req.body));
+    
     await Promise.all(validations.map(validation => validation.run(req)));
 
+    // DEBUG: Log timezone AFTER validation
+    console.log('✋ VALIDATION MIDDLEWARE - AFTER');
+    console.log('  req.body.timezone:', req.body.timezone);
+    
     const errors = validationResult(req);
     if (errors.isEmpty()) {
       next();
